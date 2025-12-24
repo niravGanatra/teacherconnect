@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+        }
+
+        .content h2 {
+            color: #1e3a5f;
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f1f5f9;
+            padding: 20px 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .alert-badge {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .applicant-card {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #1e3a5f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 TeacherConnect</h1>
+        </div>
+        <div class="content">
+            <p style="text-align: center;">
+                <span class="alert-badge">📋 New Application</span>
+            </p>
+
+            <h2>Hello, {{ institution_name }}!</h2>
+            <p>You've received a new application for your job posting.</p>
+
+            <div class="applicant-card">
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b;">Position:</p>
+                <h3 style="margin: 0 0 15px 0; color: #1e3a5f;">{{ job_title }}</h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b;">Applicant:</p>
+                <p style="margin: 0; font-weight: 600; color: #334155;">{{ applicant_name }}</p>
+            </div>
+
+            <p>Review their profile, resume, and cover letter to see if they're a good fit for your institution.</p>
+
+            <p style="text-align: center;">
+                <a href="{{ site_url }}/applicants/{{ job_id }}" class="btn">Review Application →</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>© TeacherConnect | Empowering Educators</p>
+        </div>
+    </div>
+</body>
+
+</html>

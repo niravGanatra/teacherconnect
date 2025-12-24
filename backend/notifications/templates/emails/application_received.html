@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+        }
+
+        .content h2 {
+            color: #1e3a5f;
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f1f5f9;
+            padding: 20px 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .job-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 TeacherConnect</h1>
+        </div>
+        <div class="content">
+            <p style="text-align: center;">
+                <span class="success-badge">✓ Application Submitted</span>
+            </p>
+
+            <h2>Great news, {{ teacher_name }}!</h2>
+            <p>Your application has been successfully submitted.</p>
+
+            <div class="job-card">
+                <h3 style="margin-top: 0; color: #1e3a5f;">{{ job_title }}</h3>
+                <p style="margin-bottom: 0; color: #64748b;">{{ institution_name }}</p>
+            </div>
+
+            <p>The institution will review your profile and cover letter. You'll receive an email when there's an update
+                on your application status.</p>
+
+            <p style="text-align: center;">
+                <a href="{{ site_url }}/my-applications" class="btn">Track Your Applications →</a>
+            </p>
+
+            <p style="color: #64748b; font-size: 14px;">Tip: Keep your profile updated to increase your chances!</p>
+        </div>
+        <div class="footer">
+            <p>© TeacherConnect | Empowering Educators</p>
+        </div>
+    </div>
+</body>
+
+</html>

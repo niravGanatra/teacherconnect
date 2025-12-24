@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeacherConnect</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; }
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); padding: 30px; text-align: center; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .content { padding: 40px 30px; color: #334155; }
+        .content h2 { color: #1e3a5f; margin-top: 0; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f1f5f9; padding: 20px 30px; text-align: center; color: #64748b; font-size: 13px; }
+        .highlight { background: #f0f9ff; border-left: 4px solid #1e3a5f; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 TeacherConnect</h1>
+        </div>
+        <div class="content">
+            <h2>Welcome to TeacherConnect, {{ username }}! 👋</h2>
+            <p>We're thrilled to have you join our community of educators{% if user_type == 'INSTITUTION' %} and institutions{% endif %}.</p>
+            
+            {% if user_type == 'TEACHER' %}
+            <div class="highlight">
+                <strong>Here's what you can do:</strong>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    <li>Browse job opportunities from verified institutions</li>
+                    <li>Connect with fellow teachers</li>
+                    <li>Share your expertise on the feed</li>
+                    <li>Attend workshops and events</li>
+                </ul>
+            </div>
+            {% else %}
+            <div class="highlight">
+                <strong>Here's what you can do:</strong>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    <li>Post job openings and reach qualified teachers</li>
+                    <li>Review applications with our ATS</li>
+                    <li>Host events and workshops</li>
+                    <li>Build your institution's profile</li>
+                </ul>
+            </div>
+            {% endif %}
+            
+            <p style="text-align: center;">
+                <a href="{{ site_url }}/dashboard" class="btn">Get Started →</a>
+            </p>
+            
+            <p>If you have any questions, just reply to this email – we're here to help!</p>
+        </div>
+        <div class="footer">
+            <p>© TeacherConnect | Empowering Educators</p>
+        </div>
+    </div>
+</body>
+</html>

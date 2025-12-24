@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+        }
+
+        .content h2 {
+            color: #1e3a5f;
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+
+        .footer {
+            background: #f1f5f9;
+            padding: 20px 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .event-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #1e3a5f;
+        }
+
+        .event-detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            color: #475569;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 TeacherConnect</h1>
+        </div>
+        <div class="content">
+            <h2>⏰ Event Reminder</h2>
+            <p>Hi {{ user_name }},</p>
+            <p>This is a friendly reminder about an upcoming event you're attending:</p>
+
+            <div class="event-card">
+                <h3 style="margin-top: 0; color: #1e3a5f; font-size: 20px;">{{ event_title }}</h3>
+
+                <div class="event-detail">
+                    📅 <strong>{{ event_date|date:"l, F j, Y" }}</strong>
+                </div>
+                <div class="event-detail">
+                    🕐 <strong>{{ event_date|time:"g:i A" }}</strong>
+                </div>
+                <div class="event-detail">
+                    📍 <strong>{{ event_location }}</strong>
+                </div>
+
+                {% if meeting_link %}
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="{{ meeting_link }}" class="btn" style="background: #10b981;">Join Meeting →</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <p>Don't forget to prepare any questions or materials you might need!</p>
+
+            <p style="text-align: center;">
+                <a href="{{ site_url }}/events" class="btn">View Event Details →</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>© TeacherConnect | Empowering Educators</p>
+        </div>
+    </div>
+</body>
+
+</html>
