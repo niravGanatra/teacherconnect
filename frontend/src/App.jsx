@@ -24,6 +24,13 @@ import InstitutionProfileView from './pages/institution/ProfileView';
 import MyJobs from './pages/institution/MyJobs';
 import Applicants from './pages/institution/Applicants';
 
+// Admin Pages
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminJobs from './pages/admin/Jobs';
+import AdminInstitutions from './pages/admin/Institutions';
+import AdminContent from './pages/admin/Content';
+
 // Shared Pages
 import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
@@ -54,6 +61,10 @@ function DashboardRouter() {
 
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  if (user?.user_type === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
   }
 
   if (user?.user_type === 'TEACHER') {
@@ -241,6 +252,52 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={['INSTITUTION']}>
             <Applicants />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin-Only Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedTypes={['ADMIN']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute allowedTypes={['ADMIN']}>
+            <AdminUsers />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/jobs"
+        element={
+          <ProtectedRoute allowedTypes={['ADMIN']}>
+            <AdminJobs />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/institutions"
+        element={
+          <ProtectedRoute allowedTypes={['ADMIN']}>
+            <AdminInstitutions />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/content"
+        element={
+          <ProtectedRoute allowedTypes={['ADMIN']}>
+            <AdminContent />
           </ProtectedRoute>
         }
       />

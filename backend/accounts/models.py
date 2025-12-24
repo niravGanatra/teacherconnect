@@ -24,6 +24,11 @@ class User(AbstractUser):
         default=UserType.TEACHER
     )
     is_verified = models.BooleanField(default=False)
+    
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -49,3 +54,12 @@ class User(AbstractUser):
     @property
     def is_admin_user(self):
         return self.user_type == UserType.ADMIN
+    
+    def soft_delete(self):
+        """Mark user as deleted without removing from database."""
+        from django.utils import timezone
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.is_active = False  # Also deactivate the user
+        self.save()
+

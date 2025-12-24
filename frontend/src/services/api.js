@@ -155,4 +155,36 @@ export const eventsAPI = {
     getAttendingEvents: () => api.get('/events/attending/'),
 };
 
+// Admin API (requires ADMIN user type)
+export const adminAPI = {
+    // Dashboard stats
+    getStats: () => api.get('/admin/stats/'),
+
+    // User management (soft delete)
+    getUsers: (params) => api.get('/admin/users/', { params }),
+    getUser: (id) => api.get(`/admin/users/${id}/`),
+    updateUser: (id, data) => api.put(`/admin/users/${id}/`, data),
+    deleteUser: (id) => api.delete(`/admin/users/${id}/delete/`),  // Soft delete
+    restoreUser: (id) => api.post(`/admin/users/${id}/delete/`),   // Restore
+    verifyUser: (id) => api.post(`/admin/users/${id}/verify/`),
+    unverifyUser: (id) => api.delete(`/admin/users/${id}/verify/`),
+    toggleUserActive: (id) => api.post(`/admin/users/${id}/toggle-active/`),
+
+    // Job moderation (soft delete)
+    getJobs: (params) => api.get('/admin/jobs/', { params }),
+    toggleJob: (id) => api.post(`/admin/jobs/${id}/toggle/`),
+    deleteJob: (id) => api.delete(`/admin/jobs/${id}/`),  // Soft delete
+    restoreJob: (id) => api.post(`/admin/jobs/${id}/`),   // Restore
+
+    // Institution verification
+    getInstitutions: (params) => api.get('/admin/institutions/', { params }),
+    verifyInstitution: (id) => api.post(`/admin/institutions/${id}/verify/`),
+    unverifyInstitution: (id) => api.delete(`/admin/institutions/${id}/verify/`),
+
+    // Content moderation (soft delete)
+    getPosts: (params) => api.get('/admin/posts/', { params }),
+    deletePost: (id) => api.delete(`/admin/posts/${id}/`),  // Soft delete
+    restorePost: (id) => api.post(`/admin/posts/${id}/`),   // Restore
+};
+
 export default api;

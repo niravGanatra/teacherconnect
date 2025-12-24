@@ -48,6 +48,10 @@ class JobListing(models.Model):
     is_active = models.BooleanField(default=True)
     application_deadline = models.DateField(null=True, blank=True)
     
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -62,6 +66,14 @@ class JobListing(models.Model):
     @property
     def application_count(self):
         return self.applications.count()
+    
+    def soft_delete(self):
+        """Mark job as deleted without removing from database."""
+        from django.utils import timezone
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.is_active = False
+        self.save()
 
 
 class ApplicationStatus(models.TextChoices):

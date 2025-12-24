@@ -48,6 +48,10 @@ class Post(models.Model):
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,6 +61,13 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post by {self.author.email} at {self.created_at}"
+    
+    def soft_delete(self):
+        """Mark post as deleted without removing from database."""
+        from django.utils import timezone
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
 
 
 class Like(models.Model):

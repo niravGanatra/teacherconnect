@@ -20,7 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export function Sidebar({ isOpen, onClose }) {
-    const { user, logout, isTeacher, isInstitution } = useAuth();
+    const { user, logout, isTeacher, isInstitution, isAdmin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -52,7 +52,15 @@ export function Sidebar({ isOpen, onClose }) {
         { to: '/profile', icon: BuildingOfficeIcon, label: 'Campus Profile' },
     ];
 
-    const links = isTeacher ? teacherLinks : institutionLinks;
+    const adminLinks = [
+        { to: '/admin', icon: HomeIcon, label: 'Dashboard' },
+        { to: '/admin/users', icon: UsersIcon, label: 'Users' },
+        { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions' },
+        { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs' },
+        { to: '/admin/content', icon: DocumentTextIcon, label: 'Content' },
+    ];
+
+    const links = isAdmin ? adminLinks : (isTeacher ? teacherLinks : institutionLinks);
 
     return (
         <>
