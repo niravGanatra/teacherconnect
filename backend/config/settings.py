@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'storages',  # django-storages for S3/R2
     # Local apps
     'accounts',
     'profiles',
@@ -93,9 +94,43 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Media files - Cloudflare R2 Configuration
+# R2 is S3-compatible, so we use S3Boto3Storage
+R2_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID', '')
+R2_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY', '')
+R2_BUCKET_NAME = os.getenv('R2_BUCKET_NAME', 'teacherconnect-media')
+R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '')
+R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL', '')  # e.g., https://pub-xxx.r2.dev
+
+# Use R2 if credentials are provided, otherwise fall back to local storage
+if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_ACCOUNT_ID:
+    # Cloudflare R2 Storage (S3-compatible)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "access_key": R2_ACCESS_KEY_ID,
+                "secret_key": R2_SECRET_ACCESS_KEY,
+                "bucket_name": R2_BUCKET_NAME,
+                "endpoint_url": f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+                "custom_domain": R2_PUBLIC_URL.replace('https://', '').replace('http://', '') if R2_PUBLIC_URL else None,
+                "default_acl": None,  # R2 doesn't support ACLs
+                "signature_version": "s3v4",
+                "region_name": "auto",
+                "object_parameters": {
+                    "CacheControl": "max-age=86400",  # 1 day cache
+                },
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = f"{R2_PUBLIC_URL}/" if R2_PUBLIC_URL else f"https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/"
+else:
+    # Local storage fallback for development
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
