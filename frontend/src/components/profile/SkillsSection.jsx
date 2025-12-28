@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Card, Button, Input, Spinner, Badge } from '../common';
+import EmptySectionState, { EMPTY_STATE_PRESETS } from '../common/EmptySectionState';
 import { skillsAPI } from '../../services/api';
 import {
     PlusIcon,
@@ -92,7 +93,11 @@ export default function SkillsSection({ className = '' }) {
 
             {/* Skills List */}
             {skills.length === 0 ? (
-                <p className="text-center text-slate-500 py-4">No skills added yet</p>
+                <EmptySectionState
+                    icon={SparklesIcon}
+                    {...EMPTY_STATE_PRESETS.skills}
+                    onAction={() => document.querySelector('input[placeholder="Add a skill..."]')?.focus()}
+                />
             ) : (
                 <div className="flex flex-wrap gap-2">
                     {skills.map((skill) => (

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, Input, TextArea, Badge, Spinner } from '../../components/common';
 import ImageUpload from '../../components/common/ImageUpload';
+import ProfileSkeleton from '../../components/common/ProfileSkeleton';
 import { ExperienceSection, EducationSection, SkillsSection, CertificationsSection } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { profileAPI } from '../../services/api';
@@ -164,9 +165,7 @@ export default function TeacherProfile() {
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="flex items-center justify-center h-64">
-                    <Spinner size="lg" />
-                </div>
+                <ProfileSkeleton />
             </DashboardLayout>
         );
     }

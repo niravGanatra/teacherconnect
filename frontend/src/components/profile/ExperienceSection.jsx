@@ -3,7 +3,9 @@
  * LinkedIn-style experience list with add/edit functionality
  */
 import { useState, useEffect } from 'react';
-import { Card, Button, Modal, Input, TextArea, Select, Spinner } from '../common';
+import { Card, Button, Input, TextArea, Select, Spinner } from '../common';
+import SlideOverDrawer, { DrawerFooter } from '../common/SlideOverDrawer';
+import EmptySectionState, { EMPTY_STATE_PRESETS } from '../common/EmptySectionState';
 import { experienceAPI } from '../../services/api';
 import { formatDateRange, formatDateForInput } from '../../utils/dateUtils';
 import {
@@ -113,7 +115,20 @@ function ExperienceModal({ isOpen, onClose, experience, onSave }) {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={experience ? 'Edit Experience' : 'Add Experience'} size="lg">
+        <SlideOverDrawer
+            isOpen={isOpen}
+            onClose={onClose}
+            title={experience ? 'Edit Experience' : 'Add Experience'}
+            width="max-w-lg"
+            footer={
+                <DrawerFooter
+                    onCancel={onClose}
+                    onSave={handleSubmit}
+                    saveText={experience ? 'Save Changes' : 'Add Experience'}
+                    saving={saving}
+                />
+            }
+        >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
                     <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
@@ -201,17 +216,8 @@ function ExperienceModal({ isOpen, onClose, experience, onSave }) {
                     placeholder="Describe your responsibilities and achievements..."
                     rows={4}
                 />
-
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button type="button" variant="secondary" onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button type="submit" loading={saving}>
-                        {experience ? 'Save Changes' : 'Add Experience'}
-                    </Button>
-                </div>
             </form>
-        </Modal>
+        </SlideOverDrawer>
     );
 }
 
@@ -332,14 +338,11 @@ export default function ExperienceSection({ className = '' }) {
 
                 {/* Experience List */}
                 {experiences.length === 0 ? (
-                    <div className="text-center py-8">
-                        <BuildingOfficeIcon className="w-12 h-12 mx-auto text-slate-300" />
-                        <p className="mt-2 text-slate-500">No experience added yet</p>
-                        <Button variant="secondary" onClick={handleAdd} className="mt-4">
-                            <PlusIcon className="w-4 h-4" />
-                            Add Experience
-                        </Button>
-                    </div>
+                    <EmptySectionState
+                        icon={BriefcaseIcon}
+                        {...EMPTY_STATE_PRESETS.experience}
+                        onAction={handleAdd}
+                    />
                 ) : (
                     <div className="space-y-6">
                         {experiences.map((experience, index) => (

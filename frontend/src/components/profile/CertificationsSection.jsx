@@ -3,7 +3,9 @@
  * LinkedIn-style licenses & certifications
  */
 import { useState, useEffect } from 'react';
-import { Card, Button, Modal, Input, Spinner } from '../common';
+import { Card, Button, Input, Spinner } from '../common';
+import SlideOverDrawer, { DrawerFooter } from '../common/SlideOverDrawer';
+import EmptySectionState, { EMPTY_STATE_PRESETS } from '../common/EmptySectionState';
 import { certificationsAPI } from '../../services/api';
 import { formatMonthYear } from '../../utils/dateUtils';
 import {
@@ -60,7 +62,20 @@ function CertificationModal({ isOpen, onClose, certification, onSave }) {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={certification ? 'Edit Certification' : 'Add Certification'} size="lg">
+        <SlideOverDrawer
+            isOpen={isOpen}
+            onClose={onClose}
+            title={certification ? 'Edit Certification' : 'Add Certification'}
+            width="max-w-lg"
+            footer={
+                <DrawerFooter
+                    onCancel={onClose}
+                    onSave={handleSubmit}
+                    saveText={certification ? 'Save Changes' : 'Add Certification'}
+                    saving={saving}
+                />
+            }
+        >
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Input label="Name *" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., AWS Certified" required />
                 <Input label="Issuing Organization *" name="issuing_org" value={formData.issuing_org} onChange={handleChange} placeholder="e.g., Amazon Web Services" required />
@@ -70,12 +85,8 @@ function CertificationModal({ isOpen, onClose, certification, onSave }) {
                 </div>
                 <Input label="Credential ID" name="credential_id" value={formData.credential_id} onChange={handleChange} />
                 <Input label="Credential URL" name="credential_url" type="url" value={formData.credential_url} onChange={handleChange} placeholder="https://..." />
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-                    <Button type="submit" loading={saving}>{certification ? 'Save' : 'Add'}</Button>
-                </div>
             </form>
-        </Modal>
+        </SlideOverDrawer>
     );
 }
 
@@ -139,10 +150,11 @@ export default function CertificationsSection({ className = '' }) {
                 </div>
 
                 {certifications.length === 0 ? (
-                    <div className="text-center py-8">
-                        <TrophyIcon className="w-12 h-12 mx-auto text-slate-300" />
-                        <p className="mt-2 text-slate-500">No certifications added yet</p>
-                    </div>
+                    <EmptySectionState
+                        icon={TrophyIcon}
+                        {...EMPTY_STATE_PRESETS.certifications}
+                        onAction={() => { setEditingCert(null); setModalOpen(true); }}
+                    />
                 ) : (
                     <div className="space-y-4">
                         {certifications.map((cert) => (

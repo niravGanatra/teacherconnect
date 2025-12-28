@@ -3,7 +3,9 @@
  * LinkedIn-style education list with add/edit functionality
  */
 import { useState, useEffect } from 'react';
-import { Card, Button, Modal, Input, TextArea, Spinner } from '../common';
+import { Card, Button, Input, TextArea, Spinner } from '../common';
+import SlideOverDrawer, { DrawerFooter } from '../common/SlideOverDrawer';
+import EmptySectionState, { EMPTY_STATE_PRESETS } from '../common/EmptySectionState';
 import { educationAPI } from '../../services/api';
 import { formatMonthYear } from '../../utils/dateUtils';
 import {
@@ -78,7 +80,20 @@ function EducationModal({ isOpen, onClose, education, onSave }) {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={education ? 'Edit Education' : 'Add Education'} size="lg">
+        <SlideOverDrawer
+            isOpen={isOpen}
+            onClose={onClose}
+            title={education ? 'Edit Education' : 'Add Education'}
+            width="max-w-lg"
+            footer={
+                <DrawerFooter
+                    onCancel={onClose}
+                    onSave={handleSubmit}
+                    saveText={education ? 'Save Changes' : 'Add Education'}
+                    saving={saving}
+                />
+            }
+        >
             <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
                     <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
@@ -151,15 +166,8 @@ function EducationModal({ isOpen, onClose, education, onSave }) {
                     placeholder="Additional details..."
                     rows={3}
                 />
-
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-                    <Button type="submit" loading={saving}>
-                        {education ? 'Save Changes' : 'Add Education'}
-                    </Button>
-                </div>
             </form>
-        </Modal>
+        </SlideOverDrawer>
     );
 }
 
@@ -240,13 +248,11 @@ export default function EducationSection({ className = '' }) {
                 </div>
 
                 {education.length === 0 ? (
-                    <div className="text-center py-8">
-                        <AcademicCapIcon className="w-12 h-12 mx-auto text-slate-300" />
-                        <p className="mt-2 text-slate-500">No education added yet</p>
-                        <Button variant="secondary" onClick={handleAdd} className="mt-4">
-                            <PlusIcon className="w-4 h-4" /> Add Education
-                        </Button>
-                    </div>
+                    <EmptySectionState
+                        icon={AcademicCapIcon}
+                        {...EMPTY_STATE_PRESETS.education}
+                        onAction={handleAdd}
+                    />
                 ) : (
                     <div className="space-y-6">
                         {education.map((edu) => (
