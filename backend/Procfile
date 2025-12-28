@@ -1,1 +1,1 @@
-web: python manage.py migrate && gunicorn config.wsgi --bind 0.0.0.0:$PORT
+web: python manage.py migrate && python manage.py createsuperuser --noinput --email admin@teacherconnect.com --username admin || true && python manage.py seed_data || true && gunicorn config.wsgi --bind 0.0.0.0:$PORT
