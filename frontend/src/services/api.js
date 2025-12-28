@@ -72,12 +72,28 @@ export const authAPI = {
 // Profile API
 export const profileAPI = {
     getTeacherProfile: () => api.get('/profiles/teacher/me/'),
-    updateTeacherProfile: (data) => api.put('/profiles/teacher/me/', data),
+    updateTeacherProfile: (data) => {
+        // Check if data is FormData (for file uploads)
+        if (data instanceof FormData) {
+            return api.put('/profiles/teacher/me/', data, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        }
+        return api.put('/profiles/teacher/me/', data);
+    },
     getTeacherById: (id) => api.get(`/profiles/teacher/${id}/`),
     searchTeachers: (params) => api.get('/profiles/teachers/search/', { params }),
 
     getInstitutionProfile: () => api.get('/profiles/institution/me/'),
-    updateInstitutionProfile: (data) => api.put('/profiles/institution/me/', data),
+    updateInstitutionProfile: (data) => {
+        // Check if data is FormData (for file uploads)
+        if (data instanceof FormData) {
+            return api.put('/profiles/institution/me/', data, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+        }
+        return api.put('/profiles/institution/me/', data);
+    },
     getInstitutionById: (id) => api.get(`/profiles/institution/${id}/`),
     listInstitutions: (params) => api.get('/profiles/institutions/', { params }),
 };
