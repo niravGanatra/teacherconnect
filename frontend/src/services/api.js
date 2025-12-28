@@ -98,6 +98,40 @@ export const profileAPI = {
     listInstitutions: (params) => api.get('/profiles/institutions/', { params }),
 };
 
+// Experience API (LinkedIn-style)
+export const experienceAPI = {
+    list: () => api.get('/profiles/experience/'),
+    create: (data) => api.post('/profiles/experience/', data),
+    get: (id) => api.get(`/profiles/experience/${id}/`),
+    update: (id, data) => api.put(`/profiles/experience/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/experience/${id}/`),
+};
+
+// Education API (LinkedIn-style)
+export const educationAPI = {
+    list: () => api.get('/profiles/education/'),
+    create: (data) => api.post('/profiles/education/', data),
+    get: (id) => api.get(`/profiles/education/${id}/`),
+    update: (id, data) => api.put(`/profiles/education/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/education/${id}/`),
+};
+
+// Skills API (LinkedIn-style)
+export const skillsAPI = {
+    list: () => api.get('/profiles/skills/'),
+    create: (data) => api.post('/profiles/skills/', data),
+    delete: (id) => api.delete(`/profiles/skills/${id}/`),
+};
+
+// Certifications API (LinkedIn-style)
+export const certificationsAPI = {
+    list: () => api.get('/profiles/certifications/'),
+    create: (data) => api.post('/profiles/certifications/', data),
+    get: (id) => api.get(`/profiles/certifications/${id}/`),
+    update: (id, data) => api.put(`/profiles/certifications/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/certifications/${id}/`),
+};
+
 // Feed API
 export const feedAPI = {
     getFeed: (page = 1) => api.get('/feed/', { params: { page } }),

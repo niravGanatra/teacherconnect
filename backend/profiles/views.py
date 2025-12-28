@@ -1,19 +1,23 @@
 """
 Views for profile management.
 """
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from accounts.permissions import IsTeacher, IsInstitution
-from .models import TeacherProfile, InstitutionProfile
+from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification
 from .serializers import (
     TeacherProfileSerializer,
     TeacherProfilePublicSerializer,
     InstitutionProfileSerializer,
     InstitutionProfilePublicSerializer,
+    ExperienceSerializer,
+    EducationSerializer,
+    SkillSerializer,
+    CertificationSerializer,
 )
 
 
@@ -125,3 +129,87 @@ class InstitutionListView(generics.ListAPIView):
             queryset = queryset.filter(institution_type=institution_type)
         
         return queryset
+
+
+# ============================================
+# LinkedIn-style Profile Section ViewSets
+# ============================================
+
+class ExperienceViewSet(viewsets.ModelViewSet):
+    """
+    CRUD ViewSet for Experience entries.
+    All operations are scoped to the current user's profile.
+    """
+    serializer_class = ExperienceSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        """Return experiences for the current user's profile only."""
+        profile = TeacherProfile.objects.get(user=self.request.user)
+        return Experience.objects.filter(profile=profile)
+
+    def perform_create(self, serializer):
+        """Automatically associate experience with current user's profile."""
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class EducationViewSet(viewsets.ModelViewSet):
+    """
+    CRUD ViewSet for Education entries.
+    All operations are scoped to the current user's profile.
+    """
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        """Return education entries for the current user's profile only."""
+        profile = TeacherProfile.objects.get(user=self.request.user)
+        return Education.objects.filter(profile=profile)
+
+    def perform_create(self, serializer):
+        """Automatically associate education with current user's profile."""
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class SkillViewSet(viewsets.ModelViewSet):
+    """
+    CRUD ViewSet for Skill entries.
+    All operations are scoped to the current user's profile.
+    """
+    serializer_class = SkillSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        """Return skills for the current user's profile only."""
+        profile = TeacherProfile.objects.get(user=self.request.user)
+        return Skill.objects.filter(profile=profile)
+
+    def perform_create(self, serializer):
+        """Automatically associate skill with current user's profile."""
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+
+
+class CertificationViewSet(viewsets.ModelViewSet):
+    """
+    CRUD ViewSet for Certification entries.
+    All operations are scoped to the current user's profile.
+    """
+    serializer_class = CertificationSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        """Return certifications for the current user's profile only."""
+        profile = TeacherProfile.objects.get(user=self.request.user)
+        return Certification.objects.filter(profile=profile)
+
+    def perform_create(self, serializer):
+        """Automatically associate certification with current user's profile."""
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
+        serializer.save(profile=profile)
+

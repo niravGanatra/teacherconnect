@@ -1,7 +1,8 @@
 """
 URL configuration for profiles app.
 """
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     TeacherProfileView,
     TeacherProfileDetailView,
@@ -9,7 +10,18 @@ from .views import (
     InstitutionProfileView,
     InstitutionProfileDetailView,
     InstitutionListView,
+    ExperienceViewSet,
+    EducationViewSet,
+    SkillViewSet,
+    CertificationViewSet,
 )
+
+# Router for ViewSets
+router = DefaultRouter()
+router.register(r'experience', ExperienceViewSet, basename='experience')
+router.register(r'education', EducationViewSet, basename='education')
+router.register(r'skills', SkillViewSet, basename='skill')
+router.register(r'certifications', CertificationViewSet, basename='certification')
 
 urlpatterns = [
     # Teacher profiles
@@ -21,4 +33,7 @@ urlpatterns = [
     path('institution/me/', InstitutionProfileView.as_view(), name='institution_profile'),
     path('institution/<int:pk>/', InstitutionProfileDetailView.as_view(), name='institution_profile_detail'),
     path('institutions/', InstitutionListView.as_view(), name='institution_list'),
+    
+    # LinkedIn-style profile sections (REST ViewSets)
+    path('', include(router.urls)),
 ]

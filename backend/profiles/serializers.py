@@ -3,7 +3,7 @@ Serializers for Teacher and Institution profiles.
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import TeacherProfile, InstitutionProfile
+from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification
 
 User = get_user_model()
 
@@ -86,3 +86,75 @@ class InstitutionProfilePublicSerializer(serializers.ModelSerializer):
             'website_url', 'is_verified',
             'established_year', 'student_count'
         ]
+
+
+class ExperienceSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Experience entries with date validation.
+    Validates that end_date >= start_date unless is_current is True.
+    """
+    class Meta:
+        model = Experience
+        fields = [
+            'id', 'title', 'employment_type', 'company_name', 'company_logo',
+            'location', 'start_date', 'end_date', 'is_current',
+            'description', 'media_links',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        """
+        Custom validation for date logic:
+        - If is_current is True, end_date should be None
+        - If is_current is False and end_date exists, end_date must be >= start_date
+        """
+        is_current = data.get('is_current', False)
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        # If currently working, clear end_date
+        if is_current:
+            data['end_date'] = None
+        # Otherwise validate end_date >= start_date
+        elif end_date and start_date:
+            if end_date < start_date:
+                raise serializers.ValidationError({
+                    'end_date': 'End date cannot be before start date.'
+                })
+        
+        return data
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    """Serializer for Education entries."""
+    class Meta:
+        model = Education
+        fields = [
+            'id', 'school', 'school_logo', 'degree', 'field_of_study',
+            'start_date', 'end_date', 'grade', 'activities', 'description',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    """Serializer for Skill entries."""
+    class Meta:
+        model = Skill
+        fields = ['id', 'name', 'endorsements_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'endorsements_count', 'created_at', 'updated_at']
+
+
+class CertificationSerializer(serializers.ModelSerializer):
+    """Serializer for Certification entries."""
+    class Meta:
+        model = Certification
+        fields = [
+            'id', 'name', 'issuing_org', 'issuing_org_logo',
+            'issue_date', 'expiration_date',
+            'credential_id', 'credential_url',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+

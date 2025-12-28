@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, Input, TextArea, Badge, Spinner } from '../../components/common';
 import ImageUpload from '../../components/common/ImageUpload';
+import { ExperienceSection, EducationSection, SkillsSection, CertificationsSection } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { profileAPI } from '../../services/api';
 import {
@@ -437,6 +438,16 @@ export default function TeacherProfile() {
                     </Button>
                 </div>
             </form>
+
+            {/* LinkedIn-style Profile Sections */}
+            <div className="mt-8 space-y-6">
+                <ExperienceSection />
+                <EducationSection />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SkillsSection />
+                    <CertificationsSection />
+                </div>
+            </div>
         </DashboardLayout>
     );
 }

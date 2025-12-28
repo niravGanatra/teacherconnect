@@ -117,3 +117,142 @@ class InstitutionProfile(models.Model):
 
     def __str__(self):
         return f"{self.institution_name}"
+
+
+class Experience(models.Model):
+    """
+    Work experience entries for teacher profiles (LinkedIn-style).
+    Supports multiple entries per profile with ordering.
+    """
+    EMPLOYMENT_TYPES = [
+        ('FULL_TIME', 'Full-time'),
+        ('PART_TIME', 'Part-time'),
+        ('CONTRACT', 'Contract'),
+        ('FREELANCE', 'Freelance'),
+        ('INTERNSHIP', 'Internship'),
+        ('VOLUNTEER', 'Volunteer'),
+    ]
+
+    profile = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.CASCADE,
+        related_name='experiences'
+    )
+    title = models.CharField(max_length=200)
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPES, default='FULL_TIME')
+    company_name = models.CharField(max_length=200)
+    company_logo = models.ImageField(upload_to='companies/', blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    is_current = models.BooleanField(default=False)  # "I currently work here"
+    description = models.TextField(blank=True)
+    media_links = models.JSONField(default=list, blank=True)  # [{url, title, thumbnail}]
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'experiences'
+        ordering = ['-is_current', '-start_date']  # Current jobs first, then by date
+        verbose_name = 'Experience'
+        verbose_name_plural = 'Experiences'
+
+    def __str__(self):
+        return f"{self.title} at {self.company_name}"
+
+    def clean(self):
+        """Validate that end_date is after start_date unless is_current"""
+        from django.core.exceptions import ValidationError
+        if not self.is_current and self.end_date:
+            if self.end_date < self.start_date:
+                raise ValidationError("End date cannot be before start date")
+
+
+class Education(models.Model):
+    """
+    Education entries for teacher profiles (LinkedIn-style).
+    """
+    profile = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.CASCADE,
+        related_name='education_entries'
+    )
+    school = models.CharField(max_length=200)
+    school_logo = models.ImageField(upload_to='schools/', blank=True, null=True)
+    degree = models.CharField(max_length=200, blank=True)  # e.g., "Bachelor's", "Master's"
+    field_of_study = models.CharField(max_length=200, blank=True)  # e.g., "Computer Science"
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    grade = models.CharField(max_length=50, blank=True)  # e.g., "3.8 GPA", "First Class"
+    activities = models.TextField(blank=True)  # Activities and societies
+    description = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'education'
+        ordering = ['-end_date', '-start_date']
+        verbose_name = 'Education'
+        verbose_name_plural = 'Education Entries'
+
+    def __str__(self):
+        return f"{self.degree} at {self.school}" if self.degree else self.school
+
+
+class Skill(models.Model):
+    """
+    Skills with endorsement counts for teacher profiles.
+    """
+    profile = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.CASCADE,
+        related_name='skill_entries'
+    )
+    name = models.CharField(max_length=100)
+    endorsements_count = models.PositiveIntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'skills'
+        ordering = ['-endorsements_count', 'name']
+        unique_together = ['profile', 'name']  # No duplicate skills per profile
+        verbose_name = 'Skill'
+        verbose_name_plural = 'Skills'
+
+    def __str__(self):
+        return self.name
+
+
+class Certification(models.Model):
+    """
+    Licenses and certifications for teacher profiles (LinkedIn-style).
+    """
+    profile = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.CASCADE,
+        related_name='certification_entries'
+    )
+    name = models.CharField(max_length=200)
+    issuing_org = models.CharField(max_length=200)
+    issuing_org_logo = models.ImageField(upload_to='certifications/', blank=True, null=True)
+    issue_date = models.DateField(null=True, blank=True)
+    expiration_date = models.DateField(null=True, blank=True)  # null = no expiration
+    credential_id = models.CharField(max_length=200, blank=True)
+    credential_url = models.URLField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'certifications'
+        ordering = ['-issue_date']
+        verbose_name = 'Certification'
+        verbose_name_plural = 'Certifications'
+
+    def __str__(self):
+        return f"{self.name} - {self.issuing_org}"
+
