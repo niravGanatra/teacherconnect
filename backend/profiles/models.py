@@ -172,18 +172,33 @@ class Experience(models.Model):
 class Education(models.Model):
     """
     Education entries for teacher profiles (LinkedIn-style).
+    Links to Institution pages for alumni tracking.
     """
     profile = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
         related_name='education_entries'
     )
+    
+    # School name (text field for manual entry)
     school = models.CharField(max_length=200)
+    
+    # Link to Institution page (for alumni tracking)
+    # If linked, the school name is derived from the Institution
+    school_link = models.ForeignKey(
+        'institutions.Institution',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alumni_education'
+    )
+    
     school_logo = models.ImageField(upload_to='schools/', blank=True, null=True)
     degree = models.CharField(max_length=200, blank=True)  # e.g., "Bachelor's", "Master's"
     field_of_study = models.CharField(max_length=200, blank=True)  # e.g., "Computer Science"
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    graduation_year = models.PositiveIntegerField(null=True, blank=True)  # For alumni filtering
     grade = models.CharField(max_length=50, blank=True)  # e.g., "3.8 GPA", "First Class"
     activities = models.TextField(blank=True)  # Activities and societies
     description = models.TextField(blank=True)

@@ -35,6 +35,7 @@ import AdminContent from './pages/admin/Content';
 import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
 import Events from './pages/events/Events';
+import InstitutionPage from './pages/InstitutionPage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
@@ -205,6 +206,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Events />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Institution Public Pages */}
+      <Route
+        path="/institution/:slug"
+        element={
+          <ProtectedRoute>
+            <InstitutionPage />
           </ProtectedRoute>
         }
       />
