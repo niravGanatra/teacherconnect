@@ -232,9 +232,12 @@ export default function ExperienceSection({ className = '' }) {
     const fetchExperiences = async () => {
         try {
             const response = await experienceAPI.list();
-            setExperiences(response.data);
+            // Handle both paginated (results) and plain array responses
+            const data = response.data.results || response.data;
+            setExperiences(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch experiences:', error);
+            setExperiences([]);
         } finally {
             setLoading(false);
         }

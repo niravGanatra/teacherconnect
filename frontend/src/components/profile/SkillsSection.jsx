@@ -24,9 +24,12 @@ export default function SkillsSection({ className = '' }) {
     const fetchSkills = async () => {
         try {
             const response = await skillsAPI.list();
-            setSkills(response.data);
+            // Handle both paginated (results) and plain array responses
+            const data = response.data.results || response.data;
+            setSkills(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch skills:', error);
+            setSkills([]);
         } finally {
             setLoading(false);
         }

@@ -179,9 +179,12 @@ export default function EducationSection({ className = '' }) {
     const fetchEducation = async () => {
         try {
             const response = await educationAPI.list();
-            setEducation(response.data);
+            // Handle both paginated (results) and plain array responses
+            const data = response.data.results || response.data;
+            setEducation(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch education:', error);
+            setEducation([]);
         } finally {
             setLoading(false);
         }

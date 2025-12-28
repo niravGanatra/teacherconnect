@@ -92,9 +92,12 @@ export default function CertificationsSection({ className = '' }) {
     const fetchCertifications = async () => {
         try {
             const response = await certificationsAPI.list();
-            setCertifications(response.data);
+            // Handle both paginated (results) and plain array responses
+            const data = response.data.results || response.data;
+            setCertifications(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch certifications:', error);
+            setCertifications([]);
         } finally {
             setLoading(false);
         }
