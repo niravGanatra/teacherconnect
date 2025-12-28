@@ -1,5 +1,5 @@
 """
-Email Notification Service for TeacherConnect
+Email Notification Service for AcadWorld
 """
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -44,7 +44,7 @@ class EmailNotificationService:
         }
         return cls.send_email(
             to_email=user.email,
-            subject='Welcome to TeacherConnect!',
+            subject='Welcome to AcadWorld!',
             template_name='welcome',
             context=context
         )

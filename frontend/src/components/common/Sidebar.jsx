@@ -76,10 +76,10 @@ export function Sidebar({ isOpen, onClose }) {
                 <div className="p-4 lg:p-6 border-b border-white/10 flex items-center justify-between">
                     <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
                         <span className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm">
-                            TC
+                            AW
                         </span>
-                        <span className="hidden sm:inline">TeacherConnect</span>
-                        <span className="sm:hidden">TC</span>
+                        <span className="hidden sm:inline">AcadWorld</span>
+                        <span className="sm:hidden">AW</span>
                     </h1>
                     {/* Close button on mobile */}
                     <button
@@ -138,7 +138,7 @@ export function MobileHeader({ onMenuClick }) {
             <button onClick={onMenuClick} className="hamburger-btn">
                 <Bars3Icon className="w-6 h-6" />
             </button>
-            <h1 className="text-white font-bold text-lg">TeacherConnect</h1>
+            <h1 className="text-white font-bold text-lg">AcadWorld</h1>
             <div className="w-11" /> {/* Spacer for centering */}
         </header>
     );

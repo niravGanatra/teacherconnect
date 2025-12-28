@@ -1,5 +1,5 @@
 /**
- * API Service for TeacherConnect
+ * API Service for AcadWorld
  * Configured Axios instance with JWT authentication
  */
 import axios from 'axios';

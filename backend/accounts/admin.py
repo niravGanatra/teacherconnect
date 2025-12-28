@@ -15,14 +15,14 @@ class UserAdmin(BaseUserAdmin):
     list_per_page = 25
     
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('TeacherConnect Info', {
+        ('AcadWorld Info', {
             'fields': ('user_type', 'is_verified'),
             'classes': ('wide',)
         }),
     )
     
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('TeacherConnect Info', {
+        ('AcadWorld Info', {
             'fields': ('email', 'user_type'),
             'classes': ('wide',)
         }),

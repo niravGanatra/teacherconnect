@@ -39,7 +39,7 @@ export default function Login() {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] rounded-2xl mb-4">
                         <span className="text-2xl font-bold text-white">TC</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900">TeacherConnect</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">AcadWorld</h1>
                     <p className="text-slate-500 mt-1">Welcome back! Please sign in.</p>
                 </div>
 

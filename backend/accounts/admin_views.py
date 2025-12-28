@@ -1,5 +1,5 @@
 """
-Admin API Views for TeacherConnect
+Admin API Views for AcadWorld
 Provides endpoints for admin users to manage all aspects of the app.
 """
 from rest_framework import generics, status

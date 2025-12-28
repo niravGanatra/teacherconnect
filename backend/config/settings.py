@@ -1,5 +1,5 @@
 """
-Django settings for TeacherConnect project.
+Django settings for AcadWorld project.
 """
 import os
 from pathlib import Path
@@ -112,7 +112,7 @@ STORAGES["staticfiles"] = {
 # R2 is S3-compatible, so we use S3Boto3Storage
 R2_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID', '')
 R2_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY', '')
-R2_BUCKET_NAME = os.getenv('R2_BUCKET_NAME', 'teacherconnect-media')
+R2_BUCKET_NAME = os.getenv('R2_BUCKET_NAME', 'acadworld-media')
 R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '')
 R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL', '')  # e.g., https://pub-xxx.r2.dev
 
@@ -197,7 +197,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'TeacherConnect <noreply@teacherconnect.com>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <noreply@acadworld.com>')
 
 # Set to True to send emails even in DEBUG mode
 SEND_EMAILS_IN_DEBUG = os.getenv('SEND_EMAILS_IN_DEBUG', 'False').lower() in ('true', '1', 'yes')

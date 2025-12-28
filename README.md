@@ -1,4 +1,4 @@
-# TeacherConnect
+# AcadWorld
 
 A **Teacher-Centric Professional Network & Job Board** where teachers have full privacy control and institutions can only interact with teachers who proactively apply to their listings.
 

@@ -1,1 +1,1 @@
-# Notifications app for TeacherConnect
+# Notifications app for AcadWorld

@@ -1,5 +1,5 @@
 """
-Custom User Model for TeacherConnect
+Custom User Model for AcadWorld
 Implements three user types: TEACHER, INSTITUTION, ADMIN
 """
 from django.contrib.auth.models import AbstractUser
