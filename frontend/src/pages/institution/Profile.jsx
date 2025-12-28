@@ -1,9 +1,10 @@
 /**
- * Institution Profile Editor
+ * Institution Profile Editor with Photo Header
  */
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, Input, TextArea, Badge, Select, Spinner } from '../../components/common';
+import ImageUpload from '../../components/common/ImageUpload';
 import { profileAPI } from '../../services/api';
 import {
     BuildingOfficeIcon,
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function InstitutionProfile() {
+    const [profileData, setProfileData] = useState(null);
     const [formData, setFormData] = useState({
         institution_name: '',
         institution_type: 'SCHOOL',
@@ -48,6 +50,7 @@ export default function InstitutionProfile() {
         try {
             const response = await profileAPI.getInstitutionProfile();
             const data = response.data;
+            setProfileData(data);
             setFormData({
                 institution_name: data.institution_name || '',
                 institution_type: data.institution_type || 'SCHOOL',
@@ -79,13 +82,43 @@ export default function InstitutionProfile() {
         }));
     };
 
+    const handlePhotoUpload = async (file, type) => {
+        const formDataUpload = new FormData();
+        formDataUpload.append(type, file);
+
+        try {
+            const response = await profileAPI.updateInstitutionProfile(formDataUpload);
+            setProfileData(prev => ({
+                ...prev,
+                [type]: response.data[type]
+            }));
+            setMessage({ type: 'success', text: `${type === 'logo' ? 'Logo' : 'Cover'} photo updated!` });
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    const handlePhotoRemove = async (type) => {
+        try {
+            await profileAPI.updateInstitutionProfile({ [type]: null });
+            setProfileData(prev => ({
+                ...prev,
+                [type]: null
+            }));
+            setMessage({ type: 'success', text: 'Photo removed!' });
+        } catch (error) {
+            console.error('Failed to remove photo:', error);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         setMessage({ type: '', text: '' });
 
         try {
-            await profileAPI.updateInstitutionProfile(formData);
+            const response = await profileAPI.updateInstitutionProfile(formData);
+            setProfileData(response.data);
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
         } catch (error) {
             setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
@@ -106,28 +139,79 @@ export default function InstitutionProfile() {
 
     return (
         <DashboardLayout>
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Campus Profile</h1>
-                    <p className="text-slate-500 mt-1">Manage your institution information</p>
-                </div>
-                {isVerified ? (
-                    <Badge variant="success" className="flex items-center gap-1 px-3 py-1.5">
-                        <CheckBadgeIcon className="w-5 h-5" />
-                        Verified Institution
-                    </Badge>
-                ) : (
-                    <Badge variant="warning" className="px-3 py-1.5">
-                        Pending Verification
-                    </Badge>
-                )}
-            </div>
-
             {message.text && (
                 <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                     {message.text}
                 </div>
             )}
+
+            {/* Profile Header with Photos */}
+            <Card className="mb-6 overflow-hidden">
+                {/* Background Photo */}
+                <div className="relative">
+                    <ImageUpload
+                        currentImage={profileData?.background_photo}
+                        onUpload={(file) => handlePhotoUpload(file, 'background_photo')}
+                        onRemove={() => handlePhotoRemove('background_photo')}
+                        type="background"
+                        className="!rounded-none !rounded-t-xl"
+                    />
+
+                    {/* Logo - Overlapping */}
+                    <div className="absolute -bottom-16 left-6">
+                        <div className="relative">
+                            <div className="ring-4 ring-white rounded-full bg-white">
+                                <ImageUpload
+                                    currentImage={profileData?.logo}
+                                    onUpload={(file) => handlePhotoUpload(file, 'logo')}
+                                    onRemove={() => handlePhotoRemove('logo')}
+                                    type="profile"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Institution Info */}
+                <div className="pt-20 pb-6 px-6">
+                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold text-slate-900">
+                                    {formData.institution_name || 'Your Institution'}
+                                </h1>
+                                {isVerified && (
+                                    <CheckBadgeIcon className="w-6 h-6 text-emerald-500" />
+                                )}
+                            </div>
+                            <p className="text-slate-600 mt-1 capitalize">
+                                {formData.institution_type.toLowerCase().replace('_', ' ')}
+                            </p>
+                            <p className="text-sm text-slate-500 mt-1">
+                                {formData.city && formData.state
+                                    ? `${formData.city}, ${formData.state}`
+                                    : 'Add your location'}
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            {isVerified ? (
+                                <Badge variant="success" className="px-3 py-1">
+                                    Verified
+                                </Badge>
+                            ) : (
+                                <Badge variant="warning" className="px-3 py-1">
+                                    Pending Verification
+                                </Badge>
+                            )}
+                            {formData.established_year && (
+                                <Badge variant="primary" className="px-3 py-1">
+                                    Est. {formData.established_year}
+                                </Badge>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </Card>
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Info */}

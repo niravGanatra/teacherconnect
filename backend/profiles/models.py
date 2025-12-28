@@ -22,6 +22,7 @@ class TeacherProfile(models.Model):
     headline = models.CharField(max_length=200, blank=True)
     bio = models.TextField(blank=True)
     profile_photo = models.ImageField(upload_to='profiles/teachers/', blank=True, null=True)
+    background_photo = models.ImageField(upload_to='profiles/teachers/backgrounds/', blank=True, null=True)
     
     # Professional Info
     subjects = models.JSONField(default=list, blank=True)  # ["Math", "Physics"]
@@ -83,6 +84,7 @@ class InstitutionProfile(models.Model):
     ], default='SCHOOL')
     description = models.TextField(blank=True)
     logo = models.ImageField(upload_to='profiles/institutions/', blank=True, null=True)
+    background_photo = models.ImageField(upload_to='profiles/institutions/backgrounds/', blank=True, null=True)
     
     # Campus Details
     campus_address = models.TextField(blank=True)

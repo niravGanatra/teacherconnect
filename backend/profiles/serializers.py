@@ -17,7 +17,7 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         model = TeacherProfile
         fields = [
             'id', 'email', 'username',
-            'first_name', 'last_name', 'headline', 'bio', 'profile_photo',
+            'first_name', 'last_name', 'headline', 'bio', 'profile_photo', 'background_photo',
             'subjects', 'skills', 'experience_years', 'current_school',
             'education', 'certifications',
             'resume', 'portfolio_url',
@@ -40,7 +40,7 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherProfile
         fields = [
-            'id', 'full_name', 'headline', 'bio', 'profile_photo',
+            'id', 'full_name', 'headline', 'bio', 'profile_photo', 'background_photo',
             'subjects', 'skills', 'experience_years',
             'city', 'state',
             'email', 'phone'
@@ -65,7 +65,7 @@ class InstitutionProfileSerializer(serializers.ModelSerializer):
         model = InstitutionProfile
         fields = [
             'id', 'email',
-            'institution_name', 'institution_type', 'description', 'logo',
+            'institution_name', 'institution_type', 'description', 'logo', 'background_photo',
             'campus_address', 'city', 'state', 'pincode',
             'contact_email', 'contact_phone', 'website_url',
             'accreditation_details', 'established_year', 'student_count',
@@ -81,7 +81,7 @@ class InstitutionProfilePublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstitutionProfile
         fields = [
-            'id', 'institution_name', 'institution_type', 'description', 'logo',
+            'id', 'institution_name', 'institution_type', 'description', 'logo', 'background_photo',
             'city', 'state',
             'website_url', 'is_verified',
             'established_year', 'student_count'
