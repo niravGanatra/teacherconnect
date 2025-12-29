@@ -182,6 +182,38 @@ export const profileAPI = {
     deleteCertification: (id) => api.delete(`/profiles/certifications/${id}/`),
 };
 
+// Experience API (separate export for profile sections)
+export const experienceAPI = {
+    list: () => api.get('/profiles/experiences/'),
+    create: (data) => api.post('/profiles/experiences/', data),
+    update: (id, data) => api.patch(`/profiles/experiences/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/experiences/${id}/`),
+};
+
+// Education API (separate export for profile sections)
+export const educationAPI = {
+    list: () => api.get('/profiles/education/'),
+    create: (data) => api.post('/profiles/education/', data),
+    update: (id, data) => api.patch(`/profiles/education/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/education/${id}/`),
+};
+
+// Skills API (separate export for profile sections)
+export const skillsAPI = {
+    list: () => api.get('/profiles/skills/'),
+    create: (data) => api.post('/profiles/skills/', data),
+    update: (id, data) => api.patch(`/profiles/skills/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/skills/${id}/`),
+};
+
+// Certifications API (separate export for profile sections)
+export const certificationAPI = {
+    list: () => api.get('/profiles/certifications/'),
+    create: (data) => api.post('/profiles/certifications/', data),
+    update: (id, data) => api.patch(`/profiles/certifications/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/certifications/${id}/`),
+};
+
 // Jobs API
 export const jobsAPI = {
     // Get job listings with filters
