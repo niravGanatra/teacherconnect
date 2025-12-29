@@ -1,7 +1,7 @@
 /**
  * Authentication Context
  * Manages user authentication state across the app.
- * Uses HttpOnly cookie-based JWT authentication for XSS protection.
+ * Uses localStorage-based JWT authentication.
  */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI, profileAPI } from '../services/api';
@@ -14,29 +14,33 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Check for existing auth on mount and fetch CSRF token
+    // Check for existing auth on mount
     useEffect(() => {
         initializeAuth();
     }, []);
 
     const initializeAuth = async () => {
         try {
-            // Fetch CSRF token on app initialization
-            // This ensures we have a valid CSRF token for subsequent requests
-            await authAPI.getCSRFToken();
+            // Check if we have a token in localStorage
+            const accessToken = localStorage.getItem('accessToken');
 
-            // Try to get current user (cookie will be sent automatically)
-            // If access token is valid, this will succeed
-            // If access token is expired but refresh token is valid, 
-            // the interceptor will handle token refresh
+            if (!accessToken) {
+                // No token, user is not authenticated
+                setLoading(false);
+                return;
+            }
+
+            // Try to get current user
             const response = await authAPI.getCurrentUser();
             setUser(response.data);
             await fetchProfile(response.data.user_type);
         } catch (err) {
-            // No valid session - user is not authenticated
-            // This is expected for logged-out users
+            // Token is invalid or expired - the interceptor will handle refresh
+            // If refresh also fails, tokens will be cleared
             setUser(null);
             setProfile(null);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
         } finally {
             setLoading(false);
         }
@@ -60,9 +64,11 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.login({ email, password });
-            const { user } = response.data;
-            // Note: Tokens are now set as HttpOnly cookies by the server
-            // No need to store them in localStorage
+            const { access, refresh, user } = response.data;
+
+            // Store tokens in localStorage
+            localStorage.setItem('accessToken', access);
+            localStorage.setItem('refreshToken', refresh);
 
             setUser(user);
             await fetchProfile(user.user_type);
@@ -79,19 +85,20 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.register(data);
-            const { user } = response.data;
-            // Note: Tokens are now set as HttpOnly cookies by the server
-            // No need to store them in localStorage
+            const { access, refresh, user } = response.data;
+
+            // Store tokens in localStorage
+            localStorage.setItem('accessToken', access);
+            localStorage.setItem('refreshToken', refresh);
 
             setUser(user);
             await fetchProfile(user.user_type);
 
             return { success: true, user };
         } catch (err) {
-            const errors = err.response?.data;
-            const message = typeof errors === 'object'
-                ? Object.values(errors).flat().join(' ')
-                : 'Registration failed. Please try again.';
+            const message = err.response?.data?.email?.[0] ||
+                err.response?.data?.error ||
+                'Registration failed. Please try again.';
             setError(message);
             return { success: false, error: message };
         }
@@ -99,12 +106,13 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            // Logout endpoint clears cookies and blacklists the refresh token
             await authAPI.logout();
         } catch (err) {
-            console.error('Logout error:', err);
+            // Ignore logout errors
         } finally {
-            // Clear local state regardless of API call outcome
+            // Clear tokens and state
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             setUser(null);
             setProfile(null);
         }

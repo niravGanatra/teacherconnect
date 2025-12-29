@@ -93,14 +93,14 @@ class RegisterView(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
         
-        # Create response with user data (no tokens in body)
+        # Return tokens and user data in response body
+        # Cookie-based auth doesn't work well with cross-origin Railway deployment
         response = Response({
+            'access': str(access),
+            'refresh': str(refresh),
             'user': UserSerializer(user).data,
             'message': 'Registration successful!'
         }, status=status.HTTP_201_CREATED)
-        
-        # Set tokens as HttpOnly cookies
-        set_auth_cookies(response, access, refresh)
         
         return response
 
@@ -137,29 +137,27 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
         
-        # Create response with user data (no tokens in body)
+        # Return tokens and user data in response body
         response = Response({
+            'access': str(access),
+            'refresh': str(refresh),
             'user': UserSerializer(user).data,
         })
-        
-        # Set tokens as HttpOnly cookies
-        set_auth_cookies(response, access, refresh)
-        
-        # Ensure CSRF token is set
-        get_token(request)
         
         return response
 
 
 class CookieTokenRefreshView(APIView):
     """
-    API endpoint to refresh JWT tokens using the refresh token from cookie.
+    API endpoint to refresh JWT tokens.
+    Accepts refresh token from request body or cookie.
     Implements token rotation - old refresh token is blacklisted.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        refresh_token = request.COOKIES.get('refresh_token')
+        # Accept token from body or cookies
+        refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
         
         if not refresh_token:
             return Response({
@@ -181,27 +179,21 @@ class CookieTokenRefreshView(APIView):
             new_refresh = RefreshToken.for_user(user)
             new_access = new_refresh.access_token
             
-            response = Response({
+            # Return tokens in response body
+            return Response({
+                'access': str(new_access),
+                'refresh': str(new_refresh),
                 'message': 'Token refreshed successfully.'
             })
             
-            # Set new tokens as cookies
-            set_auth_cookies(response, new_access, new_refresh)
-            
-            return response
-            
         except TokenError:
-            response = Response({
+            return Response({
                 'error': 'Invalid or expired refresh token.'
             }, status=status.HTTP_401_UNAUTHORIZED)
-            clear_auth_cookies(response)
-            return response
         except User.DoesNotExist:
-            response = Response({
+            return Response({
                 'error': 'User not found.'
             }, status=status.HTTP_401_UNAUTHORIZED)
-            clear_auth_cookies(response)
-            return response
 
 
 class CurrentUserView(generics.RetrieveUpdateAPIView):
