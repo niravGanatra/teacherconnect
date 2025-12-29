@@ -191,9 +191,8 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-# JWT Cookie Settings (for HttpOnly cookie-based auth)
 JWT_COOKIE_SECURE = not DEBUG  # True in production (HTTPS only)
-JWT_COOKIE_SAMESITE = 'Lax'  # Protects against CSRF for cross-origin requests
+JWT_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'  # 'None' required for cross-origin in production
 JWT_COOKIE_HTTPONLY = True  # Prevents JavaScript access (XSS protection)
 
 # CORS Configuration
@@ -209,8 +208,9 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
     'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
 ).split(',')
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'  # 'None' required for cross-origin in production
 CSRF_COOKIE_HTTPONLY = False  # Must be readable by JavaScript to send in X-CSRFToken header
+CSRF_COOKIE_SECURE = not DEBUG  # Must be True when SameSite=None
 
 # Frontend URL (for email links)
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -231,14 +231,17 @@ SEND_EMAILS_IN_DEBUG = os.getenv('SEND_EMAILS_IN_DEBUG', 'False').lower() in ('t
 # Content Security Policy (CSP) - XSS Prevention
 # =============================================================================
 # django-csp 4.0+ format
+# Build connect-src dynamically from CORS origins
+_csp_connect_src = ["'self'"] + CORS_ALLOWED_ORIGINS
+
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'"),  # Some React builds need inline scripts
         'style-src': ("'self'", "'unsafe-inline'"),  # unsafe-inline needed for some CSS
         'img-src': ("'self'", "data:", "https:"),  # Allow images from https sources
         'font-src': ("'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"),
-        'connect-src': ("'self'",),  # API calls
+        'connect-src': tuple(_csp_connect_src),  # Allow API calls to CORS origins
         'frame-src': ("'none'",),  # No iframes
         'object-src': ("'none'",),  # No plugins (Flash, Java, etc.)
         'base-uri': ("'self'",),
