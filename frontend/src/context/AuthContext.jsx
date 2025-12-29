@@ -1,6 +1,7 @@
 /**
  * Authentication Context
- * Manages user authentication state across the app
+ * Manages user authentication state across the app.
+ * Uses HttpOnly cookie-based JWT authentication for XSS protection.
  */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI, profileAPI } from '../services/api';
@@ -13,24 +14,32 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Check for existing auth on mount
+    // Check for existing auth on mount and fetch CSRF token
     useEffect(() => {
-        checkAuth();
+        initializeAuth();
     }, []);
 
-    const checkAuth = async () => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            try {
-                const response = await authAPI.getCurrentUser();
-                setUser(response.data);
-                await fetchProfile(response.data.user_type);
-            } catch (err) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-            }
+    const initializeAuth = async () => {
+        try {
+            // Fetch CSRF token on app initialization
+            // This ensures we have a valid CSRF token for subsequent requests
+            await authAPI.getCSRFToken();
+
+            // Try to get current user (cookie will be sent automatically)
+            // If access token is valid, this will succeed
+            // If access token is expired but refresh token is valid, 
+            // the interceptor will handle token refresh
+            const response = await authAPI.getCurrentUser();
+            setUser(response.data);
+            await fetchProfile(response.data.user_type);
+        } catch (err) {
+            // No valid session - user is not authenticated
+            // This is expected for logged-out users
+            setUser(null);
+            setProfile(null);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const fetchProfile = async (userType) => {
@@ -51,10 +60,9 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.login({ email, password });
-            const { user, tokens } = response.data;
-
-            localStorage.setItem('accessToken', tokens.access);
-            localStorage.setItem('refreshToken', tokens.refresh);
+            const { user } = response.data;
+            // Note: Tokens are now set as HttpOnly cookies by the server
+            // No need to store them in localStorage
 
             setUser(user);
             await fetchProfile(user.user_type);
@@ -71,10 +79,9 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.register(data);
-            const { user, tokens } = response.data;
-
-            localStorage.setItem('accessToken', tokens.access);
-            localStorage.setItem('refreshToken', tokens.refresh);
+            const { user } = response.data;
+            // Note: Tokens are now set as HttpOnly cookies by the server
+            // No need to store them in localStorage
 
             setUser(user);
             await fetchProfile(user.user_type);
@@ -92,15 +99,12 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (refreshToken) {
-                await authAPI.logout(refreshToken);
-            }
+            // Logout endpoint clears cookies and blacklists the refresh token
+            await authAPI.logout();
         } catch (err) {
             console.error('Logout error:', err);
         } finally {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
+            // Clear local state regardless of API call outcome
             setUser(null);
             setProfile(null);
         }

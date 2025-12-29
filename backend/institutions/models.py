@@ -1,7 +1,9 @@
 """
 Institution Models for AcadWorld
 Public pages for Schools, Colleges, Universities with alumni tracking.
+Uses UUIDs as primary keys for IDOR protection.
 """
+import uuid
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
@@ -11,6 +13,7 @@ class Institution(models.Model):
     """
     Public Institution Page (School/College/University)
     Similar to LinkedIn Company Pages but for educational institutions.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
     
     # Institution Type
@@ -38,6 +41,9 @@ class Institution(models.Model):
         ('VERIFIED', 'Verified'),
         ('REJECTED', 'Rejected'),
     ]
+    
+    # UUID Primary Key
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     # Identity
     name = models.CharField(max_length=200)
@@ -126,6 +132,11 @@ class Institution(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        # Sanitize user-generated content
+        from config.sanitizers import sanitize_html
+        if self.description:
+            self.description = sanitize_html(self.description)
+        
         # Auto-generate slug from name if not provided
         if not self.slug:
             base_slug = slugify(self.name)

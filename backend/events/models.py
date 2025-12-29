@@ -1,6 +1,8 @@
 """
 Event models for workshops, seminars, and networking events.
+Uses UUIDs as primary keys for IDOR protection.
 """
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -8,7 +10,9 @@ from django.conf import settings
 class Event(models.Model):
     """
     Event created by Teachers or Institutions.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organizer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -68,11 +72,20 @@ class Event(models.Model):
             return self.attendee_count >= self.max_attendees
         return False
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.description:
+            self.description = sanitize_html(self.description)
+        super().save(*args, **kwargs)
+
 
 class EventAttendee(models.Model):
     """
     User attending an event.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,

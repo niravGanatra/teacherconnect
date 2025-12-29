@@ -1,6 +1,8 @@
 """
 Profile models for Teachers and Institutions.
+Uses UUIDs as primary keys for IDOR protection.
 """
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -9,7 +11,9 @@ class TeacherProfile(models.Model):
     """
     Profile for Teacher users.
     Includes privacy controls and professional information.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -57,6 +61,13 @@ class TeacherProfile(models.Model):
     def __str__(self):
         return f"{self.user.email} - Teacher Profile"
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.bio:
+            self.bio = sanitize_html(self.bio)
+        super().save(*args, **kwargs)
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip() or self.user.username
@@ -66,7 +77,9 @@ class InstitutionProfile(models.Model):
     """
     Profile for Institution users.
     Includes campus details and verification status.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -118,11 +131,19 @@ class InstitutionProfile(models.Model):
     def __str__(self):
         return f"{self.institution_name}"
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.description:
+            self.description = sanitize_html(self.description)
+        super().save(*args, **kwargs)
+
 
 class Experience(models.Model):
     """
     Work experience entries for teacher profiles (LinkedIn-style).
     Supports multiple entries per profile with ordering.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
     EMPLOYMENT_TYPES = [
         ('FULL_TIME', 'Full-time'),
@@ -133,6 +154,7 @@ class Experience(models.Model):
         ('VOLUNTEER', 'Volunteer'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
@@ -168,12 +190,21 @@ class Experience(models.Model):
             if self.end_date < self.start_date:
                 raise ValidationError("End date cannot be before start date")
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.description:
+            self.description = sanitize_html(self.description)
+        super().save(*args, **kwargs)
+
 
 class Education(models.Model):
     """
     Education entries for teacher profiles (LinkedIn-style).
     Links to Institution pages for alumni tracking.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
@@ -215,11 +246,22 @@ class Education(models.Model):
     def __str__(self):
         return f"{self.degree} at {self.school}" if self.degree else self.school
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.activities:
+            self.activities = sanitize_html(self.activities)
+        if self.description:
+            self.description = sanitize_html(self.description)
+        super().save(*args, **kwargs)
+
 
 class Skill(models.Model):
     """
     Skills with endorsement counts for teacher profiles.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
@@ -245,7 +287,9 @@ class Skill(models.Model):
 class Certification(models.Model):
     """
     Licenses and certifications for teacher profiles (LinkedIn-style).
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     profile = models.ForeignKey(
         TeacherProfile,
         on_delete=models.CASCADE,
@@ -270,4 +314,3 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.issuing_org}"
-

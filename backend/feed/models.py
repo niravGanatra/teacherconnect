@@ -1,6 +1,8 @@
 """
 Feed models for the social wall.
+Uses UUIDs as primary keys for IDOR protection.
 """
+import uuid
 from django.db import models
 from django.conf import settings
 
@@ -9,7 +11,9 @@ class Follow(models.Model):
     """
     Follow relationship between users.
     Only teachers can follow each other.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     follower = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -34,7 +38,9 @@ class Post(models.Model):
     """
     Post in the social feed.
     Teachers and Institutions can create posts.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -69,11 +75,20 @@ class Post(models.Model):
         self.deleted_at = timezone.now()
         self.save()
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.content:
+            self.content = sanitize_html(self.content)
+        super().save(*args, **kwargs)
+
 
 class Like(models.Model):
     """
     Like on a post.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -97,7 +112,9 @@ class Like(models.Model):
 class Comment(models.Model):
     """
     Comment on a post.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -118,3 +135,10 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user.email} on {self.post.id}"
+
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.content:
+            self.content = sanitize_html(self.content)
+        super().save(*args, **kwargs)

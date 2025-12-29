@@ -1,7 +1,9 @@
 """
 Job listing and application models.
 Implements the privacy-preserving application snapshot system.
+Uses UUIDs as primary keys for IDOR protection.
 """
+import uuid
 from django.db import models
 from django.conf import settings
 from model_utils import FieldTracker
@@ -10,7 +12,9 @@ from model_utils import FieldTracker
 class JobListing(models.Model):
     """
     Job listing posted by an Institution.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     institution = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -75,6 +79,13 @@ class JobListing(models.Model):
         self.is_active = False
         self.save()
 
+    def save(self, *args, **kwargs):
+        """Sanitize user-generated content before saving."""
+        from config.sanitizers import sanitize_html
+        if self.description:
+            self.description = sanitize_html(self.description)
+        super().save(*args, **kwargs)
+
 
 class ApplicationStatus(models.TextChoices):
     PENDING = 'PENDING', 'Pending'
@@ -89,7 +100,9 @@ class ApplicationStatus(models.TextChoices):
 class Application(models.Model):
     """
     Job application from a Teacher to a JobListing.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -133,7 +146,9 @@ class ApplicationSnapshot(models.Model):
     Snapshot of teacher's profile at the time of application.
     This allows institutions to view ONLY the profile data of teachers
     who have applied to their jobs, not any teacher globally.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application = models.OneToOneField(
         Application,
         on_delete=models.CASCADE,
@@ -195,7 +210,9 @@ class ApplicationSnapshot(models.Model):
 class SavedJob(models.Model):
     """
     Jobs saved/bookmarked by teachers.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

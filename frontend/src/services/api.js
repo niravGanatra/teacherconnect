@@ -1,62 +1,111 @@
 /**
  * API Service for AcadWorld
- * Configured Axios instance with JWT authentication
+ * Configured Axios instance with HttpOnly cookie-based JWT authentication
+ * and CSRF protection for state-changing requests.
  */
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Create axios instance
+/**
+ * Helper function to get CSRF token from cookie.
+ * Django sets this cookie automatically when CSRF_COOKIE_HTTPONLY = False.
+ */
+function getCSRFToken() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : null;
+}
+
+// Create axios instance with credentials enabled for cookie-based auth
 const api = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true, // Send cookies with every request
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Request interceptor - add auth token
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve();
+        }
+    });
+    failedQueue = [];
+};
+
+// Request interceptor - add CSRF token for state-changing requests
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        // Add CSRF token for POST, PUT, PATCH, DELETE requests
+        const method = config.method?.toLowerCase();
+        if (['post', 'put', 'patch', 'delete'].includes(method)) {
+            const csrfToken = getCSRFToken();
+            if (csrfToken) {
+                config.headers['X-CSRFToken'] = csrfToken;
+            }
         }
         return config;
     },
     (error) => Promise.reject(error)
 );
 
-// Response interceptor - handle token refresh
+// Response interceptor - handle 401 errors and automatic token refresh
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-
-            try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                if (refreshToken) {
-                    const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-                        refresh: refreshToken,
-                    });
-
-                    const { access } = response.data;
-                    localStorage.setItem('accessToken', access);
-
-                    originalRequest.headers.Authorization = `Bearer ${access}`;
-                    return api(originalRequest);
-                }
-            } catch (refreshError) {
-                // Refresh failed - logout user
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
-            }
+        // If error is not 401 or we've already retried, reject
+        if (error.response?.status !== 401 || originalRequest._retry) {
+            return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        // Don't retry refresh endpoint itself to prevent infinite loops
+        if (originalRequest.url?.includes('/auth/refresh/')) {
+            // Refresh failed - redirect to login
+            window.location.href = '/login';
+            return Promise.reject(error);
+        }
+
+        // If already refreshing, queue this request
+        if (isRefreshing) {
+            return new Promise((resolve, reject) => {
+                failedQueue.push({ resolve, reject });
+            })
+                .then(() => api(originalRequest))
+                .catch((err) => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            // Attempt to refresh token using cookie-based auth
+            // The refresh token is automatically sent via cookies
+            await axios.post(`${API_BASE_URL}/auth/refresh/`, {}, {
+                withCredentials: true,
+            });
+
+            // Success - new access token is now in cookie
+            processQueue(null);
+
+            // Retry the original request (cookie will be sent automatically)
+            return api(originalRequest);
+        } catch (refreshError) {
+            // Refresh failed - clear queue and redirect to login
+            processQueue(refreshError);
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+        } finally {
+            isRefreshing = false;
+        }
     }
 );
 
@@ -64,9 +113,10 @@ api.interceptors.response.use(
 export const authAPI = {
     register: (data) => api.post('/auth/register/', data),
     login: (data) => api.post('/auth/login/', data),
-    logout: (refreshToken) => api.post('/auth/logout/', { refresh: refreshToken }),
+    logout: () => api.post('/auth/logout/', {}), // No refresh token needed - it's in cookies
     getCurrentUser: () => api.get('/auth/me/'),
     changePassword: (data) => api.put('/auth/change-password/', data),
+    getCSRFToken: () => api.get('/auth/csrf/'), // Get CSRF token on app init
 };
 
 // Profile API

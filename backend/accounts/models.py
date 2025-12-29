@@ -1,7 +1,9 @@
 """
 Custom User Model for AcadWorld
 Implements three user types: TEACHER, INSTITUTION, ADMIN
+Uses UUID as primary key for IDOR protection.
 """
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -16,7 +18,9 @@ class User(AbstractUser):
     """
     Custom User model with user type field.
     Email is used as the primary identifier for authentication.
+    Uses UUID as primary key to prevent ID enumeration attacks.
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     user_type = models.CharField(
         max_length=20,
@@ -62,4 +66,3 @@ class User(AbstractUser):
         self.deleted_at = timezone.now()
         self.is_active = False  # Also deactivate the user
         self.save()
-

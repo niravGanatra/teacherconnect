@@ -28,8 +28,10 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # Token blacklisting for secure logout
     'corsheaders',
     'storages',  # django-storages for S3/R2
+    'csp',  # Content Security Policy headers
     # Local apps
     'accounts',
     'profiles',
@@ -50,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',  # Content Security Policy
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -155,13 +158,27 @@ AUTH_USER_MODEL = 'accounts.User'
 # REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'accounts.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    # Rate Limiting / Throttling
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Tiered throttling
+        'anon': '50/day',      # Strict: unauthenticated users
+        'user': '1000/hour',   # Generous: logged-in users
+        # Scoped throttling for sensitive endpoints
+        'login': '5/minute',   # Brute-force protection
+        'register': '3/hour',  # Anti-spam registration
+        'password_reset': '3/hour',  # Prevent abuse
+    }
 }
 
 # SimpleJWT Configuration
@@ -174,19 +191,26 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
+# JWT Cookie Settings (for HttpOnly cookie-based auth)
+JWT_COOKIE_SECURE = not DEBUG  # True in production (HTTPS only)
+JWT_COOKIE_SAMESITE = 'Lax'  # Protects against CSRF for cross-origin requests
+JWT_COOKIE_HTTPONLY = True  # Prevents JavaScript access (XSS protection)
+
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS', 
-    'http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 
-# CSRF Configuration for production
+# CSRF Configuration
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
-    'http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
 ).split(',')
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Must be readable by JavaScript to send in X-CSRFToken header
 
 # Frontend URL (for email links)
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -202,3 +226,22 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <noreply@acadwor
 
 # Set to True to send emails even in DEBUG mode
 SEND_EMAILS_IN_DEBUG = os.getenv('SEND_EMAILS_IN_DEBUG', 'False').lower() in ('true', '1', 'yes')
+
+# =============================================================================
+# Content Security Policy (CSP) - XSS Prevention
+# =============================================================================
+# django-csp 4.0+ format
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'script-src': ("'self'",),
+        'style-src': ("'self'", "'unsafe-inline'"),  # unsafe-inline needed for some CSS
+        'img-src': ("'self'", "data:", "https:"),  # Allow images from https sources
+        'font-src': ("'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"),
+        'connect-src': ("'self'",),  # API calls
+        'frame-src': ("'none'",),  # No iframes
+        'object-src': ("'none'",),  # No plugins (Flash, Java, etc.)
+        'base-uri': ("'self'",),
+        'form-action': ("'self'",),
+    }
+}
