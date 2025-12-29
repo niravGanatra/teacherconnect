@@ -4,13 +4,13 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '../../components/common/Sidebar';
-import { Card, Spinner } from '../../components/common';
-import InstitutionHeader from '../../components/institution/InstitutionHeader';
-import InstitutionTabs from '../../components/institution/InstitutionTabs';
-import AlumniGrid from '../../components/institution/AlumniGrid';
-import { institutionAPI } from '../../services/institutionAPI';
-import { useAuth } from '../../context/AuthContext';
+import { DashboardLayout } from '../components/common/Sidebar';
+import { Card, Spinner } from '../components/common';
+import InstitutionHeader from '../components/institution/InstitutionHeader';
+import InstitutionTabs from '../components/institution/InstitutionTabs';
+import AlumniGrid from '../components/institution/AlumniGrid';
+import { institutionAPI } from '../services/institutionAPI';
+import { useAuth } from '../context/AuthContext';
 import {
     BuildingLibraryIcon,
     BriefcaseIcon,
