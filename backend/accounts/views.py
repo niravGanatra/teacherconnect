@@ -18,6 +18,7 @@ from .serializers import (
     LoginSerializer,
     ChangePasswordSerializer
 )
+from .throttles import LoginRateThrottle, RegisterRateThrottle
 
 User = get_user_model()
 
@@ -81,7 +82,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
-    throttle_classes = ['accounts.throttles.RegisterRateThrottle']
+    throttle_classes = [RegisterRateThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -111,7 +112,7 @@ class LoginView(APIView):
     Rate limited: 5 attempts per minute per IP.
     """
     permission_classes = [AllowAny]
-    throttle_classes = ['accounts.throttles.LoginRateThrottle']
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
