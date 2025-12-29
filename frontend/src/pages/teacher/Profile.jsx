@@ -48,22 +48,23 @@ export default function TeacherProfile() {
     const fetchProfile = async () => {
         try {
             const response = await profileAPI.getTeacherProfile();
-            setProfileData(response.data);
+            setProfileData(response.data || {});
+            const data = response.data || {};
             setFormData({
-                first_name: response.data.first_name || '',
-                last_name: response.data.last_name || '',
-                headline: response.data.headline || '',
-                bio: response.data.bio || '',
-                phone: response.data.phone || '',
-                city: response.data.city || '',
-                state: response.data.state || '',
-                experience_years: response.data.experience_years || 0,
-                current_school: response.data.current_school || '',
-                portfolio_url: response.data.portfolio_url || '',
-                is_searchable: response.data.is_searchable ?? true,
-                contact_visible: response.data.contact_visible ?? false,
-                subjects: response.data.subjects || [],
-                skills: response.data.skills || [],
+                first_name: data.first_name || '',
+                last_name: data.last_name || '',
+                headline: data.headline || '',
+                bio: data.bio || '',
+                phone: data.phone || '',
+                city: data.city || '',
+                state: data.state || '',
+                experience_years: data.experience_years || 0,
+                current_school: data.current_school || '',
+                portfolio_url: data.portfolio_url || '',
+                is_searchable: data.is_searchable ?? true,
+                contact_visible: data.contact_visible ?? false,
+                subjects: Array.isArray(data.subjects) ? data.subjects : [],
+                skills: Array.isArray(data.skills) ? data.skills : [],
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);

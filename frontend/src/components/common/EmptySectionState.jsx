@@ -37,10 +37,17 @@ export default function EmptySectionState({
             {/* Icon/Illustration */}
             {Icon && (
                 <div className="mb-6 p-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl">
+                    {/* Handle both functional components and forwardRef components/objects */}
                     {typeof Icon === 'function' ? (
                         <Icon className="w-12 h-12 text-purple-500" />
                     ) : (
-                        Icon
+                        // If it's a forwardRef component (which is an object with a render function) or an element
+                        typeof Icon === 'object' && Icon.render ? (
+                            <Icon className="w-12 h-12 text-purple-500" />
+                        ) : (
+                            // Fallback for when Icon is passed as an element
+                            Icon
+                        )
                     )}
                 </div>
             )}

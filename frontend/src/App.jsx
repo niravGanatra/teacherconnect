@@ -3,7 +3,7 @@
  */
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { LoadingScreen } from './components/common';
+import { LoadingScreen, ErrorBoundary } from './components/common';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -160,7 +160,9 @@ function AppRoutes() {
         path="/profile/edit"
         element={
           <ProtectedRoute>
-            <ProfileEditRouter />
+            <ErrorBoundary>
+              <ProfileEditRouter />
+            </ErrorBoundary>
           </ProtectedRoute>
         }
       />

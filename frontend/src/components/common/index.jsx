@@ -377,3 +377,6 @@ export function Toast({ type = 'success', message, onClose }) {
         </div>
     );
 }
+
+// Error Boundary
+export { default as ErrorBoundary } from './ErrorBoundary';

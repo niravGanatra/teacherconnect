@@ -49,7 +49,7 @@ export default function InstitutionProfile() {
     const fetchProfile = async () => {
         try {
             const response = await profileAPI.getInstitutionProfile();
-            const data = response.data;
+            const data = response.data || {};
             setProfileData(data);
             setFormData({
                 institution_name: data.institution_name || '',
@@ -66,7 +66,7 @@ export default function InstitutionProfile() {
                 established_year: data.established_year || '',
                 student_count: data.student_count || '',
             });
-            setIsVerified(data.is_verified);
+            setIsVerified(!!data.is_verified);
         } catch (error) {
             console.error('Failed to fetch profile:', error);
         } finally {
