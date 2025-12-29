@@ -18,7 +18,7 @@ from .views import (
 
 # Router for ViewSets
 router = DefaultRouter()
-router.register(r'experience', ExperienceViewSet, basename='experience')
+router.register(r'experiences', ExperienceViewSet, basename='experience')
 router.register(r'education', EducationViewSet, basename='education')
 router.register(r'skills', SkillViewSet, basename='skill')
 router.register(r'certifications', CertificationViewSet, basename='certification')
