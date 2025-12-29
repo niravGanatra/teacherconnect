@@ -207,7 +207,7 @@ export const skillsAPI = {
 };
 
 // Certifications API (separate export for profile sections)
-export const certificationAPI = {
+export const certificationsAPI = {
     list: () => api.get('/profiles/certifications/'),
     create: (data) => api.post('/profiles/certifications/', data),
     update: (id, data) => api.patch(`/profiles/certifications/${id}/`, data),
