@@ -142,3 +142,83 @@ class Comment(models.Model):
         if self.content:
             self.content = sanitize_html(self.content)
         super().save(*args, **kwargs)
+
+
+class PostAttachment(models.Model):
+    """
+    Media attachment for a post.
+    Can be an Image, Video, or Document (PDF).
+    """
+    MEDIA_TYPE_CHOICES = (
+        ('IMAGE', 'Image'),
+        ('VIDEO', 'Video'),
+        ('DOCUMENT', 'Document'),
+    )
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        null=True,  # Allow null temporarily for draft uploads
+        blank=True
+    )
+    file = models.FileField(upload_to='post_attachments/')
+    thumbnail = models.ImageField(upload_to='post_attachments/thumbnails/', blank=True, null=True)
+    media_type = models.CharField(max_length=20, choices=MEDIA_TYPE_CHOICES)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'post_attachments'
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.media_type} attachment for {self.post_id}"
+
+
+class AttachmentPage(models.Model):
+    """
+    Generated image for a page of a PDF document.
+    Used for the swipeable carousel effect.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    attachment = models.ForeignKey(
+        PostAttachment,
+        on_delete=models.CASCADE,
+        related_name='pages'
+    )
+    image = models.ImageField(upload_to='attachment_pages/')
+    page_number = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'attachment_pages'
+        ordering = ['page_number']
+        unique_together = ['attachment', 'page_number']
+
+    def __str__(self):
+        return f"Page {self.page_number} of {self.attachment_id}"
+
+
+class LinkPreview(models.Model):
+    """
+    Open Graph preview for a link in a post.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='link_previews'
+    )
+    url = models.URLField(max_length=500)
+    title = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+    image_url = models.URLField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'link_previews'
+
+    def __str__(self):
+        return f"Link preview for {self.url}"

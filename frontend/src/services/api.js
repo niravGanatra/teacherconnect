@@ -277,6 +277,11 @@ export const feedAPI = {
         return api.post('/feed/posts/', data);
     },
 
+    // Upload media attachment
+    uploadMedia: (data) => api.post('/feed/media/upload/', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
     // Update post
     updatePost: (id, data) => api.patch(`/feed/posts/${id}/`, data),
 

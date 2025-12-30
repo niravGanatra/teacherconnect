@@ -13,8 +13,10 @@
     "@heroicons/react": "^2.2.0",
     "axios": "^1.13.2",
     "dompurify": "^3.3.1",
+    "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.8",
     "react-router-dom": "^7.11.0",
     "serve": "^14.2.4"
   },

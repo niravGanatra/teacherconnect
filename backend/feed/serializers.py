@@ -3,7 +3,7 @@ Serializers for the feed.
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Post, Like, Comment, Follow
+from .models import Post, Like, Comment, Follow, PostAttachment, AttachmentPage, LinkPreview
 
 User = get_user_model()
 
@@ -44,16 +44,42 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'author', 'created_at']
 
 
+class AttachmentPageSerializer(serializers.ModelSerializer):
+    """Serializer for PDF pages."""
+    class Meta:
+        model = AttachmentPage
+        fields = ['id', 'image', 'page_number']
+
+
+class PostAttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for post attachments."""
+    pages = AttachmentPageSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = PostAttachment
+        fields = ['id', 'file', 'media_type', 'order', 'pages']
+
+
+class LinkPreviewSerializer(serializers.ModelSerializer):
+    """Serializer for link previews."""
+    class Meta:
+        model = LinkPreview
+        fields = ['id', 'url', 'title', 'description', 'image_url']
+
+
 class PostSerializer(serializers.ModelSerializer):
-    """Serializer for posts with nested comments."""
+    """Serializer for posts with nested comments and attachments."""
     author = AuthorSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
+    attachments = PostAttachmentSerializer(many=True, read_only=True)
+    link_previews = LinkPreviewSerializer(many=True, read_only=True)
     is_liked = serializers.SerializerMethodField()
     
     class Meta:
         model = Post
         fields = [
             'id', 'author', 'content', 'image', 'video',
+            'attachments', 'link_previews',
             'likes_count', 'comments_count', 'comments',
             'is_liked', 'created_at', 'updated_at'
         ]
@@ -68,10 +94,26 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating posts."""
+    media_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        write_only=True
+    )
     
     class Meta:
         model = Post
-        fields = ['content', 'image', 'video']
+        fields = ['content', 'image', 'video', 'media_ids']
+
+
+class MediaUploadSerializer(serializers.ModelSerializer):
+    """Serializer for uploading media separately."""
+    file = serializers.FileField()
+    media_type = serializers.ChoiceField(choices=PostAttachment.MEDIA_TYPE_CHOICES)
+    
+    class Meta:
+        model = PostAttachment
+        fields = ['id', 'file', 'media_type', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class FollowSerializer(serializers.ModelSerializer):

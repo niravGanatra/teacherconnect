@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, TextArea, Avatar, Spinner, EmptyState } from '../../components/common';
+import CreatePostModal from '../../components/feed/CreatePostModal';
 import { feedAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -16,10 +17,7 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 
 export default function Feed() {
     const { user } = useAuth();
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [newPost, setNewPost] = useState('');
-    const [posting, setPosting] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -27,7 +25,7 @@ export default function Feed() {
 
     const fetchPosts = async () => {
         try {
-            const response = await feedAPI.getAllPosts();
+            const response = await feedAPI.getPosts();
             setPosts(response.data.results || response.data);
         } catch (error) {
             console.error('Failed to fetch posts:', error);
@@ -36,19 +34,12 @@ export default function Feed() {
         }
     };
 
-    const handleCreatePost = async () => {
-        if (!newPost.trim()) return;
+    const handleCreatePost = () => {
+        setIsModalOpen(true);
+    };
 
-        setPosting(true);
-        try {
-            await feedAPI.createPost({ content: newPost });
-            setNewPost('');
-            fetchPosts();
-        } catch (error) {
-            console.error('Failed to create post:', error);
-        } finally {
-            setPosting(false);
-        }
+    const handlePostCreated = () => {
+        fetchPosts();
     };
 
     const handleLike = async (postId) => {
@@ -80,40 +71,125 @@ export default function Feed() {
         return date.toLocaleDateString();
     };
 
+    const renderAttachments = (post) => {
+        if (!post.attachments || post.attachments.length === 0) {
+            // Fallback for old posts
+            if (post.image) {
+                return (
+                    <div className="mt-4 rounded-lg overflow-hidden">
+                        <img src={post.image} alt="Post" className="w-full max-h-96 object-cover" />
+                    </div>
+                );
+            }
+            return null;
+        }
+
+        const videos = post.attachments.filter(a => a.media_type === 'VIDEO');
+        if (videos.length > 0) {
+            return (
+                <div className="mt-4 rounded-lg overflow-hidden bg-black">
+                    <video controls className="w-full max-h-96" src={videos[0].file} />
+                </div>
+            );
+        }
+
+        // Images or Document Pages (treated as images for carousel)
+        let images = post.attachments.filter(a => a.media_type === 'IMAGE').map(a => ({ src: a.file, id: a.id }));
+
+        // Add PDF pages
+        const docs = post.attachments.filter(a => a.media_type === 'DOCUMENT');
+        if (docs.length > 0) {
+            // If pages generated
+            docs.forEach(doc => {
+                if (doc.pages && doc.pages.length > 0) {
+                    images = [...images, ...doc.pages.map(p => ({ src: p.image, id: p.id }))];
+                } else {
+                    // Fallback if no pages generated yet (pending processing)
+                    // Show icon
+                    images.push({
+                        html: (
+                            <div key={doc.id} className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50 mt-2">
+                                <div className="bg-red-100 p-3 rounded text-red-600">
+                                    <span className="font-bold">PDF</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-800">Document Processing...</p>
+                                </div>
+                            </div>
+                        )
+                    });
+                }
+            });
+        }
+
+        if (images.length === 0) return null;
+
+        // Render Grid or Carousel
+        // For simplicity, simple grid for images, stack for cards
+        if (images.some(i => i.html)) {
+            return <div className="mt-4">{images.map(i => i.html)}</div>;
+        }
+
+        if (images.length === 1) {
+            return (
+                <div className="mt-4 rounded-lg overflow-hidden">
+                    <img src={images[0].src} alt="Post" className="w-full max-h-96 object-cover" />
+                </div>
+            );
+        }
+
+        // Multi-image grid (LinkedIn style: 1, 2, 3, 4+)
+        // Simple implementation: Grid of 2 columns
+        return (
+            <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+                {images.slice(0, 4).map((img, idx) => (
+                    <div key={img.id} className={`relative ${images.length === 3 && idx === 0 ? 'row-span-2 h-full' : 'h-48'}`}>
+                        <img src={img.src} alt="Post" className="w-full h-full object-cover" />
+                        {idx === 3 && images.length > 4 && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl">
+                                +{images.length - 4}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <DashboardLayout>
+            <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPostCreated={handlePostCreated} />
+
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900">Feed</h1>
                 <p className="text-slate-500 mt-1">Connect with fellow educators</p>
             </div>
 
-            {/* Create Post */}
-            <Card className="p-6 mb-6">
-                <div className="flex gap-4">
+            {/* Create Post Trigger */}
+            <Card className="p-4 mb-6">
+                <div className="flex gap-4 items-center">
                     <Avatar name={user?.username} size="md" />
-                    <div className="flex-1">
-                        <TextArea
-                            placeholder="Share something with your network..."
-                            value={newPost}
-                            onChange={(e) => setNewPost(e.target.value)}
-                            rows={3}
-                        />
-                        <div className="flex items-center justify-between mt-3">
-                            <button className="flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
-                                <PhotoIcon className="w-5 h-5" />
-                                <span className="text-sm">Add Photo</span>
-                            </button>
-                            <Button
-                                onClick={handleCreatePost}
-                                loading={posting}
-                                disabled={!newPost.trim()}
-                            >
-                                <PaperAirplaneIcon className="w-4 h-4" />
-                                Post
-                            </Button>
-                        </div>
-                    </div>
+                    <button
+                        onClick={handleCreatePost}
+                        className="flex-1 text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 font-medium transition-colors border border-gray-200"
+                    >
+                        Start a post
+                    </button>
+                </div>
+                <div className="flex items-center justify-between mt-4 pt-2 px-4">
+                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                        <PhotoIcon className="w-6 h-6 text-blue-500" />
+                        <span className="text-sm font-medium">Photo</span>
+                    </button>
+                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                        <span className="w-6 h-6 flex items-center justify-center text-green-600 font-bold border-2 border-green-600 rounded">▶</span>
+                        <span className="text-sm font-medium">Video</span>
+                    </button>
+                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                        <span className="w-6 h-6 flex items-center justify-center text-orange-600">📄</span>
+                        <span className="text-sm font-medium">Article</span>
+                    </button>
                 </div>
             </Card>
 
@@ -152,16 +228,24 @@ export default function Feed() {
                             {/* Post Content */}
                             <p className="text-slate-700 whitespace-pre-wrap">{post.content}</p>
 
-                            {/* Post Image */}
-                            {post.image && (
-                                <div className="mt-4 rounded-lg overflow-hidden">
-                                    <img
-                                        src={post.image}
-                                        alt="Post"
-                                        className="w-full max-h-96 object-cover"
-                                    />
+                            {/* Link Preview */}
+                            {post.link_previews && post.link_previews.length > 0 && (
+                                <div className="mt-2 border rounded-lg overflow-hidden bg-gray-50">
+                                    <a href={post.link_previews[0].url} target="_blank" rel="noopener noreferrer" className="block hover:bg-gray-100 transition">
+                                        {post.link_previews[0].image_url && (
+                                            <img src={post.link_previews[0].image_url} alt="preview" className="w-full h-48 object-cover" />
+                                        )}
+                                        <div className="p-3">
+                                            <h3 className="font-semibold text-gray-800">{post.link_previews[0].title}</h3>
+                                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{post.link_previews[0].description}</p>
+                                            <p className="text-xs text-gray-400 mt-2">{new URL(post.link_previews[0].url).hostname}</p>
+                                        </div>
+                                    </a>
                                 </div>
                             )}
+
+                            {/* Post Attachments */}
+                            {renderAttachments(post)}
 
                             {/* Post Actions */}
                             <div className="flex items-center gap-6 mt-4 pt-4 border-t border-slate-100">
