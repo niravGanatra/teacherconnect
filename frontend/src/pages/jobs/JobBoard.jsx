@@ -3,7 +3,6 @@
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button, Input, Select, Spinner, EmptyState } from '../../components/common';
 import { jobsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -105,7 +104,7 @@ export default function JobBoard() {
     ];
 
     return (
-        <DashboardLayout>
+        <div>
             {/* Header */}
             <div className="mb-4 md:mb-6">
                 <h1 className="text-xl md:text-2xl font-bold text-slate-900">Job Board</h1>
@@ -258,6 +257,6 @@ export default function JobBoard() {
                     ))}
                 </div>
             )}
-        </DashboardLayout>
+        </div>
     );
 }

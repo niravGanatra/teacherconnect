@@ -216,11 +216,11 @@ export const certificationsAPI = {
 
 // Jobs API
 export const jobsAPI = {
-    // Get job listings with filters
-    getJobs: (params = {}) => api.get('/jobs/', { params }),
+    // List all jobs
+    listJobs: (params = {}) => api.get('/jobs/', { params }),
 
-    // Get single job detail
-    getJobById: (id) => api.get(`/jobs/${id}/`),
+    // Get single job
+    getJob: (id) => api.get(`/jobs/${id}/`),
 
     // Institution: Create job listing
     createJob: (data) => api.post('/jobs/', data),

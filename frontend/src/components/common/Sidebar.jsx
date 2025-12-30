@@ -37,9 +37,7 @@ export function Sidebar({ isOpen, onClose }) {
     const teacherLinks = [
         { to: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
         { to: '/feed', icon: NewspaperIcon, label: 'Feed' },
-        { to: '/jobs', icon: BriefcaseIcon, label: 'Browse Jobs' },
-        { to: '/my-applications', icon: DocumentTextIcon, label: 'My Applications' },
-        { to: '/saved-jobs', icon: BookmarkIcon, label: 'Saved Jobs' },
+        { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs Hub' },
         { to: '/events', icon: CalendarIcon, label: 'Events' },
         { to: '/profile', icon: UserCircleIcon, label: 'My Profile' },
     ];
