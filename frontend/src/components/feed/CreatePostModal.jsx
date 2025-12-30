@@ -256,8 +256,8 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, initialMediaType = nu
                             {hasImages && (
                                 <div className="grid grid-cols-2 gap-2">
                                     {attachments.map((att, index) => (
-                                        <div key={att.tempId} className={`relative rounded-lg overflow-hidden border ${index === 0 && attachments.length === 1 ? 'col-span-2' : ''} ${index > 1 ? 'hidden' : ''}`}>
-                                            <img src={att.preview} alt="preview" className="w-full h-48 object-cover" />
+                                        <div key={att.tempId} className={`relative rounded-lg overflow-hidden border bg-gray-100 ${index === 0 && attachments.length === 1 ? 'col-span-2' : ''} ${index > 1 ? 'hidden' : ''}`}>
+                                            <img src={att.preview} alt="preview" className="w-full h-48 object-contain" />
                                             {att.status === 'uploading' && (
                                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
                                                     <Loader2 className="animate-spin" />

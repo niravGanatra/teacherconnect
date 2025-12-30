@@ -81,8 +81,8 @@ export default function Feed() {
             // Fallback for old posts
             if (post.image) {
                 return (
-                    <div className="mt-4 rounded-lg overflow-hidden">
-                        <img src={post.image} alt="Post" className="w-full max-h-96 object-cover" />
+                    <div className="mt-4 rounded-lg overflow-hidden bg-gray-100">
+                        <img src={post.image} alt="Post" className="w-full max-h-96 object-contain" />
                     </div>
                 );
             }
@@ -137,8 +137,8 @@ export default function Feed() {
 
         if (images.length === 1) {
             return (
-                <div className="mt-4 rounded-lg overflow-hidden">
-                    <img src={images[0].src} alt="Post" className="w-full max-h-96 object-cover" />
+                <div className="mt-4 rounded-lg overflow-hidden bg-gray-100">
+                    <img src={images[0].src} alt="Post" className="w-full max-h-96 object-contain" />
                 </div>
             );
         }
