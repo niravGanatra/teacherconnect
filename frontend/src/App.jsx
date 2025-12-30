@@ -35,9 +35,11 @@ import AdminContent from './pages/admin/Content';
 import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
 import JobAlerts from './pages/jobs/JobAlerts';
+import MyLearning from './pages/courses/MyLearning';
 import Events from './pages/events/Events';
 import InstitutionPage from './pages/InstitutionPage';
 import JobsLayout from './components/jobs/JobsLayout';
+
 import SearchResults from './pages/search/SearchResults';
 
 // Protected Route Component
@@ -158,6 +160,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/learning"
+        element={
+          <ProtectedRoute>
+            <MyLearning />
+          </ProtectedRoute>
+        }
+      />
+
 
       <Route
         path="/profile"
