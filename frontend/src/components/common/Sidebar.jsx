@@ -34,21 +34,22 @@ const NAV_ITEMS = [
     // Common items (no role restriction)
     { to: '/feed', icon: NewspaperIcon, label: 'Feed', roles: [] },
 
-    // Student/Teacher items
-    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.STUDENT, ROLES.TEACHER] },
+    // Student/Teacher items (NOT for institutions)
+    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.INSTRUCTOR] },
     { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs Hub', roles: [ROLES.TEACHER, ROLES.STUDENT] },
-    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.TEACHER, ROLES.STUDENT] },
-    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.TEACHER, ROLES.STUDENT] },
+    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.TEACHER, ROLES.STUDENT, ROLES.INSTITUTION_ADMIN] },
+    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.TEACHER, ROLES.STUDENT, ROLES.INSTITUTION_ADMIN] },
 
     // Instructor items
     { to: '/instructor/studio', icon: PresentationChartBarIcon, label: 'Course Studio', roles: [ROLES.INSTRUCTOR] },
     { to: '/instructor/courses', icon: AcademicCapIcon, label: 'My Courses', roles: [ROLES.INSTRUCTOR] },
 
-    // Institution Admin items
+    // Institution Admin items (Job Management - create/review, NOT apply)
     { to: '/institution/dashboard', icon: HomeIcon, label: 'School Dashboard', roles: [ROLES.INSTITUTION_ADMIN] },
     { to: '/institution/manage', icon: BuildingOfficeIcon, label: 'Manage School', roles: [ROLES.INSTITUTION_ADMIN] },
-    { to: '/my-jobs', icon: BriefcaseIcon, label: 'Active Jobs', roles: [ROLES.INSTITUTION_ADMIN] },
+    { to: '/my-jobs', icon: BriefcaseIcon, label: 'Posted Jobs', roles: [ROLES.INSTITUTION_ADMIN] },
     { to: '/applicants', icon: UsersIcon, label: 'Applicants', roles: [ROLES.INSTITUTION_ADMIN] },
+
 
     // Admin items
     { to: '/admin', icon: HomeIcon, label: 'Admin Dashboard', roles: [ROLES.ADMIN] },
