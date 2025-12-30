@@ -2,19 +2,27 @@
  * Authentication Context with Role-Based Access Control
  * Manages user authentication state, roles, and permissions across the app.
  * Uses localStorage-based JWT authentication.
+ * 
+ * Educator-First Platform:
+ * - EDUCATOR: Teachers, professors, trainers (can browse jobs, buy FDPs)
+ * - INSTITUTION: Schools, colleges, EdTech (can post jobs, sell FDPs)
+ * - SUPER_ADMIN: Platform administrators
  */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI, profileAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
-// Role definitions
+// Role definitions - Educator-First Platform
 export const ROLES = {
-    STUDENT: 'student',
-    TEACHER: 'teacher',
-    INSTRUCTOR: 'instructor',
+    EDUCATOR: 'educator',           // Teachers, professors, trainers
+    INSTRUCTOR: 'instructor',       // Educator who creates courses
     INSTITUTION_ADMIN: 'institution_admin',
-    ADMIN: 'admin',
+    SUPER_ADMIN: 'super_admin',
+    // Backward compatibility aliases
+    TEACHER: 'educator',
+    STUDENT: 'educator',
+    ADMIN: 'super_admin',
 };
 
 // Permission definitions
@@ -23,21 +31,31 @@ export const PERMISSIONS = {
     CAN_EDIT_SCHOOL: 'can_edit_school',
     CAN_MANAGE_JOBS: 'can_manage_jobs',
     CAN_VIEW_APPLICANTS: 'can_view_applicants',
-    CAN_ENROLL_COURSES: 'can_enroll_courses',
+    CAN_APPLY_JOBS: 'can_apply_jobs',
+    CAN_BUY_FDPS: 'can_buy_fdps',
+    CAN_SELL_FDPS: 'can_sell_fdps',
+    CAN_ISSUE_CERTIFICATES: 'can_issue_certificates',
 };
 
 // Role to permissions mapping
 const ROLE_PERMISSIONS = {
-    [ROLES.STUDENT]: [PERMISSIONS.CAN_ENROLL_COURSES],
-    [ROLES.TEACHER]: [PERMISSIONS.CAN_ENROLL_COURSES],
-    [ROLES.INSTRUCTOR]: [PERMISSIONS.CAN_CREATE_COURSE, PERMISSIONS.CAN_ENROLL_COURSES],
+    [ROLES.EDUCATOR]: [
+        PERMISSIONS.CAN_APPLY_JOBS,
+        PERMISSIONS.CAN_BUY_FDPS,
+    ],
+    [ROLES.INSTRUCTOR]: [
+        PERMISSIONS.CAN_CREATE_COURSE,
+        PERMISSIONS.CAN_APPLY_JOBS,
+        PERMISSIONS.CAN_BUY_FDPS,
+    ],
     [ROLES.INSTITUTION_ADMIN]: [
         PERMISSIONS.CAN_EDIT_SCHOOL,
         PERMISSIONS.CAN_MANAGE_JOBS,
         PERMISSIONS.CAN_VIEW_APPLICANTS,
-        PERMISSIONS.CAN_CREATE_COURSE,
+        PERMISSIONS.CAN_SELL_FDPS,
+        PERMISSIONS.CAN_ISSUE_CERTIFICATES,
     ],
-    [ROLES.ADMIN]: Object.values(PERMISSIONS),
+    [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
 };
 
 export function AuthProvider({ children }) {

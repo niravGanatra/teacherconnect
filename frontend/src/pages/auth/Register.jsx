@@ -1,166 +1,120 @@
 /**
- * Registration Page
+ * Split Registration Page
+ * Two-path landing for Educators and Institutions.
  */
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { Button, Input, Card } from '../../components/common';
+import { Link } from 'react-router-dom';
+import {
+    AcademicCapIcon,
+    BuildingOffice2Icon,
+    ArrowRightIcon,
+} from '@heroicons/react/24/outline';
 
 export default function Register() {
-    const [formData, setFormData] = useState({
-        email: '',
-        username: '',
-        password: '',
-        password_confirm: '',
-        user_type: 'TEACHER',
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const { register } = useAuth();
-    const navigate = useNavigate();
-
-    const handleChange = (e) => {
-        setFormData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        if (formData.password !== formData.password_confirm) {
-            setError('Passwords do not match');
-            setLoading(false);
-            return;
-        }
-
-        const result = await register(formData);
-
-        if (result.success) {
-            navigate('/dashboard');
-        } else {
-            setError(result.error);
-        }
-
-        setLoading(false);
-    };
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 py-12 px-4">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] rounded-2xl mb-4">
-                        <span className="text-2xl font-bold text-white">TC</span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
-                    <p className="text-slate-500 mt-1">Join the teacher community today</p>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <div className="max-w-4xl w-full">
+                {/* Header */}
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-slate-800 mb-4">
+                        Join TeacherConnect
+                    </h1>
+                    <p className="text-xl text-slate-600">
+                        India's Professional Network for Educators
+                    </p>
                 </div>
 
-                <Card className="p-8">
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        {error && (
-                            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                                {error}
+                {/* Split Cards */}
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Educator Card */}
+                    <Link
+                        to="/register/educator"
+                        className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-500 cursor-pointer"
+                    >
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                <AcademicCapIcon className="w-10 h-10 text-white" />
                             </div>
-                        )}
 
-                        {/* User Type Selection */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-slate-700">
-                                I am a
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, user_type: 'TEACHER' }))}
-                                    className={`
-                    p-4 rounded-lg border-2 text-center transition-all
-                    ${formData.user_type === 'TEACHER'
-                                            ? 'border-[#1e3a5f] bg-[#1e3a5f]/5 text-[#1e3a5f]'
-                                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                                        }
-                  `}
-                                >
-                                    <div className="text-2xl mb-1">👨‍🏫</div>
-                                    <div className="font-medium">Teacher</div>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, user_type: 'INSTITUTION' }))}
-                                    className={`
-                    p-4 rounded-lg border-2 text-center transition-all
-                    ${formData.user_type === 'INSTITUTION'
-                                            ? 'border-[#1e3a5f] bg-[#1e3a5f]/5 text-[#1e3a5f]'
-                                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                                        }
-                  `}
-                                >
-                                    <div className="text-2xl mb-1">🏫</div>
-                                    <div className="font-medium">Institution</div>
-                                </button>
+                            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                                I am an Educator
+                            </h2>
+
+                            <p className="text-slate-600 mb-6 leading-relaxed">
+                                Build your professional portfolio, discover teaching opportunities,
+                                and upskill with faculty development programs.
+                            </p>
+
+                            <ul className="text-left text-sm text-slate-500 space-y-2 mb-6">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                    Create your teaching portfolio
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                    Browse & apply to faculty positions
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                    Access professional development courses
+                                </li>
+                            </ul>
+
+                            <div className="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-4 transition-all">
+                                Get Started
+                                <ArrowRightIcon className="w-5 h-5" />
                             </div>
                         </div>
+                    </Link>
 
-                        <Input
-                            label="Username"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleChange}
-                            placeholder="Choose a username"
-                            required
-                        />
+                    {/* Institution Card */}
+                    <Link
+                        to="/register/institution"
+                        className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-purple-500 cursor-pointer"
+                    >
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                <BuildingOffice2Icon className="w-10 h-10 text-white" />
+                            </div>
 
-                        <Input
-                            label="Email"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Enter your email"
-                            required
-                        />
+                            <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                                I am an Institution
+                            </h2>
 
-                        <Input
-                            label="Password"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Create a password"
-                            required
-                        />
+                            <p className="text-slate-600 mb-6 leading-relaxed">
+                                Hire qualified faculty, train your staff with FDPs,
+                                and grow your institution's brand presence.
+                            </p>
 
-                        <Input
-                            label="Confirm Password"
-                            type="password"
-                            name="password_confirm"
-                            value={formData.password_confirm}
-                            onChange={handleChange}
-                            placeholder="Confirm your password"
-                            required
-                        />
+                            <ul className="text-left text-sm text-slate-500 space-y-2 mb-6">
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                    Post faculty job openings
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                    Access verified educator profiles
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                                    Bulk buy training programs for staff
+                                </li>
+                            </ul>
 
-                        <Button
-                            type="submit"
-                            loading={loading}
-                            className="w-full"
-                        >
-                            Create Account
-                        </Button>
-                    </form>
+                            <div className="flex items-center gap-2 text-purple-600 font-semibold group-hover:gap-4 transition-all">
+                                Get Started
+                                <ArrowRightIcon className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </Link>
+                </div>
 
-                    <div className="mt-6 text-center text-sm text-slate-500">
-                        Already have an account?{' '}
-                        <Link to="/login" className="text-[#1e3a5f] font-medium hover:underline">
-                            Sign in
-                        </Link>
-                    </div>
-                </Card>
+                {/* Footer */}
+                <p className="text-center text-slate-500 mt-8">
+                    Already have an account?{' '}
+                    <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+                        Sign in
+                    </Link>
+                </p>
             </div>
         </div>
     );

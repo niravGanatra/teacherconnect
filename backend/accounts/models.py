@@ -1,6 +1,6 @@
 """
 Custom User Model for AcadWorld
-Implements three user types: TEACHER, INSTITUTION, ADMIN
+Implements three user types: EDUCATOR, INSTITUTION, SUPER_ADMIN
 Uses UUID as primary key for IDOR protection.
 """
 import uuid
@@ -9,9 +9,13 @@ from django.db import models
 
 
 class UserType(models.TextChoices):
-    TEACHER = 'TEACHER', 'Teacher'
-    INSTITUTION = 'INSTITUTION', 'Institution'
-    ADMIN = 'ADMIN', 'Admin'
+    """
+    User roles for the educator-first platform.
+    No student role - this is a B2B platform for educators and institutions.
+    """
+    EDUCATOR = 'EDUCATOR', 'Educator'          # Teachers, professors, trainers
+    INSTITUTION = 'INSTITUTION', 'Institution'  # Schools, colleges, EdTech
+    SUPER_ADMIN = 'SUPER_ADMIN', 'Super Admin'  # Platform administrators
 
 
 class User(AbstractUser):
@@ -25,7 +29,7 @@ class User(AbstractUser):
     user_type = models.CharField(
         max_length=20,
         choices=UserType.choices,
-        default=UserType.TEACHER
+        default=UserType.EDUCATOR
     )
     is_verified = models.BooleanField(default=False)
     
@@ -48,16 +52,31 @@ class User(AbstractUser):
         return f"{self.email} ({self.get_user_type_display()})"
 
     @property
+    def is_educator(self):
+        """Check if user is an educator (teacher/trainer)."""
+        return self.user_type == UserType.EDUCATOR
+    
+    # Backward compatibility alias
+    @property
     def is_teacher(self):
-        return self.user_type == UserType.TEACHER
+        """Alias for is_educator - backward compatibility."""
+        return self.is_educator
 
     @property
     def is_institution(self):
+        """Check if user is an institution admin."""
         return self.user_type == UserType.INSTITUTION
 
     @property
+    def is_super_admin(self):
+        """Check if user is a super admin."""
+        return self.user_type == UserType.SUPER_ADMIN
+    
+    # Backward compatibility alias
+    @property
     def is_admin_user(self):
-        return self.user_type == UserType.ADMIN
+        """Alias for is_super_admin - backward compatibility."""
+        return self.is_super_admin
     
     def soft_delete(self):
         """Mark user as deleted without removing from database."""

@@ -1,67 +1,128 @@
 """
-Profile models for Teachers and Institutions.
+Profile models for Educators and Institutions.
 Uses UUIDs as primary keys for IDOR protection.
 """
 import uuid
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
-class TeacherProfile(models.Model):
+class EducatorProfile(models.Model):
     """
-    Profile for Teacher users.
-    Includes privacy controls and professional information.
+    Profile for Educator users (teachers, professors, trainers).
+    Includes professional identity, teaching expertise, and privacy controls.
     Uses UUID as primary key to prevent ID enumeration attacks.
+    
+    Note: The db_table remains 'teacher_profiles' for backward compatibility.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='teacher_profile'
+        related_name='educator_profile'
     )
     
+    # ===========================================
     # Personal Info
+    # ===========================================
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
     headline = models.CharField(max_length=200, blank=True)
     bio = models.TextField(blank=True)
-    profile_photo = models.ImageField(upload_to='profiles/teachers/', blank=True, null=True)
-    background_photo = models.ImageField(upload_to='profiles/teachers/backgrounds/', blank=True, null=True)
+    profile_photo = models.ImageField(upload_to='profiles/educators/', blank=True, null=True)
+    background_photo = models.ImageField(upload_to='profiles/educators/backgrounds/', blank=True, null=True)
     
-    # Professional Info
-    subjects = models.JSONField(default=list, blank=True)  # ["Math", "Physics"]
-    skills = models.JSONField(default=list, blank=True)  # ["Classroom Management", "Curriculum Design"]
+    # ===========================================
+    # Professional Identity
+    # ===========================================
+    ROLE_CHOICES = [
+        ('PRT', 'Primary Teacher (PRT)'),
+        ('TGT', 'Trained Graduate Teacher (TGT)'),
+        ('PGT', 'Post Graduate Teacher (PGT)'),
+        ('LECTURER', 'Lecturer'),
+        ('PROFESSOR', 'Professor'),
+        ('HOD', 'Head of Department'),
+        ('PRINCIPAL', 'Principal/Vice Principal'),
+        ('COORDINATOR', 'Academic Coordinator'),
+        ('TRAINER', 'Corporate Trainer'),
+        ('COUNSELOR', 'Counselor'),
+        ('OTHER', 'Other'),
+    ]
+    current_role = models.CharField(max_length=50, choices=ROLE_CHOICES, blank=True)
+    current_role_custom = models.CharField(max_length=100, blank=True, help_text='Custom role if Other selected')
+    
     experience_years = models.PositiveIntegerField(default=0)
     current_school = models.CharField(max_length=200, blank=True)
-    education = models.JSONField(default=list, blank=True)  # [{"degree": "B.Ed", "institution": "...", "year": 2020}]
-    certifications = models.JSONField(default=list, blank=True)
     
-    # ==========================================
-    # Teacher Attributes (Availability & Preferences)
-    # ==========================================
+    # Link to Institution (for verified employment)
+    current_institution = models.ForeignKey(
+        'institutions.Institution',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='current_educators'
+    )
+    
+    # Qualifications (e.g., ["B.Ed", "M.Ed", "PhD"])
+    QUALIFICATION_CHOICES = ['B.Ed', 'M.Ed', 'M.Phil', 'PhD', 'D.Ed', 'NTT', 'B.A', 'M.A', 'B.Sc', 'M.Sc', 'MBA']
+    qualifications = models.JSONField(default=list, blank=True)
+    
+    # Job seeking status
+    open_to_work = models.BooleanField(default=True, help_text='Show "Open to Work" badge')
+    
+    # Legacy fields for compatibility
+    education = models.JSONField(default=list, blank=True)
+    certifications = models.JSONField(default=list, blank=True)
+    skills = models.JSONField(default=list, blank=True)
+    
+    # ===========================================
+    # Teaching Expertise (REQUIRED: min 1 subject)
+    # ===========================================
+    SUBJECT_CHOICES = [
+        'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi',
+        'Social Studies', 'History', 'Geography', 'Economics', 'Commerce',
+        'Computer Science', 'Physical Education', 'Art', 'Music', 'Sanskrit',
+        'French', 'German', 'Spanish', 'Environmental Science', 'Psychology',
+        'Political Science', 'Sociology', 'Accountancy', 'Business Studies',
+    ]
+    expert_subjects = models.JSONField(
+        default=list,
+        help_text='Primary teaching subjects - at least one required'
+    )
+    
+    # Additional subjects (secondary areas)
+    subjects = models.JSONField(default=list, blank=True)
+    
+    # ===========================================
+    # Teaching Preferences
+    # ===========================================
     AVAILABILITY_CHOICES = [
-        ('FULL_TIME', 'Full-Time'),
-        ('PART_TIME', 'Part-Time'),
-        ('FREELANCE', 'Freelance'),
-        ('OCCUPIED', 'Not Available'),
+        ('AVAILABLE', 'Available'),
+        ('FULL_TIME', 'Open to Full-Time'),
+        ('PART_TIME', 'Open to Part-Time'),
+        ('FREELANCE', 'Freelance/Guest Lectures'),
+        ('NOT_LOOKING', 'Not Looking'),
     ]
     availability = models.CharField(
         max_length=20,
         choices=AVAILABILITY_CHOICES,
-        default='FULL_TIME',
+        default='AVAILABLE',
         blank=True
     )
     
     TEACHING_MODE_CHOICES = ['ONLINE', 'OFFLINE', 'HYBRID']
-    teaching_modes = models.JSONField(default=list, blank=True)  # ["ONLINE", "HYBRID"]
+    teaching_modes = models.JSONField(default=list, blank=True)
     
-    BOARD_CHOICES = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'OTHER']
-    boards = models.JSONField(default=list, blank=True)  # ["CBSE", "IB"]
+    BOARD_CHOICES = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'CAMBRIDGE', 'NIOS', 'OTHER']
+    boards = models.JSONField(default=list, blank=True)
     
-    GRADE_CHOICES = ['K-5', '6-8', '9-10', '11-12', 'UG', 'PG']
-    grades_taught = models.JSONField(default=list, blank=True)  # ["9-10", "11-12"]
+    GRADE_CHOICES = ['Pre-Primary', 'K-5', '6-8', '9-10', '11-12', 'UG', 'PG', 'Competitive Exams']
+    grades_taught = models.JSONField(default=list, blank=True)
     
-    # Demo Video
+    # ===========================================
+    # Portfolio & Demo
+    # ===========================================
     demo_video_url = models.URLField(blank=True, help_text='YouTube or Vimeo link')
     demo_video_file = models.FileField(
         upload_to='demo_videos/',
@@ -69,32 +130,40 @@ class TeacherProfile(models.Model):
         null=True,
         help_text='MP4 or MOV, max 50MB'
     )
-    
-    # Portfolio
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     portfolio_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True, help_text='LinkedIn profile URL')
     
+    # ===========================================
     # Contact Info
+    # ===========================================
     phone = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=100, blank=True)
     
+    # ===========================================
     # Privacy Settings
-    is_searchable = models.BooleanField(default=True)  # Can other teachers find this profile?
-    contact_visible = models.BooleanField(default=False)  # Is contact info visible to others?
+    # ===========================================
+    is_searchable = models.BooleanField(default=True)
+    contact_visible = models.BooleanField(default=False)
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
     class Meta:
-        db_table = 'teacher_profiles'
-        verbose_name = 'Teacher Profile'
-        verbose_name_plural = 'Teacher Profiles'
+        db_table = 'teacher_profiles'  # Keep for backward compatibility
+        verbose_name = 'Educator Profile'
+        verbose_name_plural = 'Educator Profiles'
 
     def __str__(self):
-        return f"{self.user.email} - Teacher Profile"
+        return f"{self.user.email} - Educator Profile"
+
+    def clean(self):
+        """Validate that at least one expert subject is selected."""
+        super().clean()
+        # Validation will be enforced during onboarding, not here
+        # to allow partial saves during profile creation
 
     def save(self, *args, **kwargs):
         """Sanitize user-generated content before saving."""
@@ -106,6 +175,19 @@ class TeacherProfile(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip() or self.user.username
+    
+    @property
+    def is_profile_complete(self):
+        """Check if profile has minimum required fields for job applications."""
+        return bool(
+            self.first_name and
+            self.expert_subjects and len(self.expert_subjects) > 0 and
+            self.experience_years is not None
+        )
+
+
+# Backward compatibility alias
+TeacherProfile = EducatorProfile
 
 
 class InstitutionProfile(models.Model):

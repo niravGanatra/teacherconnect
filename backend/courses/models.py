@@ -1,8 +1,11 @@
 """
-LMS Course Models for Faculty Development Programs.
-Includes Course, Section, Lesson, Enrollment, and Progress tracking.
+LMS Course Models for Faculty Development Programs (FDPs).
+Includes Course, Section, Lesson, Enrollment, Progress tracking,
+and B2B Bulk Purchase with Redemption Codes.
 """
 import uuid
+import secrets
+import string
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
@@ -11,7 +14,9 @@ from django.db.models import Sum
 
 class Course(models.Model):
     """
-    A Course/Training Program created by an instructor.
+    A Course/FDP (Faculty Development Program) created by an instructor.
+    In the UI, FDPs are referred to as "Training Programs" or "FDPs".
+    Attendees (not students) enroll in these programs.
     """
     DIFFICULTY_CHOICES = [
         ('BEGINNER', 'Beginner'),
@@ -25,9 +30,25 @@ class Course(models.Model):
         ('REGIONAL', 'Regional'),
     ]
     
+    # FDP-specific: Target audience categories
+    AUDIENCE_CHOICES = [
+        ('PRIMARY', 'Primary School Teachers'),
+        ('MIDDLE', 'Middle School Teachers'),
+        ('SECONDARY', 'Secondary School Teachers'),
+        ('HIGHER_SECONDARY', 'Higher Secondary Teachers'),
+        ('HIGHER_ED', 'Higher Education Faculty'),
+        ('HOD', 'Heads of Department'),
+        ('ADMIN', 'School Administrators'),
+        ('COUNSELOR', 'Counselors'),
+        ('SPECIAL_ED', 'Special Educators'),
+        ('ALL', 'All Educators'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
+    # ===========================================
     # Identity
+    # ===========================================
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=220)
     subtitle = models.CharField(max_length=300, blank=True)
@@ -44,17 +65,63 @@ class Course(models.Model):
     thumbnail = models.ImageField(upload_to='courses/thumbnails/', blank=True, null=True)
     promo_video_url = models.URLField(blank=True, help_text='YouTube/Vimeo promotional video')
     
+    # ===========================================
     # Pricing
+    # ===========================================
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # 0 = Free
     original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
+    # B2B Bulk pricing
+    bulk_price_per_seat = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text='Discounted price per seat for bulk purchases'
+    )
+    min_bulk_seats = models.PositiveIntegerField(default=5, help_text='Minimum seats for bulk pricing')
+    
+    # ===========================================
+    # FDP-Specific Metadata
+    # ===========================================
+    is_fdp = models.BooleanField(default=True, help_text='Mark as Faculty Development Program')
+    
+    # Accreditation
+    accreditation_body = models.CharField(
+        max_length=200, blank=True,
+        help_text='Certifying body (e.g., CBSE, Microsoft Educator, NCERT)'
+    )
+    accreditation_logo = models.ImageField(upload_to='accreditations/', blank=True, null=True)
+    
+    # Certificate validity
+    VALIDITY_CHOICES = [
+        (0, 'Lifetime'),
+        (12, '1 Year'),
+        (24, '2 Years'),
+        (36, '3 Years'),
+        (60, '5 Years'),
+    ]
+    validity_period_months = models.PositiveIntegerField(
+        default=0,
+        choices=VALIDITY_CHOICES,
+        help_text='Certificate validity period (0 = lifetime)'
+    )
+    
+    # Target audience
+    target_audience = models.JSONField(
+        default=list, blank=True,
+        help_text='Target audience categories'
+    )
+    
+    # Topics/tags for filtering
+    topics = models.JSONField(default=list, blank=True, help_text='Topics covered')
+    
+    # ===========================================
     # Details
+    # ===========================================
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='BEGINNER')
     language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='EN')
     
     # Features
-    what_you_learn = models.JSONField(default=list, blank=True)  # ["Point 1", "Point 2"]
-    requirements = models.JSONField(default=list, blank=True)  # Prerequisites
+    what_you_learn = models.JSONField(default=list, blank=True)
+    requirements = models.JSONField(default=list, blank=True)
     
     # Settings
     is_published = models.BooleanField(default=False)
@@ -106,6 +173,14 @@ class Course(models.Model):
     @property
     def enrollment_count(self):
         return self.enrollments.count()
+    
+    @property
+    def has_bulk_pricing(self):
+        return self.bulk_price_per_seat is not None
+
+
+# Terminology alias for UI clarity
+FDP = Course
 
 
 class CourseSection(models.Model):
@@ -348,3 +423,153 @@ class UserBadge(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.badge.name}"
+
+
+# ===========================================
+# B2B Bulk Purchase Models
+# ===========================================
+
+class BulkPurchase(models.Model):
+    """
+    B2B Bulk purchase of FDP seats by an institution.
+    Institutions buy multiple seats and receive redemption codes to distribute.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Purchaser (Institution)
+    institution = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='bulk_purchases'
+    )
+    
+    # Course/FDP purchased
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='bulk_purchases')
+    
+    # Purchase details
+    seats_purchased = models.PositiveIntegerField()
+    price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Payment
+    payment_id = models.CharField(max_length=100, blank=True)  # Razorpay payment ID
+    order_id = models.CharField(max_length=100, blank=True)    # Razorpay order ID
+    is_paid = models.BooleanField(default=False)
+    
+    # Metadata
+    purchase_date = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, help_text='Internal notes')
+
+    class Meta:
+        db_table = 'bulk_purchases'
+        ordering = ['-purchase_date']
+
+    def __str__(self):
+        return f"{self.institution.email} - {self.seats_purchased} seats for {self.course.title}"
+    
+    @property
+    def seats_redeemed(self):
+        return self.redemption_codes.filter(is_redeemed=True).count()
+    
+    @property
+    def codes_remaining(self):
+        return self.seats_purchased - self.seats_redeemed
+    
+    def generate_codes(self):
+        """Generate redemption codes for all purchased seats."""
+        codes = []
+        for _ in range(self.seats_purchased):
+            code = RedemptionCode.objects.create(
+                bulk_purchase=self,
+                code=RedemptionCode.generate_unique_code()
+            )
+            codes.append(code)
+        return codes
+
+
+class RedemptionCode(models.Model):
+    """
+    Individual redemption codes for bulk-purchased FDP seats.
+    Educators use these codes to enroll in the course.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    bulk_purchase = models.ForeignKey(
+        BulkPurchase,
+        on_delete=models.CASCADE,
+        related_name='redemption_codes'
+    )
+    
+    # Unique code (e.g., "FDP-ABC123XY")
+    code = models.CharField(max_length=20, unique=True, db_index=True)
+    
+    # Redemption status
+    is_redeemed = models.BooleanField(default=False)
+    redeemed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='redeemed_codes'
+    )
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Created enrollment when redeemed
+    enrollment = models.OneToOneField(
+        Enrollment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='redemption_code'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'redemption_codes'
+        ordering = ['created_at']
+
+    def __str__(self):
+        status = "Redeemed" if self.is_redeemed else "Available"
+        return f"{self.code} ({status})"
+    
+    @staticmethod
+    def generate_unique_code():
+        """Generate a unique redemption code like FDP-ABC123XY."""
+        chars = string.ascii_uppercase + string.digits
+        while True:
+            code = 'FDP-' + ''.join(secrets.choice(chars) for _ in range(8))
+            if not RedemptionCode.objects.filter(code=code).exists():
+                return code
+    
+    def redeem(self, user):
+        """
+        Redeem this code for a user, creating an enrollment.
+        Returns the created Enrollment or raises exception.
+        """
+        from django.utils import timezone
+        
+        if self.is_redeemed:
+            raise ValueError("This code has already been redeemed")
+        
+        # Check if user is already enrolled
+        course = self.bulk_purchase.course
+        if Enrollment.objects.filter(user=user, course=course).exists():
+            raise ValueError("You are already enrolled in this course")
+        
+        # Create enrollment
+        enrollment = Enrollment.objects.create(
+            user=user,
+            course=course,
+            price_paid=0,  # Paid via bulk purchase
+            payment_id=f"BULK:{self.bulk_purchase.id}"
+        )
+        
+        # Mark as redeemed
+        self.is_redeemed = True
+        self.redeemed_by = user
+        self.redeemed_at = timezone.now()
+        self.enrollment = enrollment
+        self.save()
+        
+        return enrollment

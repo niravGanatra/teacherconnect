@@ -1,5 +1,5 @@
 """
-Job listing and application models.
+Job listing and application models for Faculty Job Board.
 Implements the privacy-preserving application snapshot system.
 Uses UUIDs as primary keys for IDOR protection.
 """
@@ -11,7 +11,7 @@ from model_utils import FieldTracker
 
 class JobListing(models.Model):
     """
-    Job listing posted by an Institution.
+    Job listing posted by an Institution for faculty positions.
     Uses UUID as primary key to prevent ID enumeration attacks.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -21,17 +21,76 @@ class JobListing(models.Model):
         related_name='job_listings'
     )
     
+    # ===========================================
     # Job Details
+    # ===========================================
     title = models.CharField(max_length=200)
     description = models.TextField()
     
-    # Requirements
-    required_subjects = models.JSONField(default=list)  # ["Math", "Physics"]
+    # ===========================================
+    # Education-Specific Requirements
+    # ===========================================
+    
+    # Job Level (PRT/TGT/PGT/HOD/Principal)
+    JOB_LEVEL_CHOICES = [
+        ('PRT', 'Primary Teacher (PRT)'),
+        ('TGT', 'Trained Graduate Teacher (TGT)'),
+        ('PGT', 'Post Graduate Teacher (PGT)'),
+        ('LECTURER', 'Lecturer'),
+        ('HOD', 'Head of Department'),
+        ('COORDINATOR', 'Academic Coordinator'),
+        ('PRINCIPAL', 'Principal/Vice Principal'),
+        ('ADMIN', 'Administrative Staff'),
+        ('OTHER', 'Other'),
+    ]
+    job_level = models.CharField(max_length=20, choices=JOB_LEVEL_CHOICES, blank=True)
+    
+    # Job Category
+    JOB_CATEGORY_CHOICES = [
+        ('PERMANENT', 'Permanent'),
+        ('GUEST', 'Guest Lecturer'),
+        ('INVIGILATOR', 'Exam Invigilator'),
+        ('CONTENT', 'Content Creator'),
+        ('TUTOR', 'Private Tutor'),
+        ('SUBSTITUTE', 'Substitute Teacher'),
+    ]
+    job_category = models.CharField(max_length=20, choices=JOB_CATEGORY_CHOICES, default='PERMANENT')
+    
+    # Subject specialization required
+    SUBJECT_CHOICES = [
+        'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi',
+        'Social Studies', 'History', 'Geography', 'Economics', 'Commerce',
+        'Computer Science', 'Physical Education', 'Art', 'Music', 'Sanskrit',
+    ]
+    subject_specialization = models.JSONField(default=list, help_text='Required subject expertise')
+    
+    # Board experience required
+    BOARD_CHOICES = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'CAMBRIDGE', 'NIOS', 'OTHER']
+    required_board_experience = models.JSONField(default=list, help_text='Required board experience')
+    
+    # Minimum qualification
+    QUALIFICATION_CHOICES = [
+        ('B_ED', 'B.Ed'),
+        ('M_ED', 'M.Ed'),
+        ('M_PHIL', 'M.Phil'),
+        ('PHD', 'PhD'),
+        ('D_ED', 'D.Ed'),
+        ('NTT', 'NTT'),
+        ('GRADUATE', 'Graduate'),
+        ('POST_GRADUATE', 'Post Graduate'),
+        ('ANY', 'Any'),
+    ]
+    min_qualification = models.CharField(max_length=20, choices=QUALIFICATION_CHOICES, default='ANY')
+    
+    # Legacy fields (keep for compatibility)
+    required_subjects = models.JSONField(default=list)
     required_experience_years = models.PositiveIntegerField(default=0)
-    required_qualifications = models.JSONField(default=list)  # ["B.Ed", "M.Ed"]
+    required_qualifications = models.JSONField(default=list)
     required_skills = models.JSONField(default=list)
     
-    # Job Type
+    # ===========================================
+    # Job Type & Employment
+    # ===========================================
     JOB_TYPE_CHOICES = [
         ('FULL_TIME', 'Full Time'),
         ('PART_TIME', 'Part Time'),
@@ -40,17 +99,39 @@ class JobListing(models.Model):
     ]
     job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='FULL_TIME')
     
-    # Compensation
+    # ===========================================
+    # Compensation & Perks
+    # ===========================================
     salary_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     salary_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
+    # Education-specific perks
+    PERK_CHOICES = [
+        ('ACCOMMODATION', 'Accommodation Provided'),
+        ('CHILD_EDUCATION', 'Child Education Free'),
+        ('TRANSPORT', 'Transport Provided'),
+        ('HEALTH_INSURANCE', 'Health Insurance'),
+        ('PF_GRATUITY', 'PF & Gratuity'),
+        ('MEAL', 'Meal Provided'),
+        ('ANNUAL_INCREMENT', 'Annual Increment'),
+    ]
+    perks = models.JSONField(default=list, help_text='Benefits offered')
+    
+    # ===========================================
     # Location
+    # ===========================================
     location = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
     is_remote = models.BooleanField(default=False)
     
+    # ===========================================
     # Status
+    # ===========================================
     is_active = models.BooleanField(default=True)
+    is_urgent = models.BooleanField(default=False, help_text='Mark as urgent hiring')
     application_deadline = models.DateField(null=True, blank=True)
+    positions_available = models.PositiveIntegerField(default=1)
     
     # Soft delete fields
     is_deleted = models.BooleanField(default=False)
@@ -62,7 +143,7 @@ class JobListing(models.Model):
 
     class Meta:
         db_table = 'job_listings'
-        ordering = ['-created_at']
+        ordering = ['-is_urgent', '-created_at']
 
     def __str__(self):
         return f"{self.title} at {self.institution.email}"
@@ -85,6 +166,7 @@ class JobListing(models.Model):
         if self.description:
             self.description = sanitize_html(self.description)
         super().save(*args, **kwargs)
+
 
 
 class ApplicationStatus(models.TextChoices):

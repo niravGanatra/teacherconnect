@@ -1,32 +1,38 @@
 """
 Permission classes for role-based access control.
-These enforce the privacy rules:
-- Teachers: Full access to Feed, Events, Job Browsing
-- Institutions: Restricted to Profile, Job Posting, viewing only their applicants
-- Admin: Global moderation
+Educator-First Platform:
+- Educators: View jobs, buy FDPs, edit own profile. CANNOT create jobs or issue certificates.
+- Institutions: Post jobs, sell FDPs, view applicants. CANNOT apply to jobs.
+- Super Admin: Global access
 
 Includes object-level permissions for IDOR protection.
 """
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsTeacher(BasePermission):
+class IsEducator(BasePermission):
     """
-    Permission class that only allows Teacher users.
+    Permission class that only allows Educator users.
+    Educators can: View jobs, buy FDPs, edit own profile.
     """
-    message = "Only teachers can perform this action."
+    message = "Only educators can perform this action."
 
     def has_permission(self, request, view):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type == 'TEACHER'
+            request.user.user_type == 'EDUCATOR'
         )
+
+
+# Backward compatibility alias
+IsTeacher = IsEducator
 
 
 class IsInstitution(BasePermission):
     """
     Permission class that only allows Institution users.
+    Institutions can: Post jobs, sell FDPs, view their applicants.
     """
     message = "Only institutions can perform this action."
 
@@ -38,32 +44,117 @@ class IsInstitution(BasePermission):
         )
 
 
-class IsAdminUser(BasePermission):
+class IsSuperAdmin(BasePermission):
     """
-    Permission class that only allows Admin users.
+    Permission class that only allows Super Admin users.
+    Full platform access.
     """
-    message = "Only administrators can perform this action."
+    message = "Only super administrators can perform this action."
 
     def has_permission(self, request, view):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type == 'ADMIN'
+            request.user.user_type == 'SUPER_ADMIN'
         )
 
 
-class IsTeacherOrInstitution(BasePermission):
+# Backward compatibility alias
+IsAdminUser = IsSuperAdmin
+
+
+class IsEducatorOrInstitution(BasePermission):
     """
-    Permission class that allows both Teachers and Institutions.
+    Permission class that allows both Educators and Institutions.
     """
-    message = "Only teachers or institutions can perform this action."
+    message = "Only educators or institutions can perform this action."
 
     def has_permission(self, request, view):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type in ['TEACHER', 'INSTITUTION']
+            request.user.user_type in ['EDUCATOR', 'INSTITUTION']
         )
+
+
+# Backward compatibility alias
+IsTeacherOrInstitution = IsEducatorOrInstitution
+
+
+class CanApplyToJobs(BasePermission):
+    """
+    Only Educators can apply to jobs.
+    Institutions are explicitly blocked from applying.
+    """
+    message = "Only educators can apply to jobs."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Block institutions from applying
+        if request.user.user_type == 'INSTITUTION':
+            return False
+        
+        # Only educators can apply
+        return request.user.user_type == 'EDUCATOR'
+
+
+class CanCreateJobs(BasePermission):
+    """
+    Only Institutions can create job listings.
+    Educators are explicitly blocked.
+    """
+    message = "Only institutions can create job listings."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Only institutions can create jobs
+        return request.user.user_type == 'INSTITUTION'
+
+
+class CanIssueCertificates(BasePermission):
+    """
+    Only Institutions can issue certificates.
+    Educators cannot issue certificates (they are recipients).
+    """
+    message = "Only institutions can issue certificates."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        return request.user.user_type == 'INSTITUTION'
+
+
+class CanCreateFDPs(BasePermission):
+    """
+    Both Institutions and qualified Educators can create FDPs.
+    Institutions can sell FDPs.
+    Educators with 'instructor' flag can also create FDPs.
+    """
+    message = "You don't have permission to create training programs."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Institutions can always create FDPs
+        if request.user.user_type == 'INSTITUTION':
+            return True
+        
+        # Educators need instructor status (check profile)
+        if request.user.user_type == 'EDUCATOR':
+            try:
+                # Check if educator has instructor privileges
+                profile = request.user.educator_profile
+                return getattr(profile, 'is_instructor', False)
+            except:
+                pass
+        
+        return False
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -72,7 +163,8 @@ class IsOwnerOrReadOnly(BasePermission):
     Supports multiple ownership patterns:
     - Direct user reference (obj.user)
     - Profile-based ownership (obj.profile.user)
-    - Teacher reference (obj.teacher)
+    - Educator reference (obj.educator or obj.teacher)
+    - Institution reference (obj.institution)
     """
     message = "You do not have permission to modify this object."
 
@@ -82,19 +174,23 @@ class IsOwnerOrReadOnly(BasePermission):
             return True
         
         # Check various ownership patterns
-        # Pattern 1: Direct user reference (e.g., TeacherProfile, InstitutionProfile)
+        # Pattern 1: Direct user reference
         if hasattr(obj, 'user'):
             return obj.user == request.user
         
-        # Pattern 2: Profile-based ownership (e.g., Experience, Education, Skill)
+        # Pattern 2: Profile-based ownership
         if hasattr(obj, 'profile'):
             return obj.profile.user == request.user
         
-        # Pattern 3: Teacher reference (e.g., Application, SavedJob)
+        # Pattern 3: Educator reference (new naming)
+        if hasattr(obj, 'educator'):
+            return obj.educator == request.user
+        
+        # Pattern 3b: Teacher reference (backward compatibility)
         if hasattr(obj, 'teacher'):
             return obj.teacher == request.user
         
-        # Pattern 4: Institution reference (e.g., JobListing)
+        # Pattern 4: Institution reference
         if hasattr(obj, 'institution'):
             return obj.institution == request.user
         
@@ -113,12 +209,14 @@ class IsOwner(BasePermission):
     message = "You do not have permission to access this object."
 
     def has_object_permission(self, request, view, obj):
-        # Check various ownership patterns
         if hasattr(obj, 'user'):
             return obj.user == request.user
         
         if hasattr(obj, 'profile'):
             return obj.profile.user == request.user
+        
+        if hasattr(obj, 'educator'):
+            return obj.educator == request.user
         
         if hasattr(obj, 'teacher'):
             return obj.teacher == request.user
@@ -140,11 +238,9 @@ class IsInstitutionAdmin(BasePermission):
     message = "Only institution admins can perform this action."
 
     def has_object_permission(self, request, view, obj):
-        # Read permissions allowed for any request
         if request.method in SAFE_METHODS:
             return True
         
-        # For Institution objects, check the admins M2M field
         if hasattr(obj, 'admins'):
             return request.user in obj.admins.all()
         
