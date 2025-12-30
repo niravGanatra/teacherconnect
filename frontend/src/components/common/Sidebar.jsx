@@ -1,9 +1,11 @@
 /**
- * Responsive Sidebar Component with Mobile Navigation
+ * Responsive Sidebar Component with Role-Based Navigation
+ * Renders different links based on user roles.
  */
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, ROLES } from '../../context/AuthContext';
+import { getDashboardPath, getRoleDisplayName, getRoleIcon } from '../../utils/loginRedirect';
 import {
     HomeIcon,
     BriefcaseIcon,
@@ -17,12 +19,58 @@ import {
     NewspaperIcon,
     Bars3Icon,
     XMarkIcon,
+    AcademicCapIcon,
+    BookOpenIcon,
+    PresentationChartBarIcon,
+    ChevronUpDownIcon,
+    CheckIcon,
 } from '@heroicons/react/24/outline';
 
+/**
+ * Navigation items configuration
+ * Each item specifies which roles can see it
+ */
+const NAV_ITEMS = [
+    // Common items (no role restriction)
+    { to: '/feed', icon: NewspaperIcon, label: 'Feed', roles: [] },
+
+    // Student/Teacher items
+    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.STUDENT, ROLES.TEACHER] },
+    { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs Hub', roles: [ROLES.TEACHER, ROLES.STUDENT] },
+    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.TEACHER, ROLES.STUDENT] },
+    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.TEACHER, ROLES.STUDENT] },
+
+    // Instructor items
+    { to: '/instructor/studio', icon: PresentationChartBarIcon, label: 'Course Studio', roles: [ROLES.INSTRUCTOR] },
+    { to: '/instructor/courses', icon: AcademicCapIcon, label: 'My Courses', roles: [ROLES.INSTRUCTOR] },
+
+    // Institution Admin items
+    { to: '/institution/dashboard', icon: HomeIcon, label: 'School Dashboard', roles: [ROLES.INSTITUTION_ADMIN] },
+    { to: '/institution/manage', icon: BuildingOfficeIcon, label: 'Manage School', roles: [ROLES.INSTITUTION_ADMIN] },
+    { to: '/my-jobs', icon: BriefcaseIcon, label: 'Active Jobs', roles: [ROLES.INSTITUTION_ADMIN] },
+    { to: '/applicants', icon: UsersIcon, label: 'Applicants', roles: [ROLES.INSTITUTION_ADMIN] },
+
+    // Admin items
+    { to: '/admin', icon: HomeIcon, label: 'Admin Dashboard', roles: [ROLES.ADMIN] },
+    { to: '/admin/users', icon: UsersIcon, label: 'Users', roles: [ROLES.ADMIN] },
+    { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions', roles: [ROLES.ADMIN] },
+    { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs', roles: [ROLES.ADMIN] },
+    { to: '/admin/content', icon: DocumentTextIcon, label: 'Content', roles: [ROLES.ADMIN] },
+];
+
 export function Sidebar({ isOpen, onClose }) {
-    const { user, logout, isTeacher, isInstitution, isAdmin } = useAuth();
+    const {
+        user,
+        logout,
+        roles,
+        activeMode,
+        switchMode,
+        hasMultipleRoles,
+        hasAnyRole
+    } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -34,31 +82,23 @@ export function Sidebar({ isOpen, onClose }) {
         navigate('/login');
     };
 
-    const teacherLinks = [
-        { to: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
-        { to: '/feed', icon: NewspaperIcon, label: 'Feed' },
-        { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs Hub' },
-        { to: '/events', icon: CalendarIcon, label: 'Events' },
-        { to: '/profile', icon: UserCircleIcon, label: 'My Profile' },
-    ];
+    // Filter nav items based on user roles
+    const filteredNavItems = NAV_ITEMS.filter(item => {
+        // No role restriction = show to everyone
+        if (item.roles.length === 0) return true;
+        // Check if user has any of the required roles
+        return hasAnyRole(item.roles);
+    });
 
-    const institutionLinks = [
-        { to: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
-        { to: '/my-jobs', icon: BriefcaseIcon, label: 'Active Jobs' },
-        { to: '/jobs', icon: BriefcaseIcon, label: 'Browse All Jobs' },
-        { to: '/events', icon: CalendarIcon, label: 'Events' },
-        { to: '/profile', icon: BuildingOfficeIcon, label: 'Campus Profile' },
-    ];
+    // Get switchable roles (exclude 'student' as it's always present)
+    const switchableRoles = roles.filter(r => r !== ROLES.STUDENT);
 
-    const adminLinks = [
-        { to: '/admin', icon: HomeIcon, label: 'Dashboard' },
-        { to: '/admin/users', icon: UsersIcon, label: 'Users' },
-        { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions' },
-        { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs' },
-        { to: '/admin/content', icon: DocumentTextIcon, label: 'Content' },
-    ];
-
-    const links = isAdmin ? adminLinks : (isTeacher ? teacherLinks : institutionLinks);
+    const handleRoleSwitch = (role) => {
+        switchMode(role);
+        setShowRoleSwitcher(false);
+        // Navigate to role's dashboard
+        navigate(getDashboardPath(role));
+    };
 
     return (
         <>
@@ -90,20 +130,63 @@ export function Sidebar({ isOpen, onClose }) {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
-                    {links.map((link) => (
+                    {filteredNavItems.map((link) => (
                         <NavLink
                             key={link.to}
                             to={link.to}
                             className={({ isActive }) => `
-                sidebar-link text-sm lg:text-base
-                ${isActive ? 'active' : ''}
-              `}
+                                sidebar-link text-sm lg:text-base
+                                ${isActive ? 'active' : ''}
+                            `}
                         >
                             <link.icon className="w-5 h-5 flex-shrink-0" />
                             <span className="truncate">{link.label}</span>
                         </NavLink>
                     ))}
                 </nav>
+
+                {/* Role Switcher (for multi-role users) */}
+                {hasMultipleRoles && switchableRoles.length > 1 && (
+                    <div className="px-3 lg:px-4 py-2 border-t border-white/10">
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+                                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors text-sm"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <span>{getRoleIcon(activeMode)}</span>
+                                    <span>{getRoleDisplayName(activeMode)}</span>
+                                </span>
+                                <ChevronUpDownIcon className="w-4 h-4" />
+                            </button>
+
+                            {/* Role Dropdown */}
+                            {showRoleSwitcher && (
+                                <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-800 rounded-lg shadow-lg overflow-hidden z-10">
+                                    <div className="py-1">
+                                        <div className="px-3 py-1 text-xs text-white/50 uppercase">
+                                            Switch View
+                                        </div>
+                                        {switchableRoles.map((role) => (
+                                            <button
+                                                key={role}
+                                                onClick={() => handleRoleSwitch(role)}
+                                                className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/10 ${activeMode === role ? 'text-blue-400' : 'text-white'
+                                                    }`}
+                                            >
+                                                <span>{getRoleIcon(role)}</span>
+                                                <span className="flex-1 text-left">{getRoleDisplayName(role)}</span>
+                                                {activeMode === role && (
+                                                    <CheckIcon className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* User Info & Logout */}
                 <div className="p-3 lg:p-4 border-t border-white/10 safe-area-bottom">

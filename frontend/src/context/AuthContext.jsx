@@ -1,12 +1,44 @@
 /**
- * Authentication Context
- * Manages user authentication state across the app.
+ * Authentication Context with Role-Based Access Control
+ * Manages user authentication state, roles, and permissions across the app.
  * Uses localStorage-based JWT authentication.
  */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI, profileAPI } from '../services/api';
 
 const AuthContext = createContext(null);
+
+// Role definitions
+export const ROLES = {
+    STUDENT: 'student',
+    TEACHER: 'teacher',
+    INSTRUCTOR: 'instructor',
+    INSTITUTION_ADMIN: 'institution_admin',
+    ADMIN: 'admin',
+};
+
+// Permission definitions
+export const PERMISSIONS = {
+    CAN_CREATE_COURSE: 'can_create_course',
+    CAN_EDIT_SCHOOL: 'can_edit_school',
+    CAN_MANAGE_JOBS: 'can_manage_jobs',
+    CAN_VIEW_APPLICANTS: 'can_view_applicants',
+    CAN_ENROLL_COURSES: 'can_enroll_courses',
+};
+
+// Role to permissions mapping
+const ROLE_PERMISSIONS = {
+    [ROLES.STUDENT]: [PERMISSIONS.CAN_ENROLL_COURSES],
+    [ROLES.TEACHER]: [PERMISSIONS.CAN_ENROLL_COURSES],
+    [ROLES.INSTRUCTOR]: [PERMISSIONS.CAN_CREATE_COURSE, PERMISSIONS.CAN_ENROLL_COURSES],
+    [ROLES.INSTITUTION_ADMIN]: [
+        PERMISSIONS.CAN_EDIT_SCHOOL,
+        PERMISSIONS.CAN_MANAGE_JOBS,
+        PERMISSIONS.CAN_VIEW_APPLICANTS,
+        PERMISSIONS.CAN_CREATE_COURSE,
+    ],
+    [ROLES.ADMIN]: Object.values(PERMISSIONS),
+};
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
@@ -14,31 +46,104 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // RBAC state
+    const [roles, setRoles] = useState([]);
+    const [permissions, setPermissions] = useState({});
+    const [activeMode, setActiveMode] = useState(null); // For multi-role users
+    const [managedInstitutionId, setManagedInstitutionId] = useState(null);
+
     // Check for existing auth on mount
     useEffect(() => {
         initializeAuth();
     }, []);
 
+    // Derive permissions from roles
+    const derivePermissions = useCallback((userRoles) => {
+        const permSet = {};
+        userRoles.forEach(role => {
+            const rolePerms = ROLE_PERMISSIONS[role] || [];
+            rolePerms.forEach(perm => {
+                permSet[perm] = true;
+            });
+        });
+        return permSet;
+    }, []);
+
+    // Derive roles from user data
+    const deriveRoles = useCallback((userData, profileData) => {
+        const derivedRoles = [];
+
+        // Base role from user_type
+        if (userData.user_type === 'TEACHER') {
+            derivedRoles.push(ROLES.TEACHER);
+
+            // Check if also an instructor (has courses)
+            if (profileData?.is_instructor || userData.is_instructor) {
+                derivedRoles.push(ROLES.INSTRUCTOR);
+            }
+        } else if (userData.user_type === 'INSTITUTION') {
+            derivedRoles.push(ROLES.INSTITUTION_ADMIN);
+        } else if (userData.user_type === 'ADMIN') {
+            derivedRoles.push(ROLES.ADMIN);
+        }
+
+        // Check for institution admin role (managed institutions)
+        if (userData.is_institution_admin || profileData?.is_institution_admin) {
+            if (!derivedRoles.includes(ROLES.INSTITUTION_ADMIN)) {
+                derivedRoles.push(ROLES.INSTITUTION_ADMIN);
+            }
+        }
+
+        // Everyone can be a student (for learning)
+        if (!derivedRoles.includes(ROLES.STUDENT)) {
+            derivedRoles.push(ROLES.STUDENT);
+        }
+
+        return derivedRoles;
+    }, []);
+
     const initializeAuth = async () => {
         try {
-            // Check if we have a token in localStorage
             const accessToken = localStorage.getItem('accessToken');
 
             if (!accessToken) {
-                // No token, user is not authenticated
                 setLoading(false);
                 return;
             }
 
             // Try to get current user
             const response = await authAPI.getCurrentUser();
-            setUser(response.data);
-            await fetchProfile(response.data.user_type);
+            const userData = response.data;
+            setUser(userData);
+
+            // Fetch profile
+            const profileData = await fetchProfile(userData.user_type);
+
+            // Set roles and permissions
+            const userRoles = deriveRoles(userData, profileData);
+            setRoles(userRoles);
+            setPermissions(derivePermissions(userRoles));
+
+            // Set managed institution if available
+            if (userData.managed_institution_id || profileData?.managed_institution_id) {
+                setManagedInstitutionId(userData.managed_institution_id || profileData?.managed_institution_id);
+            }
+
+            // Set default active mode (prioritize institution_admin if available)
+            if (userRoles.includes(ROLES.INSTITUTION_ADMIN)) {
+                setActiveMode(ROLES.INSTITUTION_ADMIN);
+            } else if (userRoles.includes(ROLES.INSTRUCTOR)) {
+                setActiveMode(ROLES.INSTRUCTOR);
+            } else if (userRoles.includes(ROLES.TEACHER)) {
+                setActiveMode(ROLES.TEACHER);
+            } else {
+                setActiveMode(userRoles[0] || ROLES.STUDENT);
+            }
         } catch (err) {
-            // Token is invalid or expired - the interceptor will handle refresh
-            // If refresh also fails, tokens will be cleared
             setUser(null);
             setProfile(null);
+            setRoles([]);
+            setPermissions({});
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
         } finally {
@@ -48,15 +153,20 @@ export function AuthProvider({ children }) {
 
     const fetchProfile = async (userType) => {
         try {
+            let profileData = null;
             if (userType === 'TEACHER') {
                 const response = await profileAPI.getTeacherProfile();
-                setProfile(response.data);
+                profileData = response.data;
+                setProfile(profileData);
             } else if (userType === 'INSTITUTION') {
                 const response = await profileAPI.getInstitutionProfile();
-                setProfile(response.data);
+                profileData = response.data;
+                setProfile(profileData);
             }
+            return profileData;
         } catch (err) {
             console.error('Failed to fetch profile:', err);
+            return null;
         }
     };
 
@@ -64,16 +174,34 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.login({ email, password });
-            const { access, refresh, user } = response.data;
+            const { access, refresh, user: userData, primary_role } = response.data;
 
-            // Store tokens in localStorage
             localStorage.setItem('accessToken', access);
             localStorage.setItem('refreshToken', refresh);
 
-            setUser(user);
-            await fetchProfile(user.user_type);
+            setUser(userData);
+            const profileData = await fetchProfile(userData.user_type);
 
-            return { success: true, user };
+            // Set roles and permissions
+            const userRoles = deriveRoles(userData, profileData);
+            setRoles(userRoles);
+            setPermissions(derivePermissions(userRoles));
+
+            // Set managed institution
+            if (userData.managed_institution_id) {
+                setManagedInstitutionId(userData.managed_institution_id);
+            }
+
+            // Set active mode from primary_role or derive
+            if (primary_role) {
+                setActiveMode(primary_role);
+            } else if (userRoles.includes(ROLES.INSTITUTION_ADMIN)) {
+                setActiveMode(ROLES.INSTITUTION_ADMIN);
+            } else {
+                setActiveMode(userRoles[0] || ROLES.STUDENT);
+            }
+
+            return { success: true, user: userData, primary_role: primary_role || userRoles[0] };
         } catch (err) {
             const message = err.response?.data?.error || 'Login failed. Please try again.';
             setError(message);
@@ -85,16 +213,20 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const response = await authAPI.register(data);
-            const { access, refresh, user } = response.data;
+            const { access, refresh, user: userData } = response.data;
 
-            // Store tokens in localStorage
             localStorage.setItem('accessToken', access);
             localStorage.setItem('refreshToken', refresh);
 
-            setUser(user);
-            await fetchProfile(user.user_type);
+            setUser(userData);
+            const profileData = await fetchProfile(userData.user_type);
 
-            return { success: true, user };
+            // Set roles and permissions
+            const userRoles = deriveRoles(userData, profileData);
+            setRoles(userRoles);
+            setPermissions(derivePermissions(userRoles));
+
+            return { success: true, user: userData };
         } catch (err) {
             const message = err.response?.data?.email?.[0] ||
                 err.response?.data?.error ||
@@ -110,11 +242,14 @@ export function AuthProvider({ children }) {
         } catch (err) {
             // Ignore logout errors
         } finally {
-            // Clear tokens and state
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             setUser(null);
             setProfile(null);
+            setRoles([]);
+            setPermissions({});
+            setActiveMode(null);
+            setManagedInstitutionId(null);
         }
     };
 
@@ -134,19 +269,57 @@ export function AuthProvider({ children }) {
         }
     };
 
+    // Switch active mode (for multi-role users)
+    const switchMode = (mode) => {
+        if (roles.includes(mode)) {
+            setActiveMode(mode);
+        }
+    };
+
+    // Check if user has a specific role
+    const hasRole = (role) => roles.includes(role);
+
+    // Check if user has any of specified roles
+    const hasAnyRole = (roleList) => roleList.some(role => roles.includes(role));
+
+    // Check if user has a specific permission
+    const hasPermission = (permission) => !!permissions[permission];
+
     const value = {
+        // User data
         user,
         profile,
         loading,
         error,
+
+        // RBAC
+        roles,
+        permissions,
+        activeMode,
+        managedInstitutionId,
+
+        // Actions
         login,
         register,
         logout,
         updateProfile,
+        switchMode,
+
+        // Helper methods
+        hasRole,
+        hasAnyRole,
+        hasPermission,
+
+        // Convenience flags
         isAuthenticated: !!user,
         isTeacher: user?.user_type === 'TEACHER',
         isInstitution: user?.user_type === 'INSTITUTION',
         isAdmin: user?.user_type === 'ADMIN',
+        isInstitutionAdmin: roles.includes(ROLES.INSTITUTION_ADMIN),
+        isInstructor: roles.includes(ROLES.INSTRUCTOR),
+
+        // Multi-role detection
+        hasMultipleRoles: roles.filter(r => r !== ROLES.STUDENT).length > 1,
     };
 
     return (
@@ -156,6 +329,7 @@ export function AuthProvider({ children }) {
     );
 }
 
+// Main auth hook
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {
@@ -164,4 +338,27 @@ export function useAuth() {
     return context;
 }
 
+// Permission check hook
+export function usePermission(permissionName) {
+    const { hasPermission } = useAuth();
+    return hasPermission(permissionName);
+}
+
+// Role check hook
+export function useRole(roleName) {
+    const { hasRole } = useAuth();
+    return hasRole(roleName);
+}
+
+// Check if user can access a resource/feature
+export function useAccess(requiredRoles = [], requiredPermissions = []) {
+    const { hasAnyRole, hasPermission } = useAuth();
+
+    const hasRequiredRole = requiredRoles.length === 0 || hasAnyRole(requiredRoles);
+    const hasRequiredPermissions = requiredPermissions.every(perm => hasPermission(perm));
+
+    return hasRequiredRole && hasRequiredPermissions;
+}
+
+export { ROLES as UserRoles, PERMISSIONS as UserPermissions };
 export default AuthContext;
