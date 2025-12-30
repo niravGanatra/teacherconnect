@@ -263,6 +263,9 @@ export const jobsAPI = {
 
     // Teacher: Get recommended jobs
     getRecommendedJobs: () => api.get('/jobs/recommended/'),
+
+    // Teacher: Update note on saved job
+    updateSavedJobNote: (savedJobId, note) => api.patch(`/jobs/saved/${savedJobId}/note/`, { user_note: note }),
 };
 
 // Feed API

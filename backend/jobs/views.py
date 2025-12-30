@@ -309,6 +309,44 @@ class SavedJobsListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsTeacher]
 
     def get_queryset(self):
-        return SavedJob.objects.filter(
+        queryset = SavedJob.objects.filter(
             teacher=self.request.user
         ).select_related('job__institution__institution_profile')
+        
+        # Sorting
+        sort = self.request.query_params.get('sort', 'date_saved')
+        if sort == 'deadline':
+            queryset = queryset.order_by('job__application_deadline')
+        else:
+            queryset = queryset.order_by('-created_at')
+        
+        return queryset
+
+
+class UpdateSavedJobNoteView(APIView):
+    """
+    API endpoint for teachers to update notes on a saved job.
+    """
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def patch(self, request, saved_job_id):
+        try:
+            saved_job = SavedJob.objects.get(
+                pk=saved_job_id,
+                teacher=request.user
+            )
+        except SavedJob.DoesNotExist:
+            return Response(
+                {'error': 'Saved job not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        user_note = request.data.get('user_note', '')
+        saved_job.user_note = user_note
+        saved_job.save()
+        
+        return Response({
+            'message': 'Note updated.',
+            'saved_job': SavedJobSerializer(saved_job, context={'request': request}).data
+        })
+

@@ -15,6 +15,7 @@ from .views import (
     UpdateApplicationStatusView,
     SaveJobView,
     SavedJobsListView,
+    UpdateSavedJobNoteView,
 )
 
 urlpatterns = [
@@ -37,4 +38,6 @@ urlpatterns = [
     # Saved jobs
     path('<int:job_id>/save/', SaveJobView.as_view(), name='save_job'),
     path('saved/', SavedJobsListView.as_view(), name='saved_jobs'),
+    path('saved/<uuid:saved_job_id>/note/', UpdateSavedJobNoteView.as_view(), name='update_saved_job_note'),
 ]
+

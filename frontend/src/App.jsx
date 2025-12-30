@@ -34,8 +34,10 @@ import AdminContent from './pages/admin/Content';
 // Shared Pages
 import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
+import JobAlerts from './pages/jobs/JobAlerts';
 import Events from './pages/events/Events';
 import InstitutionPage from './pages/InstitutionPage';
+import JobsLayout from './components/jobs/JobsLayout';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
@@ -185,23 +187,22 @@ function AppRoutes() {
         }
       />
 
+      {/* Jobs Hub - Nested Routes */}
       <Route
         path="/jobs"
         element={
           <ProtectedRoute>
-            <JobBoard />
+            <JobsLayout />
           </ProtectedRoute>
         }
-      />
-
-      <Route
-        path="/jobs/:id"
-        element={
-          <ProtectedRoute>
-            <JobDetail />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route index element={<Navigate to="discover" replace />} />
+        <Route path="discover" element={<JobBoard />} />
+        <Route path="applications" element={<MyApplications />} />
+        <Route path="saved" element={<SavedJobs />} />
+        <Route path="alerts" element={<JobAlerts />} />
+        <Route path=":id" element={<JobDetail />} />
+      </Route>
 
       <Route
         path="/events"
@@ -211,6 +212,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
 
       {/* Institution Public Pages */}
       <Route

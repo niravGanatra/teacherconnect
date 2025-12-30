@@ -151,4 +151,6 @@ class SavedJobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = SavedJob
-        fields = ['id', 'job', 'created_at']
+        fields = ['id', 'job', 'user_note', 'created_at']
+        read_only_fields = ['id', 'job', 'created_at']
+

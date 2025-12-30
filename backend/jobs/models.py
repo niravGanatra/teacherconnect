@@ -223,8 +223,10 @@ class SavedJob(models.Model):
         on_delete=models.CASCADE,
         related_name='saved_by'
     )
+    user_note = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'saved_jobs'
         unique_together = ['teacher', 'job']
+
