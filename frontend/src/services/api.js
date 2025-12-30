@@ -444,4 +444,42 @@ export const institutionPagesAPI = {
     adminReject: (id, data) => api.post(`/institutions/${id}/admin-reject/`, data),
 };
 
+// Network API (Connections & Follow)
+export const networkAPI = {
+    // Send connection request
+    sendConnectionRequest: (recipientId, message = '') =>
+        api.post('/network/connect/', { recipient_id: recipientId, message }),
+
+    // Take action on connection request (ACCEPT, REJECT, WITHDRAW)
+    requestAction: (requestId, action) =>
+        api.post(`/network/request/${requestId}/action/`, { action }),
+
+    // Toggle follow
+    toggleFollow: (userId) => api.post(`/network/follow/${userId}/`),
+
+    // Get pending requests (received)
+    getPendingRequests: () => api.get('/network/requests/'),
+
+    // Get sent requests
+    getSentRequests: () => api.get('/network/requests/sent/'),
+
+    // Get my connections
+    getConnections: () => api.get('/network/connections/'),
+
+    // Get relationship status with a user
+    getRelationshipStatus: (userId) => api.get(`/network/status/${userId}/`),
+
+    // Remove connection
+    removeConnection: (userId) => api.delete(`/network/connections/${userId}/`),
+};
+
+// Privacy API
+export const privacyAPI = {
+    // Get my privacy settings
+    getSettings: () => api.get('/profiles/privacy/'),
+
+    // Update privacy settings
+    updateSettings: (data) => api.patch('/profiles/privacy/', data),
+};
+
 export default api;

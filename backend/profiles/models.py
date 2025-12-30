@@ -314,3 +314,68 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.issuing_org}"
+
+
+class VisibilityChoice(models.TextChoices):
+    PUBLIC = 'PUBLIC', 'Everyone'
+    CONNECTIONS_ONLY = 'CONNECTIONS_ONLY', 'Connections Only'
+    NO_ONE = 'NO_ONE', 'Only Me'
+
+
+class UserPrivacySettings(models.Model):
+    """
+    Granular privacy settings for user profiles.
+    OneToOne with User, auto-created on first access.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='privacy_settings'
+    )
+    
+    # Privacy Controls
+    who_can_send_connect_request = models.CharField(
+        max_length=20,
+        choices=VisibilityChoice.choices,
+        default=VisibilityChoice.PUBLIC
+    )
+    who_can_see_connections_list = models.CharField(
+        max_length=20,
+        choices=VisibilityChoice.choices,
+        default=VisibilityChoice.CONNECTIONS_ONLY
+    )
+    who_can_see_posts = models.CharField(
+        max_length=20,
+        choices=VisibilityChoice.choices,
+        default=VisibilityChoice.PUBLIC
+    )
+    who_can_see_email = models.CharField(
+        max_length=20,
+        choices=VisibilityChoice.choices,
+        default=VisibilityChoice.CONNECTIONS_ONLY
+    )
+    who_can_see_phone = models.CharField(
+        max_length=20,
+        choices=VisibilityChoice.choices,
+        default=VisibilityChoice.CONNECTIONS_ONLY
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'user_privacy_settings'
+        verbose_name = 'User Privacy Settings'
+        verbose_name_plural = 'User Privacy Settings'
+
+    def __str__(self):
+        return f"Privacy settings for {self.user.email}"
+
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        """Get or create privacy settings for a user."""
+        settings, created = cls.objects.get_or_create(user=user)
+        return settings
+

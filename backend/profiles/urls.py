@@ -14,6 +14,7 @@ from .views import (
     EducationViewSet,
     SkillViewSet,
     CertificationViewSet,
+    PrivacySettingsView,
 )
 
 # Router for ViewSets
@@ -34,6 +35,10 @@ urlpatterns = [
     path('institution/<int:pk>/', InstitutionProfileDetailView.as_view(), name='institution_profile_detail'),
     path('institutions/', InstitutionListView.as_view(), name='institution_list'),
     
+    # Privacy settings
+    path('privacy/', PrivacySettingsView.as_view(), name='privacy_settings'),
+    
     # LinkedIn-style profile sections (REST ViewSets)
     path('', include(router.urls)),
 ]
+

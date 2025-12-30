@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'jobs',
     'events',
     'notifications',
+    'network',
 ]
 
 MIDDLEWARE = [

@@ -213,3 +213,36 @@ class CertificationViewSet(viewsets.ModelViewSet):
         profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         serializer.save(profile=profile)
 
+
+# ============================================
+# Privacy Settings View
+# ============================================
+
+class PrivacySettingsView(generics.RetrieveUpdateAPIView):
+    """
+    API endpoint for viewing/updating the current user's privacy settings.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        from .models import UserPrivacySettings
+        return UserPrivacySettings.get_or_create_for_user(self.request.user)
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+        from .models import UserPrivacySettings
+
+        class PrivacySettingsSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = UserPrivacySettings
+                fields = [
+                    'who_can_send_connect_request',
+                    'who_can_see_connections_list',
+                    'who_can_see_posts',
+                    'who_can_see_email',
+                    'who_can_see_phone',
+                ]
+
+        return PrivacySettingsSerializer
+
+
