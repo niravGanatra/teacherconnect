@@ -25,13 +25,25 @@ export default function MyLearning() {
     const fetchEnrollments = async () => {
         try {
             const response = await coursesAPI.getEnrollments();
-            setEnrollments(response.data || []);
+            // Handle different response formats - could be array or paginated results
+            const data = response.data;
+            if (Array.isArray(data)) {
+                setEnrollments(data);
+            } else if (data?.results && Array.isArray(data.results)) {
+                setEnrollments(data.results);
+            } else {
+                // API not ready or returned unexpected format
+                setEnrollments([]);
+            }
         } catch (error) {
             console.error('Failed to fetch enrollments:', error);
+            // Set empty array on error to prevent map error
+            setEnrollments([]);
         } finally {
             setLoading(false);
         }
     };
+
 
     if (loading) {
         return (
