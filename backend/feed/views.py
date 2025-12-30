@@ -5,7 +5,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q
 
 from accounts.permissions import IsTeacher, IsTeacherOrInstitution
@@ -71,7 +71,7 @@ class PostListCreateView(generics.ListCreateAPIView):
     API endpoint for listing all posts and creating new ones.
     """
     permission_classes = [IsAuthenticated, IsTeacherOrInstitution]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

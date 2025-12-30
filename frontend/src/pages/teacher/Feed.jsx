@@ -21,6 +21,8 @@ export default function Feed() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [initialMediaType, setInitialMediaType] = useState(null);
+
     useEffect(() => {
         fetchPosts();
     }, []);
@@ -36,7 +38,8 @@ export default function Feed() {
         }
     };
 
-    const handleCreatePost = () => {
+    const handleCreatePost = (type = null) => {
+        setInitialMediaType(type);
         setIsModalOpen(true);
     };
 
@@ -160,7 +163,12 @@ export default function Feed() {
 
     return (
         <DashboardLayout>
-            <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPostCreated={handlePostCreated} />
+            <CreatePostModal
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setInitialMediaType(null); }}
+                onPostCreated={handlePostCreated}
+                initialMediaType={initialMediaType}
+            />
 
             {/* Header */}
             <div className="mb-6">
@@ -173,22 +181,22 @@ export default function Feed() {
                 <div className="flex gap-4 items-center">
                     <Avatar name={user?.username} size="md" />
                     <button
-                        onClick={handleCreatePost}
+                        onClick={() => handleCreatePost()}
                         className="flex-1 text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 font-medium transition-colors border border-gray-200"
                     >
                         Start a post
                     </button>
                 </div>
                 <div className="flex items-center justify-between mt-4 pt-2 px-4">
-                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                    <button onClick={() => handleCreatePost('IMAGE')} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
                         <PhotoIcon className="w-6 h-6 text-blue-500" />
                         <span className="text-sm font-medium">Photo</span>
                     </button>
-                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                    <button onClick={() => handleCreatePost('VIDEO')} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
                         <span className="w-6 h-6 flex items-center justify-center text-green-600 font-bold border-2 border-green-600 rounded">▶</span>
                         <span className="text-sm font-medium">Video</span>
                     </button>
-                    <button onClick={handleCreatePost} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                    <button onClick={() => handleCreatePost('DOCUMENT')} className="flex items-center gap-2 text-slate-500 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
                         <span className="w-6 h-6 flex items-center justify-center text-orange-600">📄</span>
                         <span className="text-sm font-medium">Article</span>
                     </button>

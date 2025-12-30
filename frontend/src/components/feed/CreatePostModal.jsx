@@ -3,11 +3,14 @@ import { useDropzone } from 'react-dropzone';
 import { X, Image as ImageIcon, Video as VideoIcon, FileText, Smile, Plus, Play, Loader2 } from 'lucide-react';
 import { feedAPI } from '../../services/api';
 
-const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostModal = ({ isOpen, onClose, onPostCreated, initialMediaType = null }) => {
     const [text, setText] = useState('');
     const [attachments, setAttachments] = useState([]); // Array of { id, file, type, preview, status: 'uploading'|'done'|'error' }
     const [isPosting, setIsPosting] = useState(false);
     const textareaRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const videoInputRef = useRef(null);
+    const docInputRef = useRef(null);
     const DRAFT_KEY = 'post_draft_content';
 
     // Load draft on mount
@@ -18,14 +21,28 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
                 try {
                     const parsed = JSON.parse(savedDraft);
                     setText(parsed.text || '');
-                    // We cannot easily restore file objects/previews from localStorage without re-uploading or complex logic.
-                    // For now, we only restore text draft.
                 } catch (e) {
                     console.error("Error parsing draft", e);
                 }
             }
         }
     }, [isOpen]);
+
+    // Handle initial media type trigger
+    useEffect(() => {
+        if (isOpen && initialMediaType) {
+            // Attempt to auto-open the relevant file picker
+            // Note: Browsers may block this if not directly triggered by user action stack.
+            // But since the user clicked "Photo" on the Feed, and that set state -> isOpen, 
+            // the async React render cycle might break the trusted event chain. 
+            // We'll try anyway.
+            setTimeout(() => {
+                if (initialMediaType === 'IMAGE' && imageInputRef.current) imageInputRef.current.click();
+                if (initialMediaType === 'VIDEO' && videoInputRef.current) videoInputRef.current.click();
+                if (initialMediaType === 'DOCUMENT' && docInputRef.current) docInputRef.current.click();
+            }, 100);
+        }
+    }, [isOpen, initialMediaType]);
 
     // Auto-resize textarea
     useEffect(() => {
@@ -65,35 +82,15 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
                 alert("You cannot attach both a Document and a Video.");
                 return false;
             }
-            // If Video, can we have Images? LinkedIn allows logic varies, but usually mix is restricted or tricky.
-            // Requirement says: "Ensure a post cannot have both a Video and a Document... but can have multiple Images."
-            // Implicitly, Video + Images might be okay, or Video only. 
-            // Let's allow Images with anything for now, unless strict mode is asked. 
-            // "Mode Switching: If user uploads Video, disable Image/Document buttons." -> Strict Mode.
 
             if (type === 'VIDEO' && attachments.length > 0) {
-                // If there are existing items, they must be removed or this is invalid if we want strict mode.
-                // Requirement: "If the user uploads a Video, disable the Image/Document buttons."
-                // This implies Video is exclusive? 
-                // Let's enforce exclusivity for Video and Document. Images can be multiple.
-                // If Video is uploaded, it should be the ONLY thing? 
-                // "Post... can have multiple Images." 
-                // Let's assume:
-                // 1. Text + Images (Multiple)
-                // 2. Text + Video (Single)
-                // 3. Text + Document (Single)
-
-                if (attachments.length > 0) {
-                    alert("Video must be the only attachment.");
-                    return false;
-                }
+                alert("Video must be the only attachment.");
+                return false;
             }
 
             if (type === 'DOCUMENT' && attachments.length > 0) {
-                if (attachments.length > 0) {
-                    alert("Document must be the only attachment.");
-                    return false;
-                }
+                alert("Document must be the only attachment.");
+                return false;
             }
 
             if (type === 'IMAGE' && (currentTypes.has('VIDEO') || currentTypes.has('DOCUMENT'))) {
@@ -104,16 +101,19 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
         return true;
     };
 
-    const onDrop = async (acceptedFiles) => {
-        if (!validateFiles(acceptedFiles)) return;
+    const processFiles = async (files) => {
+        if (!files || files.length === 0) return;
+        const fileArray = Array.from(files);
 
-        const newAttachments = acceptedFiles.map(file => {
+        if (!validateFiles(fileArray)) return;
+
+        const newAttachments = fileArray.map(file => {
             let type = 'IMAGE';
             if (file.type.startsWith('video/')) type = 'VIDEO';
             if (file.type === 'application/pdf') type = 'DOCUMENT';
 
             return {
-                id: null, // to be filled by upload
+                id: null,
                 tempId: Math.random().toString(36).substr(2, 9),
                 file,
                 type,
@@ -146,13 +146,25 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
         }
     };
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+    const onDrop = (acceptedFiles) => {
+        processFiles(acceptedFiles);
+    };
+
+    const handleFileInput = (e) => {
+        processFiles(e.target.files);
+        e.target.value = ''; // Reset input
+    };
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        noClick: true, // We will handle clicks manually via buttons
+        noKeyboard: true
+    });
 
     const handlePost = async () => {
         if (isPosting) return;
         if (!text.trim() && attachments.length === 0) return;
 
-        // Ensure all uploads are done
         if (attachments.some(a => a.status === 'uploading')) {
             alert("Please wait for uploads to finish.");
             return;
@@ -174,7 +186,14 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
             onClose();
         } catch (error) {
             console.error("Post creation failed", error);
-            alert("Failed to create post.");
+            // Handle specific API error messages if available
+            if (error.response?.data?.error) {
+                alert(error.response.data.error);
+            } else if (error.response?.status === 415) {
+                alert("Unsupported Media Type. Please try again.");
+            } else {
+                alert("Failed to create post.");
+            }
         } finally {
             setIsPosting(false);
         }
@@ -184,7 +203,6 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
         setAttachments(prev => prev.filter(a => a.tempId !== tempId));
     };
 
-    // Determine current mode to disable buttons
     const hasVideo = attachments.some(a => a.type === 'VIDEO');
     const hasDocument = attachments.some(a => a.type === 'DOCUMENT');
     const hasImages = attachments.some(a => a.type === 'IMAGE');
@@ -202,9 +220,18 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                    {/* User Info (Placeholder) */}
+                {/* Content - Wrapped in Dropzone Root, but click default off */}
+                <div {...getRootProps()} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 relative outline-none">
+                    <input {...getInputProps()} />
+
+                    {/* Visual Drop Overlay */}
+                    {isDragActive && (
+                        <div className="absolute inset-0 z-10 bg-blue-50/90 border-2 border-dashed border-blue-500 flex items-center justify-center rounded-lg">
+                            <p className="text-xl font-semibold text-blue-600">Drop files here</p>
+                        </div>
+                    )}
+
+                    {/* User Info */}
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
                         <div>
@@ -218,7 +245,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
                         ref={textareaRef}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="What doy you want to talk about?"
+                        placeholder="What do you want to talk about?"
                         className="w-full resize-none outline-none text-lg text-gray-700 min-h-[100px]"
                     />
 
@@ -291,31 +318,55 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
                 {/* Footer / Actions */}
                 <div className="p-4 border-t flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        {/* Media Buttons */}
-                        <div {...getRootProps()} className="flex items-center gap-2">
-                            <input {...getInputProps()} />
-                            <button
-                                className={`p-2 rounded-full hover:bg-gray-100 text-blue-600 ${hasVideo || hasDocument ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={hasVideo || hasDocument}
-                            >
-                                <ImageIcon size={24} />
-                            </button>
-                            {/* Separate Input for specific types if desired, but Dropzone handles all. 
-                                 We can simulate buttons by opening dropzone. 
-                                 Actually, user wants specific constraints. 
-                                 Ideally we have multiple dropzones or one dropzone that strictly filters 
-                                 but the buttons imply intent. 
-                                 Let's keep it simple: One dropzone area, buttons just trigger it.
-                              */}
-                        </div>
+                        {/* Hidden Specific Inputs using Refs */}
+                        <input
+                            type="file"
+                            ref={imageInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            multiple
+                            onChange={handleFileInput}
+                        />
+                        <input
+                            type="file"
+                            ref={videoInputRef}
+                            className="hidden"
+                            accept="video/*"
+                            onChange={handleFileInput}
+                        />
+                        <input
+                            type="file"
+                            ref={docInputRef}
+                            className="hidden"
+                            accept=".pdf"
+                            onChange={handleFileInput}
+                        />
 
-                        {/* We need separate handlers if we want to enforce type via button click, 
-                             but dropzone is unified. 
-                             Let's just show icons. */}
-                        <button className={`p-2 rounded-full hover:bg-gray-100 text-green-600 ${hasImages || hasDocument ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={hasImages || hasDocument}>
+                        {/* Buttons triggering Refs */}
+                        <button
+                            onClick={() => imageInputRef.current?.click()}
+                            className={`p-2 rounded-full hover:bg-gray-100 text-blue-600 ${hasVideo || hasDocument ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={hasVideo || hasDocument}
+                            title="Add Photos"
+                        >
+                            <ImageIcon size={24} />
+                        </button>
+
+                        <button
+                            onClick={() => videoInputRef.current?.click()}
+                            className={`p-2 rounded-full hover:bg-gray-100 text-green-600 ${hasImages || hasDocument ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={hasImages || hasDocument}
+                            title="Add Video"
+                        >
                             <VideoIcon size={24} />
                         </button>
-                        <button className={`p-2 rounded-full hover:bg-gray-100 text-orange-600 ${hasImages || hasVideo ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={hasImages || hasVideo}>
+
+                        <button
+                            onClick={() => docInputRef.current?.click()}
+                            className={`p-2 rounded-full hover:bg-gray-100 text-orange-600 ${hasImages || hasVideo ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={hasImages || hasVideo}
+                            title="Add Document (PDF)"
+                        >
                             <FileText size={24} />
                         </button>
 
