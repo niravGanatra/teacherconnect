@@ -36,6 +36,40 @@ class TeacherProfile(models.Model):
     education = models.JSONField(default=list, blank=True)  # [{"degree": "B.Ed", "institution": "...", "year": 2020}]
     certifications = models.JSONField(default=list, blank=True)
     
+    # ==========================================
+    # Teacher Attributes (Availability & Preferences)
+    # ==========================================
+    AVAILABILITY_CHOICES = [
+        ('FULL_TIME', 'Full-Time'),
+        ('PART_TIME', 'Part-Time'),
+        ('FREELANCE', 'Freelance'),
+        ('OCCUPIED', 'Not Available'),
+    ]
+    availability = models.CharField(
+        max_length=20,
+        choices=AVAILABILITY_CHOICES,
+        default='FULL_TIME',
+        blank=True
+    )
+    
+    TEACHING_MODE_CHOICES = ['ONLINE', 'OFFLINE', 'HYBRID']
+    teaching_modes = models.JSONField(default=list, blank=True)  # ["ONLINE", "HYBRID"]
+    
+    BOARD_CHOICES = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'OTHER']
+    boards = models.JSONField(default=list, blank=True)  # ["CBSE", "IB"]
+    
+    GRADE_CHOICES = ['K-5', '6-8', '9-10', '11-12', 'UG', 'PG']
+    grades_taught = models.JSONField(default=list, blank=True)  # ["9-10", "11-12"]
+    
+    # Demo Video
+    demo_video_url = models.URLField(blank=True, help_text='YouTube or Vimeo link')
+    demo_video_file = models.FileField(
+        upload_to='demo_videos/',
+        blank=True,
+        null=True,
+        help_text='MP4 or MOV, max 50MB'
+    )
+    
     # Portfolio
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     portfolio_url = models.URLField(blank=True)
@@ -52,6 +86,7 @@ class TeacherProfile(models.Model):
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         db_table = 'teacher_profiles'

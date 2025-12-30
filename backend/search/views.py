@@ -18,6 +18,11 @@ class GlobalSearchView(APIView):
     """
     Global search endpoint for People, Institutions, and Jobs.
     GET /api/search/?q=query&type=ALL|PEOPLE|INSTITUTIONS|JOBS
+    
+    Teacher-specific filters:
+    - boards: Filter by board (CBSE, IB, etc.)
+    - availability: Filter by availability (FREELANCE, FULL_TIME, etc.)
+    - has_demo: Filter to only teachers with demo videos
     """
     permission_classes = [IsAuthenticated]
 
@@ -25,6 +30,11 @@ class GlobalSearchView(APIView):
         query = request.query_params.get('q', '').strip()
         search_type = request.query_params.get('type', 'ALL').upper()
         limit = int(request.query_params.get('limit', 20))
+        
+        # Teacher-specific filters
+        board_filter = request.query_params.get('boards', '')
+        availability_filter = request.query_params.get('availability', '')
+        has_demo = request.query_params.get('has_demo', '').lower() == 'true'
 
         if not query or len(query) < 2:
             return Response({
@@ -43,7 +53,12 @@ class GlobalSearchView(APIView):
         try:
             # Search People (Teachers)
             if search_type in ['ALL', 'PEOPLE']:
-                results['people'] = self._search_people(query, limit, request.user)
+                results['people'] = self._search_people(
+                    query, limit, request.user,
+                    board_filter=board_filter,
+                    availability_filter=availability_filter,
+                    has_demo=has_demo
+                )
 
             # Search Institutions
             if search_type in ['ALL', 'INSTITUTIONS', 'COMPANIES']:
@@ -63,6 +78,7 @@ class GlobalSearchView(APIView):
 
         return Response(results)
 
+
     def _get_excluded_user_ids(self):
         """Get IDs of users that should be excluded from search (admins, inactive, hidden)."""
         try:
@@ -80,11 +96,12 @@ class GlobalSearchView(APIView):
         except Exception:
             return set()
 
-    def _search_people(self, query, limit, current_user):
-        """Search teacher profiles with icontains."""
+    def _search_people(self, query, limit, current_user, board_filter='', availability_filter='', has_demo=False):
+        """Search teacher profiles with filters and prioritization."""
         excluded_ids = self._get_excluded_user_ids()
 
-        profiles = TeacherProfile.objects.filter(
+        # Base query
+        queryset = TeacherProfile.objects.filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(headline__icontains=query) |
@@ -95,7 +112,30 @@ class GlobalSearchView(APIView):
             user_id=current_user.id
         ).filter(
             is_searchable=True
-        ).select_related('user')[:limit]
+        )
+
+        # Apply board filter (e.g., boards__contains='IB')
+        if board_filter:
+            queryset = queryset.filter(boards__contains=board_filter)
+
+        # Apply availability filter
+        if availability_filter:
+            queryset = queryset.filter(availability=availability_filter)
+
+        # Filter to only those with demo videos
+        if has_demo:
+            queryset = queryset.filter(
+                Q(demo_video_url__isnull=False, demo_video_url__gt='') |
+                Q(demo_video_file__isnull=False)
+            )
+
+        # Fetch results with related user
+        profiles = list(queryset.select_related('user')[:limit * 2])  # Get extra for reordering
+
+        # Prioritize teachers with demo videos
+        with_demo = [p for p in profiles if p.demo_video_url or p.demo_video_file]
+        without_demo = [p for p in profiles if not (p.demo_video_url or p.demo_video_file)]
+        sorted_profiles = (with_demo + without_demo)[:limit]
 
         return [
             {
@@ -105,11 +145,16 @@ class GlobalSearchView(APIView):
                 'headline': p.headline or '',
                 'city': p.city or '',
                 'state': p.state or '',
+                'availability': p.availability,
+                'boards': p.boards or [],
+                'teaching_modes': p.teaching_modes or [],
+                'has_demo_video': bool(p.demo_video_url or p.demo_video_file),
                 'profile_photo': p.profile_photo.url if p.profile_photo else None,
-                'relevance_score': 1.0,
+                'relevance_score': 1.5 if (p.demo_video_url or p.demo_video_file) else 1.0,
             }
-            for p in profiles
+            for p in sorted_profiles
         ]
+
 
     def _search_institutions(self, query, limit):
         """Search institution profiles."""
