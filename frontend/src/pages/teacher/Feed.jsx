@@ -18,6 +18,8 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 export default function Feed() {
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchPosts();
