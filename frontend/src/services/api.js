@@ -244,7 +244,7 @@ export const jobsAPI = {
     withdrawApplication: (jobId) => api.delete(`/jobs/${jobId}/withdraw/`),
 
     // Teacher: Get my applications
-    getMyApplications: () => api.get('/applications/'),
+    getMyApplications: () => api.get('/jobs/my-applications/'),
 
     // Institution: Get applications for a job
     getJobApplications: (jobId, params = {}) => api.get(`/jobs/${jobId}/applications/`, { params }),
@@ -260,6 +260,9 @@ export const jobsAPI = {
 
     // Teacher: Get saved jobs
     getSavedJobs: () => api.get('/jobs/saved/'),
+
+    // Teacher: Get recommended jobs
+    getRecommendedJobs: () => api.get('/jobs/recommended/'),
 };
 
 // Feed API
@@ -309,11 +312,11 @@ export const feedAPI = {
     // Unfollow user
     unfollowUser: (userId) => api.delete(`/feed/unfollow/${userId}/`),
 
-    // Get user's followers
-    getFollowers: (userId) => api.get(`/feed/users/${userId}/followers/`),
+    // Get current user's followers
+    getFollowers: () => api.get('/feed/followers/'),
 
-    // Get user's following
-    getFollowing: (userId) => api.get(`/feed/users/${userId}/following/`),
+    // Get current user's following
+    getFollowing: () => api.get('/feed/following/'),
 };
 
 // Events API
