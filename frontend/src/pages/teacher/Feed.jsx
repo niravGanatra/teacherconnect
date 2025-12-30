@@ -12,6 +12,8 @@ import {
     ChatBubbleLeftIcon,
     PhotoIcon,
     PaperAirplaneIcon,
+    EllipsisHorizontalIcon,
+    TrashIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 
@@ -62,6 +64,19 @@ export default function Feed() {
             }));
         } catch (error) {
             console.error('Failed to like post:', error);
+        }
+    };
+
+    const handleDeletePost = async (postId) => {
+        if (!window.confirm('Are you sure you want to delete this post?')) {
+            return;
+        }
+        try {
+            await feedAPI.deletePost(postId);
+            setPosts(prev => prev.filter(post => post.id !== postId));
+        } catch (error) {
+            console.error('Failed to delete post:', error);
+            alert('Failed to delete post. Please try again.');
         }
     };
 
@@ -219,20 +234,32 @@ export default function Feed() {
                     {posts.map((post) => (
                         <Card key={post.id} className="p-6">
                             {/* Post Header */}
-                            <div className="flex items-center gap-3 mb-4">
-                                <Avatar
-                                    src={post.author?.profile_photo}
-                                    name={post.author?.display_name || post.author?.username}
-                                    size="md"
-                                />
-                                <div>
-                                    <p className="font-medium text-slate-900">
-                                        {post.author?.display_name || post.author?.username}
-                                    </p>
-                                    <p className="text-sm text-slate-500">
-                                        {formatDate(post.created_at)}
-                                    </p>
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <Avatar
+                                        src={post.author?.profile_photo}
+                                        name={post.author?.display_name || post.author?.username}
+                                        size="md"
+                                    />
+                                    <div>
+                                        <p className="font-medium text-slate-900">
+                                            {post.author?.display_name || post.author?.username}
+                                        </p>
+                                        <p className="text-sm text-slate-500">
+                                            {formatDate(post.created_at)}
+                                        </p>
+                                    </div>
                                 </div>
+                                {/* Delete button for post author */}
+                                {user?.id === post.author?.id && (
+                                    <button
+                                        onClick={() => handleDeletePost(post.id)}
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Delete post"
+                                    >
+                                        <TrashIcon className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
 
                             {/* Post Content */}
