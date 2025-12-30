@@ -14,6 +14,8 @@ class IsEducator(BasePermission):
     """
     Permission class that only allows Educator users.
     Educators can: View jobs, buy FDPs, edit own profile.
+    
+    Backward compatible: Accepts both EDUCATOR and TEACHER user_types.
     """
     message = "Only educators can perform this action."
 
@@ -21,8 +23,9 @@ class IsEducator(BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type == 'EDUCATOR'
+            request.user.user_type in ['EDUCATOR', 'TEACHER']  # Backward compatible
         )
+
 
 
 # Backward compatibility alias
@@ -55,7 +58,7 @@ class IsSuperAdmin(BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type == 'SUPER_ADMIN'
+            request.user.user_type in ['SUPER_ADMIN', 'ADMIN']  # Backward compatible
         )
 
 
@@ -66,6 +69,7 @@ IsAdminUser = IsSuperAdmin
 class IsEducatorOrInstitution(BasePermission):
     """
     Permission class that allows both Educators and Institutions.
+    Backward compatible: Accepts TEACHER as alias for EDUCATOR.
     """
     message = "Only educators or institutions can perform this action."
 
@@ -73,7 +77,7 @@ class IsEducatorOrInstitution(BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            request.user.user_type in ['EDUCATOR', 'INSTITUTION']
+            request.user.user_type in ['EDUCATOR', 'TEACHER', 'INSTITUTION']  # Backward compatible
         )
 
 
