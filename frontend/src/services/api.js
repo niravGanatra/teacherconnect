@@ -234,6 +234,10 @@ export const jobsAPI = {
     // Institution: Get my job listings
     getMyJobs: () => api.get('/jobs/my-jobs/'),
 
+    // Alias for getMyJobs (used by Dashboard and MyJobs pages)
+    getMyListings: () => api.get('/jobs/my-jobs/'),
+
+
     // Teacher: Apply to job
     applyToJob: (jobId, data) => api.post(`/jobs/${jobId}/apply/`, data),
 
