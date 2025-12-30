@@ -8,6 +8,7 @@ import { LoadingScreen, ErrorBoundary } from './components/common';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/Dashboard';
@@ -141,6 +142,15 @@ function AppRoutes() {
         path="/register"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
       />
+      <Route
+        path="/register/educator"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <EducatorOnboarding />}
+      />
+      <Route
+        path="/register/institution"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <EducatorOnboarding />}
+      />
+
 
       {/* Protected Routes - All Users */}
       <Route

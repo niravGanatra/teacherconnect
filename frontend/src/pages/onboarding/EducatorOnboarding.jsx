@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../services/api';
-import { SelectableChipGroup } from '../../components/common/SelectableChipGroup';
+import SelectableChipGroup from '../../components/common/SelectableChipGroup';
 import {
     AcademicCapIcon,
     ArrowLeftIcon,
@@ -174,10 +174,10 @@ export default function EducatorOnboarding() {
                         <div key={step.id} className="flex items-center">
                             <div
                                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${currentStep > step.id
-                                        ? 'bg-green-500 text-white'
-                                        : currentStep === step.id
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-slate-200 text-slate-400'
+                                    ? 'bg-green-500 text-white'
+                                    : currentStep === step.id
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-slate-200 text-slate-400'
                                     }`}
                             >
                                 {currentStep > step.id ? (
@@ -397,8 +397,8 @@ export default function EducatorOnboarding() {
                             onClick={prevStep}
                             disabled={currentStep === 1}
                             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${currentStep === 1
-                                    ? 'text-slate-300 cursor-not-allowed'
-                                    : 'text-slate-600 hover:bg-slate-100'
+                                ? 'text-slate-300 cursor-not-allowed'
+                                : 'text-slate-600 hover:bg-slate-100'
                                 }`}
                         >
                             <ArrowLeftIcon className="w-5 h-5" />
