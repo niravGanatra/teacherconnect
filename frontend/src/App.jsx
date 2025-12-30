@@ -38,6 +38,7 @@ import JobAlerts from './pages/jobs/JobAlerts';
 import Events from './pages/events/Events';
 import InstitutionPage from './pages/InstitutionPage';
 import JobsLayout from './components/jobs/JobsLayout';
+import SearchResults from './pages/search/SearchResults';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
@@ -145,6 +146,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardRouter />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <SearchResults />
           </ProtectedRoute>
         }
       />

@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/jobs/', include('jobs.urls')),
     path('api/events/', include('events.urls')),
     path('api/network/', include('network.urls')),
+    path('api/search/', include('search.urls')),
     
     # Admin API (protected by IsAdminUser permission)
     path('api/admin/', include('accounts.admin_urls')),

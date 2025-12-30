@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'events',
     'notifications',
     'network',
+    'search',
 ]
 
 MIDDLEWARE = [

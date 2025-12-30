@@ -482,4 +482,14 @@ export const privacyAPI = {
     updateSettings: (data) => api.patch('/profiles/privacy/', data),
 };
 
+// Search API
+export const searchAPI = {
+    // Global search
+    search: (query, type = 'ALL', params = {}) =>
+        api.get('/search/', { params: { q: query, type, ...params } }),
+
+    // Autocomplete for typeahead
+    autocomplete: (query) => api.get('/search/autocomplete/', { params: { q: query } }),
+};
+
 export default api;
