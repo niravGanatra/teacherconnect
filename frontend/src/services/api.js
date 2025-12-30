@@ -545,6 +545,14 @@ export const coursesAPI = {
     getLessons: (sectionId) => api.get(`/courses/instructor/sections/${sectionId}/lessons/`),
     addLesson: (sectionId, data) => api.post(`/courses/instructor/sections/${sectionId}/lessons/`, data),
     reorderLessons: (sectionId, order) => api.put(`/courses/instructor/sections/${sectionId}/lessons/`, { order }),
+
+    // Bulk Purchase (Institution)
+    bulkPurchase: (data) => api.post('/courses/bulk/', data),
+    getBulkPurchases: () => api.get('/courses/bulk/'),
+    getBulkPurchaseDetail: (id) => api.get(`/courses/bulk/${id}/`),
+
+    // Code Redemption (Educator)
+    redeemCode: (code) => api.post('/courses/redeem/', { code }),
 };
 
 // Payments API (Razorpay)

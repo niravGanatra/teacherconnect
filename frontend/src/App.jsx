@@ -10,6 +10,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
+import FDPMarketplace from './pages/courses/FDPMarketplace';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/Dashboard';
@@ -37,6 +38,9 @@ import AdminContent from './pages/admin/Content';
 import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
 import JobAlerts from './pages/jobs/JobAlerts';
+import FDPMarketplace from './pages/courses/FDPMarketplace';
+import FDPBulkPurchase from './pages/courses/FDPBulkPurchase';
+import RedeemCode from './pages/courses/RedeemCode';
 import MyLearning from './pages/courses/MyLearning';
 import Events from './pages/events/Events';
 import InstitutionPage from './pages/InstitutionPage';
@@ -182,6 +186,32 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/fdp"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN, ROLES.INSTRUCTOR, ROLES.SUPER_ADMIN]}>
+            <FDPMarketplace />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fdp/:id/bulk"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN, ROLES.SUPER_ADMIN]}>
+            <FDPBulkPurchase />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/redeem"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR]}>
+            <RedeemCode />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/profile"

@@ -157,3 +157,48 @@ class UserBadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserBadge
         fields = ['id', 'badge', 'awarded_at', 'is_displayed']
+
+
+# ============ FDP / BULK PURCHASE SERIALIZERS ============
+
+from .models import BulkPurchase, RedemptionCode
+
+class RedemptionCodeSerializer(serializers.ModelSerializer):
+    """Serializer for redemption codes."""
+    status = serializers.CharField(read_only=True)
+    redeemed_by_name = serializers.SerializerMethodField()
+    redeemed_at = serializers.DateTimeField(read_only=True)
+    
+    class Meta:
+        model = RedemptionCode
+        fields = ['id', 'code', 'status', 'redeemed_by', 'redeemed_by_name', 'redeemed_at', 'created_at']
+        read_only_fields = ['code', 'redeemed_by', 'created_at']
+
+    def get_redeemed_by_name(self, obj):
+        if obj.redeemed_by:
+            return obj.redeemed_by.get_full_name() or obj.redeemed_by.email
+        return None
+
+class BulkPurchaseSerializer(serializers.ModelSerializer):
+    """Serializer for bulk purchases."""
+    course_title = serializers.CharField(source='course.title', read_only=True)
+    codes = RedemptionCodeSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = BulkPurchase
+        fields = [
+            'id', 'course', 'course_title', 'quantity', 
+            'total_price', 'purchase_date', 'codes'
+        ]
+        read_only_fields = ['id', 'total_price', 'purchase_date', 'codes']
+
+class BulkPurchaseCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating bulk purchases."""
+    class Meta:
+        model = BulkPurchase
+        fields = ['course', 'quantity']
+
+    def validate_quantity(self, value):
+        if value < 5:
+            raise serializers.ValidationError("Minimum bulk purchase quantity is 5.")
+        return value

@@ -280,3 +280,97 @@ class ManageLessonsView(APIView):
             Lesson.objects.filter(id=lesson_id, section=section).update(order=idx)
         
         return Response({'message': 'Lessons reordered'})
+
+
+# ============ FDP / BULK PURCHASE VIEWS ============
+
+from django.db import transaction
+from .models import BulkPurchase, RedemptionCode
+from .serializers import BulkPurchaseSerializer, BulkPurchaseCreateSerializer, RedemptionCodeSerializer
+from accounts.permissions import IsInstitution, IsEducator
+
+class BulkPurchaseView(generics.ListCreateAPIView):
+    """
+    API for institutions to buy FDP seats in bulk.
+    """
+    permission_classes = [IsAuthenticated, IsInstitution]
+
+    def get_queryset(self):
+        return BulkPurchase.objects.filter(institution=self.request.user).order_by('-purchase_date')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return BulkPurchaseCreateSerializer
+        return BulkPurchaseSerializer
+
+    def perform_create(self, serializer):
+        # In real world, this would verify payment via Razorpay.
+        # For prototype, we assume payment success.
+        course = serializer.validated_data['course']
+        quantity = serializer.validated_data['quantity']
+        
+        # Calculate total price (apply logic if Bulk price differs)
+        # Using simple multiplier for now, ideally Course model has bulk_price field
+        unit_price = getattr(course, 'bulk_price', course.price * 0.7) # 30% discount default
+        total_price = unit_price * quantity
+        
+        with transaction.atomic():
+            purchase = serializer.save(
+                institution=self.request.user,
+                total_price=total_price
+            )
+            # Generate codes
+            purchase.generate_codes()
+
+
+class BulkPurchaseDetailView(generics.RetrieveAPIView):
+    """
+    Get details of a bulk purchase including codes.
+    """
+    permission_classes = [IsAuthenticated, IsInstitution]
+    serializer_class = BulkPurchaseSerializer
+    
+    def get_queryset(self):
+        return BulkPurchase.objects.filter(institution=self.request.user)
+
+
+class RedeemCodeView(APIView):
+    """
+    API for educators to redeem a code.
+    """
+    permission_classes = [IsAuthenticated] # IsEducator check inside or via permission class
+
+    def post(self, request):
+        code_str = request.data.get('code', '').strip().upper()
+        if not code_str:
+            return Response({'error': 'Code is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            redemption_code = RedemptionCode.objects.get(code=code_str)
+        except RedemptionCode.DoesNotExist:
+            return Response({'error': 'Invalid code'}, status=status.HTTP_404_NOT_FOUND)
+
+        if redemption_code.is_redeemed:
+            return Response({'error': 'Code already redeemed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if user already enrolled
+        course = redemption_code.purchase.course
+        if Enrollment.objects.filter(user=request.user, course=course).exists():
+            return Response({'error': 'You are already enrolled in this course'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # Mark redeemed
+            redemption_code.redeem(request.user)
+            
+            # Enroll user
+            Enrollment.objects.create(
+                user=request.user,
+                course=course,
+                price_paid=0 # Paid by institution
+            )
+
+        return Response({
+            'message': 'Code redeemed successfully! You are now enrolled.',
+            'course': course.title
+        })
+

@@ -34,29 +34,30 @@ const NAV_ITEMS = [
     // Common items (no role restriction)
     { to: '/feed', icon: NewspaperIcon, label: 'Feed', roles: [] },
 
-    // Student/Teacher items (NOT for institutions)
-    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.STUDENT, ROLES.TEACHER, ROLES.INSTRUCTOR] },
-    { to: '/jobs', icon: BriefcaseIcon, label: 'Jobs Hub', roles: [ROLES.TEACHER, ROLES.STUDENT] },
-    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.TEACHER, ROLES.STUDENT, ROLES.INSTITUTION_ADMIN] },
-    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.TEACHER, ROLES.STUDENT, ROLES.INSTITUTION_ADMIN] },
+    // Educator items
+    { to: '/jobs', icon: BriefcaseIcon, label: 'Faculty Jobs', roles: [ROLES.EDUCATOR] },
+    { to: '/fdp', icon: AcademicCapIcon, label: 'Faculty Development', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
+    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.EDUCATOR, ROLES.INSTRUCTOR] },
+    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
+    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
 
     // Instructor items
     { to: '/instructor/studio', icon: PresentationChartBarIcon, label: 'Course Studio', roles: [ROLES.INSTRUCTOR] },
     { to: '/instructor/courses', icon: AcademicCapIcon, label: 'My Courses', roles: [ROLES.INSTRUCTOR] },
 
-    // Institution Admin items (Job Management - create/review, NOT apply)
-    { to: '/institution/dashboard', icon: HomeIcon, label: 'School Dashboard', roles: [ROLES.INSTITUTION_ADMIN] },
-    { to: '/institution/manage', icon: BuildingOfficeIcon, label: 'Manage School', roles: [ROLES.INSTITUTION_ADMIN] },
+    // Institution items
+    { to: '/institution/dashboard', icon: HomeIcon, label: 'Dashboard', roles: [ROLES.INSTITUTION_ADMIN] },
+    { to: '/institution/manage', icon: BuildingOfficeIcon, label: 'Manage Profile', roles: [ROLES.INSTITUTION_ADMIN] },
     { to: '/my-jobs', icon: BriefcaseIcon, label: 'Posted Jobs', roles: [ROLES.INSTITUTION_ADMIN] },
     { to: '/applicants', icon: UsersIcon, label: 'Applicants', roles: [ROLES.INSTITUTION_ADMIN] },
 
 
     // Admin items
-    { to: '/admin', icon: HomeIcon, label: 'Admin Dashboard', roles: [ROLES.ADMIN] },
-    { to: '/admin/users', icon: UsersIcon, label: 'Users', roles: [ROLES.ADMIN] },
-    { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions', roles: [ROLES.ADMIN] },
-    { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs', roles: [ROLES.ADMIN] },
-    { to: '/admin/content', icon: DocumentTextIcon, label: 'Content', roles: [ROLES.ADMIN] },
+    { to: '/admin', icon: HomeIcon, label: 'Admin Dashboard', roles: [ROLES.SUPER_ADMIN] },
+    { to: '/admin/users', icon: UsersIcon, label: 'Users', roles: [ROLES.SUPER_ADMIN] },
+    { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions', roles: [ROLES.SUPER_ADMIN] },
+    { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs', roles: [ROLES.SUPER_ADMIN] },
+    { to: '/admin/content', icon: DocumentTextIcon, label: 'Content', roles: [ROLES.SUPER_ADMIN] },
 ];
 
 export function Sidebar({ isOpen, onClose }) {

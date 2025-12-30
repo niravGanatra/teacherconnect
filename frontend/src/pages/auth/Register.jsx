@@ -16,7 +16,7 @@ export default function Register() {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold text-slate-800 mb-4">
-                        Join TeacherConnect
+                        Join Acad World
                     </h1>
                     <p className="text-xl text-slate-600">
                         India's Professional Network for Educators

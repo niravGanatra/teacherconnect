@@ -31,4 +31,9 @@ urlpatterns = [
     path('instructor/courses/<uuid:course_id>/', views.InstructorCourseDetailView.as_view(), name='instructor-course-detail'),
     path('instructor/courses/<uuid:course_id>/sections/', views.ManageSectionsView.as_view(), name='manage-sections'),
     path('instructor/sections/<uuid:section_id>/lessons/', views.ManageLessonsView.as_view(), name='manage-lessons'),
+    
+    # FDP / Bulk Purchase
+    path('bulk/', views.BulkPurchaseView.as_view(), name='bulk-purchase-list'),
+    path('bulk/<int:pk>/', views.BulkPurchaseDetailView.as_view(), name='bulk-purchase-detail'),
+    path('redeem/', views.RedeemCodeView.as_view(), name='redeem-code'),
 ]

@@ -35,12 +35,15 @@ class InstitutionBriefSerializer(serializers.ModelSerializer):
         return False
 
 
+from .utils import calculate_match_score
+
 class JobListingSerializer(serializers.ModelSerializer):
     """Serializer for job listings."""
     institution = InstitutionBriefSerializer(read_only=True)
     application_count = serializers.IntegerField(read_only=True)
     is_saved = serializers.SerializerMethodField()
     has_applied = serializers.SerializerMethodField()
+    match_score = serializers.SerializerMethodField()
     
     class Meta:
         model = JobListing
@@ -51,22 +54,39 @@ class JobListingSerializer(serializers.ModelSerializer):
             'job_type', 'salary_min', 'salary_max',
             'location', 'is_remote', 'is_active',
             'application_deadline', 'application_count',
-            'is_saved', 'has_applied',
+            'is_saved', 'has_applied', 'match_score',
+            # New Fields
+            'job_level', 'job_category', 'subject_specialization',
+            'required_board_experience', 'min_qualification',
+            'perks', 'city', 'state', 'is_urgent', 'positions_available',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'institution', 'created_at', 'updated_at']
     
     def get_is_saved(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user.user_type == 'TEACHER':
+        if request and request.user.is_authenticated and request.user.user_type in ['EDUCATOR', 'TEACHER']:
             return SavedJob.objects.filter(teacher=request.user, job=obj).exists()
         return False
     
     def get_has_applied(self, obj):
         request = self.context.get('request')
-        if request and request.user.is_authenticated and request.user.user_type == 'TEACHER':
+        if request and request.user.is_authenticated and request.user.user_type in ['EDUCATOR', 'TEACHER']:
             return Application.objects.filter(teacher=request.user, job=obj).exists()
         return False
+
+    def get_match_score(self, obj):
+        request = self.context.get('request')
+        # Only calculate for educators
+        if request and request.user.is_authenticated and request.user.user_type in ['EDUCATOR', 'TEACHER']:
+            try:
+                # Assuming user has an educator_profile (or teacher_profile alias)
+                profile = getattr(request.user, 'educator_profile', None) or getattr(request.user, 'teacher_profile', None)
+                if profile:
+                    return calculate_match_score(job=obj, profile=profile)
+            except Exception:
+                return 0
+        return None
 
 
 class JobListingCreateSerializer(serializers.ModelSerializer):
