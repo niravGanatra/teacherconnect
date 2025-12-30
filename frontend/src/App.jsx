@@ -9,6 +9,7 @@ import { LoadingScreen, ErrorBoundary } from './components/common';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
+import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/Dashboard';
@@ -148,8 +149,9 @@ function AppRoutes() {
       />
       <Route
         path="/register/institution"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <EducatorOnboarding />}
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <InstitutionOnboarding />}
       />
+
 
 
       {/* Protected Routes - All Users */}
