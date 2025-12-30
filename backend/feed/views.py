@@ -55,9 +55,9 @@ class FeedListView(generics.ListAPIView):
             follower=user
         ).values_list('following_id', flat=True)
         
-        # Include own posts and posts from followed users
+        # Include own posts and posts from followed users (excluding soft-deleted)
         return Post.objects.filter(
-            Q(author=user) | Q(author_id__in=following_ids)
+            (Q(author=user) | Q(author_id__in=following_ids)) & Q(is_deleted=False)
         ).select_related('author').prefetch_related(
             'comments__user', 
             'attachments', 
@@ -79,7 +79,7 @@ class PostListCreateView(generics.ListCreateAPIView):
         return PostSerializer
 
     def get_queryset(self):
-        return Post.objects.all().select_related('author').prefetch_related(
+        return Post.objects.filter(is_deleted=False).select_related('author').prefetch_related(
             'comments__user', 
             'attachments', 
             'attachments__pages',
@@ -169,11 +169,98 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def perform_destroy(self, instance):
-        # Only author can delete
+        # Only author can soft delete
         if instance.author != self.request.user:
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("You can only delete your own posts.")
-        instance.delete()
+        # Soft delete
+        from django.utils import timezone
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.save()
+
+
+class RestorePostView(APIView):
+    """
+    API endpoint for users to restore their own soft-deleted posts.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+        post = get_object_or_404(Post, pk=pk)
+        
+        # Only author can restore their own posts
+        if post.author != request.user:
+            return Response(
+                {'error': 'You can only restore your own posts.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if not post.is_deleted:
+            return Response(
+                {'error': 'This post is not deleted.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        post.is_deleted = False
+        post.deleted_at = None
+        post.save()
+        
+        return Response({'message': 'Post restored successfully.'})
+
+
+class AdminPostDeleteView(APIView):
+    """
+    API endpoint for admins to soft delete any post.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Admin access required.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from django.shortcuts import get_object_or_404
+        from django.utils import timezone
+        post = get_object_or_404(Post, pk=pk)
+        
+        post.is_deleted = True
+        post.deleted_at = timezone.now()
+        post.save()
+        
+        return Response({'message': 'Post deleted successfully.'})
+
+
+class AdminPostRestoreView(APIView):
+    """
+    API endpoint for admins to restore any soft-deleted post.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Admin access required.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from django.shortcuts import get_object_or_404
+        post = get_object_or_404(Post, pk=pk)
+        
+        if not post.is_deleted:
+            return Response(
+                {'error': 'This post is not deleted.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        post.is_deleted = False
+        post.deleted_at = None
+        post.save()
+        
+        return Response({'message': 'Post restored successfully.'})
 
 
 class LikePostView(APIView):

@@ -317,6 +317,9 @@ export const feedAPI = {
 
     // Get current user's following
     getFollowing: () => api.get('/feed/following/'),
+
+    // Restore a soft-deleted post (user's own)
+    restorePost: (id) => api.post(`/feed/posts/${id}/restore/`),
 };
 
 // Events API
