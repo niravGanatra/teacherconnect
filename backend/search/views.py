@@ -8,10 +8,12 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
 from profiles.models import TeacherProfile, InstitutionProfile, UserPrivacySettings, VisibilityChoice
+from institutions.models import Institution, InstitutionAcademic, InstitutionInfrastructure
 from jobs.models import JobListing
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
 
 
 class GlobalSearchView(APIView):
@@ -60,9 +62,20 @@ class GlobalSearchView(APIView):
                     has_demo=has_demo
                 )
 
-            # Search Institutions
+            # Search Institutions (with filters)
             if search_type in ['ALL', 'INSTITUTIONS', 'COMPANIES']:
-                results['institutions'] = self._search_institutions(query, limit)
+                inst_type = request.query_params.get('institution_type', '')
+                inst_board = request.query_params.get('inst_boards', '')
+                has_hostel = request.query_params.get('has_hostel', '').lower() == 'true'
+                has_transport = request.query_params.get('has_transport', '').lower() == 'true'
+                results['institutions'] = self._search_institutions(
+                    query, limit,
+                    institution_type=inst_type,
+                    board_filter=inst_board,
+                    has_hostel=has_hostel,
+                    has_transport=has_transport
+                )
+
 
             # Search Jobs
             if search_type in ['ALL', 'JOBS']:
@@ -156,32 +169,54 @@ class GlobalSearchView(APIView):
         ]
 
 
-    def _search_institutions(self, query, limit):
-        """Search institution profiles."""
-        excluded_ids = self._get_excluded_user_ids()
+    def _search_institutions(self, query, limit, institution_type='', board_filter='', has_hostel=False, has_transport=False):
+        """Search institutions with filters."""
+        # Base query on new Institution model
+        queryset = Institution.objects.filter(
+            Q(name__icontains=query) |
+            Q(tagline__icontains=query) |
+            Q(description__icontains=query)
+        ).filter(
+            status='VERIFIED'  # Only show verified institutions
+        ).select_related('contact_details', 'academic_details', 'infrastructure_details')
 
-        profiles = InstitutionProfile.objects.filter(
-            Q(institution_name__icontains=query) |
-            Q(city__icontains=query) |
-            Q(state__icontains=query)
-        ).exclude(
-            user_id__in=excluded_ids
-        ).select_related('user')[:limit]
+        # Apply type filter
+        if institution_type:
+            queryset = queryset.filter(institution_type=institution_type)
+
+        # Apply board filter (search in academic_details.boards_affiliations)
+        if board_filter:
+            queryset = queryset.filter(academic_details__boards_affiliations__contains=board_filter)
+
+        # Apply facility filters
+        if has_hostel:
+            queryset = queryset.filter(infrastructure_details__has_hostel=True)
+        if has_transport:
+            queryset = queryset.filter(infrastructure_details__has_transport=True)
+
+        institutions = list(queryset[:limit])
 
         return [
             {
-                'id': p.user.id,
+                'id': str(inst.id),
                 'type': 'institution',
-                'name': p.institution_name,
-                'institution_type': p.institution_type,
-                'city': p.city or '',
-                'state': p.state or '',
-                'logo': p.logo.url if p.logo else None,
-                'is_verified': p.is_verified,
-                'relevance_score': 1.0,
+                'name': inst.name,
+                'slug': inst.slug,
+                'institution_type': inst.institution_type,
+                'tagline': inst.tagline or '',
+                'city': getattr(inst.contact_details, 'city', '') if hasattr(inst, 'contact_details') else '',
+                'state': getattr(inst.contact_details, 'state', '') if hasattr(inst, 'contact_details') else '',
+                'logo': inst.logo.url if inst.logo else None,
+                'is_verified': inst.is_verified,
+                'is_hiring': inst.is_hiring,
+                'boards': getattr(inst.academic_details, 'boards_affiliations', []) if hasattr(inst, 'academic_details') else [],
+                'has_hostel': getattr(inst.infrastructure_details, 'has_hostel', False) if hasattr(inst, 'infrastructure_details') else False,
+                'has_transport': getattr(inst.infrastructure_details, 'has_transport', False) if hasattr(inst, 'infrastructure_details') else False,
+                'relevance_score': 1.2 if inst.is_hiring else 1.0,
             }
-            for p in profiles
+            for inst in institutions
         ]
+
 
     def _search_jobs(self, query, limit):
         """Search active job listings."""
