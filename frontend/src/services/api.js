@@ -391,7 +391,11 @@ export const adminAPI = {
     // Institution verification
     getInstitutions: (params = {}) => api.get('/admin/institutions/', { params }),
     verifyInstitution: (id) => api.post(`/admin/institutions/${id}/verify/`),
+
+    // Activity report for analytics
+    getActivityReport: (params = {}) => api.get('/admin/activity-report/', { params }),
 };
+
 
 // Institution Pages API (LinkedIn-style company pages)
 export const institutionPagesAPI = {
