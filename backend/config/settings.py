@@ -42,7 +42,11 @@ INSTALLED_APPS = [
     'notifications',
     'network',
     'search',
+    'courses',
+    'payments',
 ]
+
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

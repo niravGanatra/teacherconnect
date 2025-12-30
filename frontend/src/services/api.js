@@ -492,4 +492,61 @@ export const searchAPI = {
     autocomplete: (query) => api.get('/search/autocomplete/', { params: { q: query } }),
 };
 
+// Courses API (LMS)
+export const coursesAPI = {
+    // List all courses
+    list: (params = {}) => api.get('/courses/', { params }),
+
+    // Get course by slug
+    getCourse: (slug) => api.get(`/courses/${slug}/`),
+
+    // Enroll in free course
+    enroll: (slug) => api.post(`/courses/${slug}/enroll/`),
+
+    // Get my enrollments
+    getEnrollments: () => api.get('/courses/my/enrollments/'),
+
+    // Update lesson progress
+    updateProgress: (lessonId, data) => api.patch(`/courses/lesson/${lessonId}/progress/`, data),
+
+    // Get progress for a course
+    getProgress: (slug) => api.get(`/courses/${slug}/progress/`),
+
+    // Get my certificates
+    getCertificates: () => api.get('/courses/my/certificates/'),
+
+    // Get my badges
+    getBadges: () => api.get('/courses/my/badges/'),
+
+    // Verify certificate (public)
+    verifyCertificate: (credentialId) => api.get(`/certificates/verify/${credentialId}/`),
+
+    // Instructor APIs
+    getInstructorCourses: () => api.get('/courses/instructor/courses/'),
+    getInstructorCourse: (courseId) => api.get(`/courses/instructor/courses/${courseId}/`),
+    createCourse: (data) => api.post('/courses/instructor/courses/', data),
+    updateCourse: (courseId, data) => api.patch(`/courses/instructor/courses/${courseId}/`, data),
+    deleteCourse: (courseId) => api.delete(`/courses/instructor/courses/${courseId}/`),
+
+    // Section management
+    getSections: (courseId) => api.get(`/courses/instructor/courses/${courseId}/sections/`),
+    addSection: (courseId, data) => api.post(`/courses/instructor/courses/${courseId}/sections/`, data),
+    reorderSections: (courseId, order) => api.put(`/courses/instructor/courses/${courseId}/sections/`, { order }),
+
+    // Lesson management
+    getLessons: (sectionId) => api.get(`/courses/instructor/sections/${sectionId}/lessons/`),
+    addLesson: (sectionId, data) => api.post(`/courses/instructor/sections/${sectionId}/lessons/`, data),
+    reorderLessons: (sectionId, order) => api.put(`/courses/instructor/sections/${sectionId}/lessons/`, { order }),
+};
+
+// Payments API (Razorpay)
+export const paymentsAPI = {
+    // Create payment order
+    createOrder: (courseId) => api.post('/payment/create-order/', { course_id: courseId }),
+
+    // Verify payment
+    verifyPayment: (data) => api.post('/payment/verify/', data),
+};
+
 export default api;
+

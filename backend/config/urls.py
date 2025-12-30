@@ -18,10 +18,14 @@ urlpatterns = [
     path('api/events/', include('events.urls')),
     path('api/network/', include('network.urls')),
     path('api/search/', include('search.urls')),
+    path('api/courses/', include('courses.urls')),
+    path('api/payment/', include('payments.urls')),
+
     
     # Admin API (protected by IsAdminUser permission)
     path('api/admin/', include('accounts.admin_urls')),
 ]
+
 
 # Serve media files in development
 if settings.DEBUG:
