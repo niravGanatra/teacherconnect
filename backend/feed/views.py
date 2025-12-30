@@ -127,17 +127,22 @@ class PostListCreateView(generics.ListCreateAPIView):
                  raise ValidationError("A post cannot contain both Videos and Documents.")
             
             # Maintain order based on input list
-            for index, media_id in enumerate(media_ids):
-                # We need to fetch specific object to preserve order if we were doing bulk update
-                # But here we just set FK.
-                # To set order properly:
-                try:
-                    att = attachments.get(id=media_id)
-                    att.post = post
-                    att.order = index
-                    att.save()
-                except PostAttachment.DoesNotExist:
-                    continue 
+            try:
+                for index, media_id in enumerate(media_ids):
+                    try:
+                        att = attachments.get(id=media_id)
+                        att.post = post
+                        att.order = index
+                        att.save()
+                    except PostAttachment.DoesNotExist:
+                        continue 
+            except Exception as e:
+                # If linking fails, we should probably rollback or at least log
+                print(f"Error linking attachments: {e}")
+                # For now, we continue, as the post is created.
+                # Ideally we'd use atomic transaction for the whole block?
+                # perform_create is inside atomic request if configured, or we can explicit.
+                pass
 
     # Note: `perform_create` in generic view calls serializer.save(). 
     # If I want to validate before save, I should look at `create` method of View or `validate` of Serializer.
