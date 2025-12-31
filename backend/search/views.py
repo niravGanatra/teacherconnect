@@ -176,8 +176,6 @@ class GlobalSearchView(APIView):
             Q(name__icontains=query) |
             Q(tagline__icontains=query) |
             Q(description__icontains=query)
-        ).filter(
-            status='VERIFIED'  # Only show verified institutions
         ).select_related('contact_details', 'academic_details', 'infrastructure_details')
 
         # Apply type filter
@@ -296,8 +294,7 @@ class AutocompleteView(APIView):
             institutions = Institution.objects.filter(
                 Q(name__icontains=query) |
                 Q(tagline__icontains=query)
-            ).filter(
-                status='VERIFIED'
+            )
             ).select_related('contact_details')[:3]
 
             # Jobs - top 3
