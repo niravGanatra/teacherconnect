@@ -204,7 +204,7 @@ JWT_COOKIE_HTTPONLY = True  # Prevents JavaScript access (XSS protection)
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS', 
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://acadworld.com,https://www.acadworld.com'
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
@@ -212,14 +212,14 @@ CORS_ALLOW_CREDENTIALS = True
 # CSRF Configuration
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS', 
-    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173'
+    'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://acadworld.com,https://www.acadworld.com'
 ).split(',')
 CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'  # 'None' required for cross-origin in production
 CSRF_COOKIE_HTTPONLY = False  # Must be readable by JavaScript to send in X-CSRFToken header
 CSRF_COOKIE_SECURE = not DEBUG  # Must be True when SameSite=None
 
 # Frontend URL (for email links)
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://acadworld.com')
 
 # Email Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
