@@ -294,7 +294,6 @@ class AutocompleteView(APIView):
             institutions = Institution.objects.filter(
                 Q(name__icontains=query) |
                 Q(tagline__icontains=query)
-            )
             ).select_related('contact_details')[:3]
 
             # Jobs - top 3
