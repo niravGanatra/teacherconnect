@@ -412,7 +412,8 @@ class UniversalSearchAPIView(APIView):
                      'type': 'educator',
                      'id': edu.user.id,
                      'title': name,
-                     'subtitle': edu.headline or 'Educator'
+                     'subtitle': edu.headline or 'Educator',
+                     'image': edu.profile_photo.url if edu.profile_photo else None
                  })
         except Exception:
              pass 
@@ -430,7 +431,8 @@ class UniversalSearchAPIView(APIView):
                     'type': 'institution',
                     'id': str(inst.id),
                     'title': inst.name,
-                    'subtitle': city
+                    'subtitle': city,
+                    'image': inst.logo.url if inst.logo else None
                 })
         except Exception:
             pass
@@ -446,9 +448,12 @@ class UniversalSearchAPIView(APIView):
             
             for job in jobs:
                 subtitle = 'Unknown'
+                image = None
                 # Check for Institution Profile on User
                 if hasattr(job.institution, 'institution_profile'):
                      subtitle = job.institution.institution_profile.institution_name
+                     if job.institution.institution_profile.logo:
+                         image = job.institution.institution_profile.logo.url
                 
                 if job.city:
                     subtitle += f" • {job.city}"
@@ -459,7 +464,8 @@ class UniversalSearchAPIView(APIView):
                     'type': 'job',
                     'id': str(job.id),
                     'title': job.title,
-                    'subtitle': subtitle
+                    'subtitle': subtitle,
+                    'image': image
                 })
         except Exception:
             pass
@@ -476,7 +482,8 @@ class UniversalSearchAPIView(APIView):
                     'type': 'fdp',
                     'id': str(fdp.id),
                     'title': fdp.title,
-                    'subtitle': instructor_name
+                    'subtitle': instructor_name,
+                    'image': fdp.thumbnail.url if fdp.thumbnail else None
                 })
         except Exception:
             pass
