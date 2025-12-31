@@ -60,7 +60,8 @@ class TeacherProfileDetailView(generics.RetrieveAPIView):
     serializer_class = TeacherProfilePublicSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
     queryset = TeacherProfile.objects.filter(is_searchable=True)
-    lookup_field = 'pk'
+    lookup_field = 'user__id'
+    lookup_url_kwarg = 'user_id'
 
 
 class TeacherSearchView(generics.ListAPIView):

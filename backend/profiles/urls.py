@@ -27,7 +27,8 @@ router.register(r'certifications', CertificationViewSet, basename='certification
 urlpatterns = [
     # Teacher profiles
     path('teacher/me/', TeacherProfileView.as_view(), name='teacher_profile'),
-    path('teacher/<int:pk>/', TeacherProfileDetailView.as_view(), name='teacher_profile_detail'),
+    # Frontend uses plural 'teachers' and sends user UUID
+    path('teachers/<uuid:user_id>/', TeacherProfileDetailView.as_view(), name='teacher_profile_detail'),
     path('teachers/search/', TeacherSearchView.as_view(), name='teacher_search'),
     
     # Institution profiles
