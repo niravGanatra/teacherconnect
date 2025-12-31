@@ -204,6 +204,32 @@ export default function SearchResults() {
         </Card>
     );
 
+    const JobCard = ({ job }) => (
+        <Card className="p-4 hover:shadow-md transition-shadow">
+            <Link to={`/jobs/${job.id}`} className="flex items-center gap-4">
+                {job.logo ? (
+                    <img src={job.logo} alt="" className="w-14 h-14 rounded-lg object-cover" />
+                ) : (
+                    <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <BriefcaseIcon className="w-6 h-6 text-blue-600" />
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-slate-800 hover:text-blue-600">{job.title}</h4>
+                    <p className="text-sm text-slate-600">{job.company}</p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                        <span className="flex items-center gap-1">
+                            <MapPinIcon className="w-3 h-3" />
+                            {job.is_remote ? 'Remote' : job.location || 'On-site'}
+                        </span>
+                        <Badge variant="default">{job.job_type?.replace('_', ' ')}</Badge>
+                    </div>
+                </div>
+                <Button variant="primary" size="sm">Apply</Button>
+            </Link>
+        </Card>
+    );
+
     const FdpCard = ({ fdp }) => (
         <Card className="p-4 hover:shadow-md transition-shadow">
             <Link to={`/fdp`} className="flex items-center gap-4">
