@@ -10,6 +10,7 @@ from django.db.models import Q
 from profiles.models import TeacherProfile, InstitutionProfile, UserPrivacySettings, VisibilityChoice
 from institutions.models import Institution, InstitutionAcademic, InstitutionInfrastructure
 from jobs.models import JobListing
+from courses.models import Course
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -381,4 +382,104 @@ class AutocompleteView(APIView):
             return set(admin_ids + hidden_ids)
         except Exception:
             return set()
+
+
+class UniversalSearchAPIView(APIView):
+    """
+    Universal Search API: Aggregates results from Educators, Institutions, Jobs, FDPs.
+    Returns: { "results": [ { "type": "educator", "id": 1, ... } ] }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get('q', '').strip()
+        if not query:
+            return Response({'results': []})
+
+        results = []
+
+        # 1. Educators
+        try:
+             educators = TeacherProfile.objects.filter(
+                 Q(user__first_name__icontains=query) |
+                 Q(user__last_name__icontains=query) |
+                 Q(headline__icontains=query)
+             ).select_related('user')[:3]
+             
+             for edu in educators:
+                 name = f"{edu.user.first_name} {edu.user.last_name}".strip() or edu.user.username
+                 results.append({
+                     'type': 'educator',
+                     'id': edu.user.id,
+                     'title': name,
+                     'subtitle': edu.headline or 'Educator'
+                 })
+        except Exception:
+             pass 
+
+        # 2. Institutions
+        try:
+            insts = Institution.objects.filter(
+                Q(name__icontains=query) |
+                Q(contact_details__city__icontains=query)
+            ).prefetch_related('contact_details').defer('is_hiring')[:3]
+            
+            for inst in insts:
+                city = getattr(inst.contact_details, 'city', '') if hasattr(inst, 'contact_details') else ''
+                results.append({
+                    'type': 'institution',
+                    'id': str(inst.id),
+                    'title': inst.name,
+                    'subtitle': city
+                })
+        except Exception:
+            pass
+
+        # 3. Jobs
+        try:
+            jobs = JobListing.objects.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query),
+                is_active=True,
+                is_deleted=False
+            ).select_related('institution')[:3]
+            
+            for job in jobs:
+                subtitle = 'Unknown'
+                # Check for Institution Profile on User
+                if hasattr(job.institution, 'institution_profile'):
+                     subtitle = job.institution.institution_profile.institution_name
+                
+                if job.city:
+                    subtitle += f" • {job.city}"
+                elif job.location:
+                    subtitle += f" • {job.location}"
+
+                results.append({
+                    'type': 'job',
+                    'id': str(job.id),
+                    'title': job.title,
+                    'subtitle': subtitle
+                })
+        except Exception:
+            pass
+
+        # 4. FDPs
+        try:
+            fdps = Course.objects.filter(
+                Q(title__icontains=query)
+            ).select_related('instructor')[:3]
+            
+            for fdp in fdps:
+                instructor_name = f"{fdp.instructor.first_name} {fdp.instructor.last_name}".strip() or fdp.instructor.username
+                results.append({
+                    'type': 'fdp',
+                    'id': str(fdp.id),
+                    'title': fdp.title,
+                    'subtitle': instructor_name
+                })
+        except Exception:
+            pass
+            
+        return Response({'results': results})
 
