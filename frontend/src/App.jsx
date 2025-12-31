@@ -168,7 +168,7 @@ function AppRoutes() {
       />
 
       <Route
-        path="/search"
+        path="/search/results"
         element={
           <ProtectedRoute>
             <SearchResults />

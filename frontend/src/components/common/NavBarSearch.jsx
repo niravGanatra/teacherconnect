@@ -151,16 +151,18 @@ export default function NavBarSearch() {
     // Handle item selection
     const handleItemSelect = (item) => {
         setIsFocused(false);
-        setQuery('');
-
         switch (item.type) {
             case 'educator':
                 saveRecentSearch(item.data.name);
-                navigate(`/profile/${item.data.id}`);
+                navigate(`/teachers/${item.data.id}`);
                 break;
             case 'institution':
                 saveRecentSearch(item.data.name);
-                navigate(`/institutions/${item.data.slug || item.data.id}`);
+                if (item.data.slug) {
+                    navigate(`/institution/${item.data.slug}`); // Public page
+                } else {
+                    navigate(`/institutions/${item.data.id}`); // Profile view
+                }
                 break;
             case 'job':
                 saveRecentSearch(item.data.title);
@@ -168,7 +170,8 @@ export default function NavBarSearch() {
                 break;
             case 'fdp':
                 saveRecentSearch(item.data.title);
-                navigate(`/fdp/${item.data.id}`);
+                // navigate(`/fdp/${item.data.id}`); // TODO: Add FDP details route
+                navigate('/fdp'); // Fallback to marketplace for now
                 break;
             case 'recent':
                 setQuery(item.data);
