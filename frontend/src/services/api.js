@@ -334,6 +334,9 @@ export const eventsAPI = {
     // Get events
     getEvents: (params = {}) => api.get('/events/', { params }),
 
+    // Alias for getEvents
+    listEvents: (params = {}) => api.get('/events/', { params }),
+
     // Get single event
     getEventById: (id) => api.get(`/events/${id}/`),
 
