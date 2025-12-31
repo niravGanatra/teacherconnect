@@ -178,8 +178,8 @@ class GlobalSearchView(APIView):
             Q(description__icontains=query) |
             Q(contact_details__city__icontains=query) |
             Q(contact_details__state__icontains=query)
-        ).prefetch_related('contact_details', 'academic_details', 'infrastructure_details')
-
+        ).prefetch_related('contact_details', 'academic_details', 'infrastructure_details').defer('is_hiring')
+        
         # Apply type filter
         if institution_type:
             queryset = queryset.filter(institution_type=institution_type)
@@ -208,11 +208,11 @@ class GlobalSearchView(APIView):
                 'state': getattr(inst.contact_details, 'state', '') if hasattr(inst, 'contact_details') else '',
                 'logo': inst.logo.url if inst.logo else None,
                 'is_verified': inst.is_verified,
-                'is_hiring': inst.is_hiring,
+                'is_hiring': False, # Safety for missing migration
                 'boards': getattr(inst.academic_details, 'boards_affiliations', []) if hasattr(inst, 'academic_details') else [],
                 'has_hostel': getattr(inst.infrastructure_details, 'has_hostel', False) if hasattr(inst, 'infrastructure_details') else False,
                 'has_transport': getattr(inst.infrastructure_details, 'has_transport', False) if hasattr(inst, 'infrastructure_details') else False,
-                'relevance_score': 1.2 if inst.is_hiring else 1.0,
+                'relevance_score': 1.0,
             }
             for inst in institutions
         ]
@@ -298,7 +298,7 @@ class AutocompleteView(APIView):
                 Q(tagline__icontains=query) |
                 Q(contact_details__city__icontains=query) |
                 Q(contact_details__state__icontains=query)
-            ).prefetch_related('contact_details')[:3]
+            ).prefetch_related('contact_details').defer('is_hiring')[:3]
 
             # Jobs - top 3
             jobs = JobListing.objects.filter(
