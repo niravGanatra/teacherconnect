@@ -261,7 +261,7 @@ class AutocompleteView(APIView):
     """
     Typeahead autocomplete endpoint.
     GET /api/search/autocomplete/?q=query
-    Returns compact results for dropdown.
+    Returns compact results for dropdown (top 3 per category).
     """
     permission_classes = [IsAuthenticated]
 
@@ -269,52 +269,64 @@ class AutocompleteView(APIView):
         query = request.query_params.get('q', '').strip()
 
         if not query or len(query) < 2:
-            return Response({'people': [], 'institutions': [], 'jobs': []})
+            return Response({'educators': [], 'institutions': [], 'jobs': [], 'fdps': []})
 
         try:
             excluded_ids = self._get_excluded_user_ids()
 
-            # People
-            people = TeacherProfile.objects.filter(
+            # Educators (Teachers) - top 3
+            educators = TeacherProfile.objects.filter(
                 Q(first_name__icontains=query) |
-                Q(last_name__icontains=query)
+                Q(last_name__icontains=query) |
+                Q(headline__icontains=query)
             ).exclude(
                 user_id__in=excluded_ids
             ).exclude(
                 user_id=request.user.id
             ).filter(
                 is_searchable=True
-            ).select_related('user')[:5]
+            ).select_related('user')[:3]
 
-            # Institutions
-            institutions = InstitutionProfile.objects.filter(
-                institution_name__icontains=query
-            ).exclude(
-                user_id__in=excluded_ids
-            ).select_related('user')[:5]
+            # Institutions (new model) - top 3
+            institutions = Institution.objects.filter(
+                Q(name__icontains=query) |
+                Q(tagline__icontains=query)
+            ).filter(
+                status='VERIFIED'
+            ).select_related('contact_details')[:3]
 
-            # Jobs
+            # Jobs - top 3
             jobs = JobListing.objects.filter(
                 title__icontains=query,
                 is_active=True,
                 is_deleted=False
-            ).select_related('institution')[:5]
+            ).select_related('institution')[:3]
+
+            # FDPs (Courses) - top 3
+            from courses.models import FDP
+            fdps = FDP.objects.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query),
+                status='PUBLISHED'
+            ).select_related('instructor')[:3]
 
             return Response({
-                'people': [
+                'educators': [
                     {
-                        'id': p.user.id,
+                        'id': str(p.user.id),
                         'name': f"{p.first_name} {p.last_name}".strip() or p.user.username,
-                        'headline': (p.headline or '')[:50],
+                        'headline': (p.headline or '')[:60],
                         'photo': p.profile_photo.url if p.profile_photo else None,
                     }
-                    for p in people
+                    for p in educators
                 ],
                 'institutions': [
                     {
-                        'id': i.user.id,
-                        'name': i.institution_name,
+                        'id': str(i.id),
+                        'name': i.name,
+                        'slug': i.slug,
                         'logo': i.logo.url if i.logo else None,
+                        'city': getattr(i.contact_details, 'city', '') if hasattr(i, 'contact_details') and i.contact_details else '',
                     }
                     for i in institutions
                 ],
@@ -326,11 +338,19 @@ class AutocompleteView(APIView):
                     }
                     for j in jobs
                 ],
+                'fdps': [
+                    {
+                        'id': str(f.id),
+                        'title': f.title,
+                        'instructor': f.instructor.get_full_name() if f.instructor else 'Unknown',
+                    }
+                    for f in fdps
+                ],
             })
         except Exception as e:
             import logging
             logging.error(f"Autocomplete error: {e}")
-            return Response({'people': [], 'institutions': [], 'jobs': []})
+            return Response({'educators': [], 'institutions': [], 'jobs': [], 'fdps': []})
 
     def _get_company_name(self, job):
         try:
@@ -354,3 +374,4 @@ class AutocompleteView(APIView):
             return set(admin_ids + hidden_ids)
         except Exception:
             return set()
+

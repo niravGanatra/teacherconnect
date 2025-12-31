@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, ROLES } from '../../context/AuthContext';
 import { getDashboardPath, getRoleDisplayName, getRoleIcon } from '../../utils/loginRedirect';
+import NavBarSearch from './NavBarSearch';
 import {
     HomeIcon,
     BriefcaseIcon,
@@ -289,7 +290,18 @@ export function DashboardLayout({ children }) {
         <div className="min-h-screen min-h-[100dvh] bg-slate-50">
             <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <main className="main-content">
+
+            {/* Desktop Top Bar with Search */}
+            <div className="hidden lg:block fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200">
+                <div className="flex items-center justify-between h-16 px-6">
+                    <NavBarSearch />
+                    <div className="flex items-center gap-4">
+                        {/* Placeholder for notifications */}
+                    </div>
+                </div>
+            </div>
+
+            <main className="main-content lg:pt-16">
                 {children}
             </main>
         </div>
