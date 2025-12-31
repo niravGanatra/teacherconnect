@@ -76,7 +76,7 @@ export default function TeacherProfileView() {
         );
     }
 
-    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Teacher';
+    const fullName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Teacher';
 
     return (
         <DashboardLayout>
