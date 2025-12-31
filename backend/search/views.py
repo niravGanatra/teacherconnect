@@ -354,8 +354,16 @@ class AutocompleteView(APIView):
             })
         except Exception as e:
             import logging
+            import traceback
             logging.error(f"Autocomplete error: {e}")
-            return Response({'educators': [], 'institutions': [], 'jobs': [], 'fdps': []})
+            return Response({
+                'educators': [], 
+                'institutions': [], 
+                'jobs': [], 
+                'fdps': [],
+                'debug_error': str(e),
+                'debug_trace': traceback.format_exc()
+            })
 
     def _get_company_name(self, job):
         try:
