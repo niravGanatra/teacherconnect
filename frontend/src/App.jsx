@@ -10,7 +10,6 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
-import FDPMarketplace from './pages/courses/FDPMarketplace';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/Dashboard';
