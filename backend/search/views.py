@@ -307,13 +307,15 @@ class AutocompleteView(APIView):
                 is_deleted=False
             ).select_related('institution')[:3]
 
-            # FDPs (Courses) - top 3
-            from courses.models import FDP
-            fdps = FDP.objects.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query),
-                is_published=True
-            ).select_related('instructor')[:3]
+            # FDPs - temporarily disabled until migrations are run on production
+            # TODO: Re-enable after running: python manage.py migrate courses
+            fdps = []
+            # from courses.models import FDP
+            # fdps = FDP.objects.filter(
+            #     Q(title__icontains=query) |
+            #     Q(description__icontains=query),
+            #     is_published=True
+            # ).select_related('instructor')[:3]
 
             return Response({
                 'educators': [
@@ -354,16 +356,8 @@ class AutocompleteView(APIView):
             })
         except Exception as e:
             import logging
-            import traceback
             logging.error(f"Autocomplete error: {e}")
-            return Response({
-                'educators': [], 
-                'institutions': [], 
-                'jobs': [], 
-                'fdps': [],
-                'debug_error': str(e),
-                'debug_trace': traceback.format_exc()
-            })
+            return Response({'educators': [], 'institutions': [], 'jobs': [], 'fdps': []})
 
     def _get_company_name(self, job):
         try:
