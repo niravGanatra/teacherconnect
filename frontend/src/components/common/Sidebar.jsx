@@ -192,21 +192,54 @@ export function Sidebar({ isOpen, onClose }) {
 
                 {/* User Info & Logout */}
                 <div className="p-3 lg:p-4 border-t border-white/10 safe-area-bottom">
-                    <div className="flex items-center gap-3 px-3 lg:px-4 py-2 mb-2">
-                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                            {user?.username?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{user?.username}</p>
-                            <p className="text-xs text-white/60 truncate">{user?.email}</p>
+                    {/* Enhanced User Profile Card */}
+                    <div className="mb-3 p-3 bg-gradient-to-r from-white/10 to-white/5 rounded-xl backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                            {/* Avatar with gradient ring and online indicator */}
+                            <div className="relative flex-shrink-0">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 via-blue-500 to-purple-600 p-0.5">
+                                    <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center overflow-hidden">
+                                        {user?.profile_photo ? (
+                                            <img
+                                                src={user.profile_photo}
+                                                alt={user?.username}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-lg font-bold text-white">
+                                                {user?.first_name?.charAt(0) || user?.username?.charAt(0).toUpperCase() || 'U'}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Online status indicator */}
+                                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-slate-800 shadow-lg" />
+                            </div>
+
+                            {/* User Details */}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">
+                                    {user?.first_name && user?.last_name
+                                        ? `${user.first_name} ${user.last_name}`
+                                        : user?.username}
+                                </p>
+                                <p className="text-xs text-white/50 truncate mt-0.5">{user?.email}</p>
+                                {/* Role badge */}
+                                <div className="mt-1.5 flex items-center gap-1">
+                                    <span className="px-2 py-0.5 text-[10px] font-medium bg-white/10 text-white/80 rounded-full capitalize">
+                                        {activeMode?.replace('_', ' ') || 'User'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <button
                         onClick={handleLogout}
-                        className="sidebar-link w-full text-sm"
+                        className="sidebar-link w-full text-sm hover:bg-red-500/20 hover:text-red-300 transition-colors"
                     >
                         <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                        Logout
+                        Sign Out
                     </button>
                 </div>
             </aside>
