@@ -175,7 +175,9 @@ class GlobalSearchView(APIView):
         queryset = Institution.objects.filter(
             Q(name__icontains=query) |
             Q(tagline__icontains=query) |
-            Q(description__icontains=query)
+            Q(description__icontains=query) |
+            Q(contact_details__city__icontains=query) |
+            Q(contact_details__state__icontains=query)
         ).prefetch_related('contact_details', 'academic_details', 'infrastructure_details')
 
         # Apply type filter
@@ -293,7 +295,9 @@ class AutocompleteView(APIView):
             # Institutions (new model) - top 3
             institutions = Institution.objects.filter(
                 Q(name__icontains=query) |
-                Q(tagline__icontains=query)
+                Q(tagline__icontains=query) |
+                Q(contact_details__city__icontains=query) |
+                Q(contact_details__state__icontains=query)
             ).prefetch_related('contact_details')[:3]
 
             # Jobs - top 3
