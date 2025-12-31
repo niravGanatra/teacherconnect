@@ -104,8 +104,8 @@ export default function SearchResults() {
                             key={t}
                             onClick={() => updateFilters('type', t)}
                             className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${type === t
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
                                 }`}
                         >
                             {t === 'ALL' ? 'All' : t.charAt(0) + t.slice(1).toLowerCase()}
@@ -161,7 +161,7 @@ export default function SearchResults() {
     // Result card components
     const PersonCard = ({ person }) => (
         <Card className="p-4 hover:shadow-md transition-shadow">
-            <Link to={`/profile/${person.id}`} className="flex items-center gap-4">
+            <Link to={`/teachers/${person.id}`} className="flex items-center gap-4">
                 {person.profile_photo ? (
                     <img src={person.profile_photo} alt="" className="w-14 h-14 rounded-full object-cover" />
                 ) : (
@@ -188,7 +188,10 @@ export default function SearchResults() {
 
     const InstitutionCard = ({ institution }) => (
         <Card className="p-4 hover:shadow-md transition-shadow">
-            <Link to={`/institution/${institution.id}`} className="flex items-center gap-4">
+            <Link
+                to={institution.slug ? `/institution/${institution.slug}` : `/institutions/${institution.id}`}
+                className="flex items-center gap-4"
+            >
                 {institution.logo ? (
                     <img src={institution.logo} alt="" className="w-14 h-14 rounded-lg object-cover" />
                 ) : (
