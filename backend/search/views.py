@@ -389,7 +389,7 @@ class UniversalSearchAPIView(APIView):
     Universal Search API: Aggregates results from Educators, Institutions, Jobs, FDPs.
     Returns: { "results": [ { "type": "educator", "id": 1, ... } ] }
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
