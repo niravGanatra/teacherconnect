@@ -16,17 +16,20 @@ import {
     BuildingOfficeIcon,
     BriefcaseIcon,
     MapPinIcon,
+
     AdjustmentsHorizontalIcon,
+    AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 
-const RESULT_TYPES = ['ALL', 'PEOPLE', 'INSTITUTIONS', 'JOBS'];
+const RESULT_TYPES = ['ALL', 'PEOPLE', 'INSTITUTIONS', 'JOBS', 'FDPS'];
 
 // Popular cities for quick filters
 const POPULAR_CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad'];
 
 export default function SearchResults() {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [results, setResults] = useState({ people: [], institutions: [], jobs: [], total: 0 });
+
+    const [results, setResults] = useState({ people: [], institutions: [], jobs: [], fdps: [], total: 0 });
     const [loading, setLoading] = useState(true);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -96,23 +99,7 @@ export default function SearchResults() {
                 </button>
             </div>
 
-            {/* Result Type */}
-            <FilterSection title="Result Type">
-                <div className="flex flex-wrap gap-2">
-                    {RESULT_TYPES.map((t) => (
-                        <button
-                            key={t}
-                            onClick={() => updateFilters('type', t)}
-                            className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${type === t
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                                }`}
-                        >
-                            {t === 'ALL' ? 'All' : t.charAt(0) + t.slice(1).toLowerCase()}
-                        </button>
-                    ))}
-                </div>
-            </FilterSection>
+            {/* Result Type - Removed as it is now in tabs */}
 
             {/* Connection Degree (for People) */}
             {(type === 'ALL' || type === 'PEOPLE') && (
@@ -217,28 +204,26 @@ export default function SearchResults() {
         </Card>
     );
 
-    const JobCard = ({ job }) => (
+    const FdpCard = ({ fdp }) => (
         <Card className="p-4 hover:shadow-md transition-shadow">
-            <Link to={`/jobs/${job.id}`} className="flex items-center gap-4">
-                {job.logo ? (
-                    <img src={job.logo} alt="" className="w-14 h-14 rounded-lg object-cover" />
-                ) : (
-                    <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <BriefcaseIcon className="w-6 h-6 text-blue-600" />
-                    </div>
-                )}
+            <Link to={`/fdp`} className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <AcademicCapIcon className="w-6 h-6 text-purple-600" />
+                </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-800 hover:text-blue-600">{job.title}</h4>
-                    <p className="text-sm text-slate-600">{job.company}</p>
+                    <h4 className="font-semibold text-slate-800 hover:text-blue-600">{fdp.title}</h4>
+                    <p className="text-sm text-slate-600 line-clamp-1">{fdp.description}</p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
-                            <MapPinIcon className="w-3 h-3" />
-                            {job.is_remote ? 'Remote' : job.location || 'On-site'}
+                            <UserIcon className="w-3 h-3" />
+                            {fdp.instructor?.name || 'Instructor'}
                         </span>
-                        <Badge variant="default">{job.job_type?.replace('_', ' ')}</Badge>
+                        <Badge variant={fdp.price > 0 ? 'default' : 'success'}>
+                            {fdp.price > 0 ? `₹${fdp.price}` : 'Free'}
+                        </Badge>
                     </div>
                 </div>
-                <Button variant="primary" size="sm">Apply</Button>
+                <Button variant="outline" size="sm">View</Button>
             </Link>
         </Card>
     );
@@ -249,11 +234,18 @@ export default function SearchResults() {
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <MagnifyingGlassIcon className="w-16 h-16 text-slate-300 mb-4" />
                     <h2 className="text-xl font-semibold text-slate-800">Search for anything</h2>
-                    <p className="text-slate-500 mt-2">Find people, companies, and jobs</p>
+                    <p className="text-slate-500 mt-2">Find people, companies, courses, and jobs</p>
                 </div>
             </DashboardLayout>
         );
     }
+
+    // Tab items
+    const getTabLabel = (t) => {
+        if (t === 'ALL') return 'All';
+        if (t === 'FDPS') return 'FDPs';
+        return t.charAt(0) + t.slice(1).toLowerCase();
+    };
 
     return (
         <DashboardLayout>
@@ -296,14 +288,27 @@ export default function SearchResults() {
 
                 {/* Results */}
                 <div className="flex-1 min-w-0">
-                    {/* Header */}
+                    {/* Header with Tabs */}
                     <div className="mb-6">
-                        <h1 className="text-xl font-semibold text-slate-800">
+                        <h1 className="text-xl font-semibold text-slate-800 mb-4">
                             Search results for "{query}"
                         </h1>
-                        <p className="text-sm text-slate-500 mt-1">
-                            {results.total} results found
-                        </p>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-200 overflow-x-auto no-scrollbar">
+                            {RESULT_TYPES.map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => updateFilters('type', t)}
+                                    className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${type === t
+                                        ? 'border-blue-600 text-blue-600'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    {getTabLabel(t)}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {loading ? (
@@ -311,9 +316,9 @@ export default function SearchResults() {
                             <Spinner size="lg" />
                         </div>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             {/* People Results */}
-                            {(type === 'ALL' || type === 'PEOPLE') && results.people.length > 0 && (
+                            {(type === 'ALL' || type === 'PEOPLE') && results.people?.length > 0 && (
                                 <div>
                                     {type === 'ALL' && (
                                         <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
@@ -325,15 +330,22 @@ export default function SearchResults() {
                                             <PersonCard key={person.id} person={person} />
                                         ))}
                                     </div>
+                                    {type === 'ALL' && results.people.length >= 3 && (
+                                        <div className="mt-3 text-center">
+                                            <Button variant="ghost" size="sm" onClick={() => updateFilters('type', 'PEOPLE')}>
+                                                View all people
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Institutions Results */}
-                            {(type === 'ALL' || type === 'INSTITUTIONS') && results.institutions.length > 0 && (
+                            {(type === 'ALL' || type === 'INSTITUTIONS') && results.institutions?.length > 0 && (
                                 <div>
                                     {type === 'ALL' && (
                                         <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                                            <BuildingOfficeIcon className="w-5 h-5" /> Companies
+                                            <BuildingOfficeIcon className="w-5 h-5" /> Institutions
                                         </h3>
                                     )}
                                     <div className="space-y-3">
@@ -341,11 +353,18 @@ export default function SearchResults() {
                                             <InstitutionCard key={inst.id} institution={inst} />
                                         ))}
                                     </div>
+                                    {type === 'ALL' && results.institutions.length >= 3 && (
+                                        <div className="mt-3 text-center">
+                                            <Button variant="ghost" size="sm" onClick={() => updateFilters('type', 'INSTITUTIONS')}>
+                                                View all institutions
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {/* Jobs Results */}
-                            {(type === 'ALL' || type === 'JOBS') && results.jobs.length > 0 && (
+                            {(type === 'ALL' || type === 'JOBS') && results.jobs?.length > 0 && (
                                 <div>
                                     {type === 'ALL' && (
                                         <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
@@ -357,6 +376,36 @@ export default function SearchResults() {
                                             <JobCard key={job.id} job={job} />
                                         ))}
                                     </div>
+                                    {type === 'ALL' && results.jobs.length >= 3 && (
+                                        <div className="mt-3 text-center">
+                                            <Button variant="ghost" size="sm" onClick={() => updateFilters('type', 'JOBS')}>
+                                                View all jobs
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* FDPs Results */}
+                            {(type === 'ALL' || type === 'FDPS') && results.fdps?.length > 0 && (
+                                <div>
+                                    {type === 'ALL' && (
+                                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                                            <AcademicCapIcon className="w-5 h-5" /> FDPs & Courses
+                                        </h3>
+                                    )}
+                                    <div className="space-y-3">
+                                        {results.fdps.map((fdp) => (
+                                            <FdpCard key={fdp.id} fdp={fdp} />
+                                        ))}
+                                    </div>
+                                    {type === 'ALL' && results.fdps.length >= 3 && (
+                                        <div className="mt-3 text-center">
+                                            <Button variant="ghost" size="sm" onClick={() => updateFilters('type', 'FDPS')}>
+                                                View all FDPs
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
