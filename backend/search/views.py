@@ -4,7 +4,7 @@ Uses database-agnostic search (icontains) for compatibility.
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Q
 
 from profiles.models import TeacherProfile, InstitutionProfile, UserPrivacySettings, VisibilityChoice
@@ -263,7 +263,7 @@ class AutocompleteView(APIView):
     GET /api/search/autocomplete/?q=query
     Returns compact results for dropdown (top 3 per category).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
@@ -273,17 +273,22 @@ class AutocompleteView(APIView):
 
         try:
             excluded_ids = self._get_excluded_user_ids()
-
-            # Educators (Teachers) - top 3
-            educators = TeacherProfile.objects.filter(
+            
+            # Base query
+            educators_query = TeacherProfile.objects.filter(
                 Q(first_name__icontains=query) |
                 Q(last_name__icontains=query) |
                 Q(headline__icontains=query)
             ).exclude(
                 user_id__in=excluded_ids
-            ).exclude(
-                user_id=request.user.id
-            ).filter(
+            )
+
+            # Exclude self if logged in
+            if request.user.is_authenticated:
+                educators_query = educators_query.exclude(user_id=request.user.id)
+
+            # Educators (Teachers) - top 3
+            educators = educators_query.filter(
                 is_searchable=True
             ).select_related('user')[:3]
 
