@@ -3,7 +3,6 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button, TextArea, Modal, Spinner } from '../../components/common';
 import { jobsAPI } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext';
@@ -93,24 +92,20 @@ export default function JobDetail() {
 
     if (loading) {
         return (
-            <DashboardLayout>
-                <div className="flex items-center justify-center h-64">
-                    <Spinner size="lg" />
-                </div>
-            </DashboardLayout>
+            <div className="flex justify-center py-20">
+                <Spinner size="lg" />
+            </div>
         );
     }
 
     if (!job) {
         return (
-            <DashboardLayout>
-                <p>Job not found</p>
-            </DashboardLayout>
+            <p className="p-6 text-center text-slate-500">Job not found</p>
         );
     }
 
     return (
-        <DashboardLayout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Back Button */}
             <button
                 onClick={() => navigate('/jobs')}
@@ -394,6 +389,6 @@ export default function JobDetail() {
                     </div>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </div>
     );
 }
