@@ -33,6 +33,24 @@ class TeacherProfileView(generics.RetrieveUpdateAPIView):
         profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         return profile
 
+    def retrieve(self, request, *args, **kwargs):
+        """Override retrieve to handle database schema errors gracefully."""
+        try:
+            return super().retrieve(request, *args, **kwargs)
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error retrieving profile: {e}")
+            
+            # Return a useful error response
+            from rest_framework.response import Response
+            from rest_framework import status
+            return Response(
+                {'error': 'Profile data could not be loaded. Database migrations may be pending.', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class TeacherProfileDetailView(generics.RetrieveAPIView):
     """

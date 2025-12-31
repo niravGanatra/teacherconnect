@@ -72,16 +72,28 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_availability_display(self, obj):
-        return AVAILABILITY_LABELS.get(obj.availability, obj.availability)
+        try:
+            return AVAILABILITY_LABELS.get(obj.availability, obj.availability)
+        except Exception:
+            return None
 
     def get_teaching_modes_display(self, obj):
-        return [TEACHING_MODE_LABELS.get(m, m) for m in (obj.teaching_modes or [])]
+        try:
+            return [TEACHING_MODE_LABELS.get(m, m) for m in (obj.teaching_modes or [])]
+        except Exception:
+            return []
 
     def get_boards_display(self, obj):
-        return [BOARD_LABELS.get(b, b) for b in (obj.boards or [])]
+        try:
+            return [BOARD_LABELS.get(b, b) for b in (obj.boards or [])]
+        except Exception:
+            return []
 
     def get_grades_taught_display(self, obj):
-        return [GRADE_LABELS.get(g, g) for g in (obj.grades_taught or [])]
+        try:
+            return [GRADE_LABELS.get(g, g) for g in (obj.grades_taught or [])]
+        except Exception:
+            return []
 
     def validate_demo_video_file(self, value):
         """Validate video file format and size."""
