@@ -2,7 +2,7 @@
  * Main App Component with Complete Routing
  */
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, ROLES } from './context/AuthContext';
 import { LoadingScreen, ErrorBoundary } from './components/common';
 
 // Auth Pages
