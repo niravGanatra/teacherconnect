@@ -312,7 +312,7 @@ class AutocompleteView(APIView):
             fdps = FDP.objects.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query),
-                status='PUBLISHED'
+                is_published=True
             ).select_related('instructor')[:3]
 
             return Response({
@@ -354,17 +354,8 @@ class AutocompleteView(APIView):
             })
         except Exception as e:
             import logging
-            import traceback
             logging.error(f"Autocomplete error: {e}")
-            logging.error(traceback.format_exc())
-            return Response({
-                'educators': [], 
-                'institutions': [], 
-                'jobs': [], 
-                'fdps': [],
-                'debug_error': str(e),
-                'debug_trace': traceback.format_exc()
-            })
+            return Response({'educators': [], 'institutions': [], 'jobs': [], 'fdps': []})
 
     def _get_company_name(self, job):
         try:
