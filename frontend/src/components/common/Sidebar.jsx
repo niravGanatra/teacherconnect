@@ -25,6 +25,7 @@ import {
     PresentationChartBarIcon,
     ChevronUpDownIcon,
     CheckIcon,
+    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 /**
@@ -248,15 +249,17 @@ export function Sidebar({ isOpen, onClose }) {
     );
 }
 
-// Mobile Header with Hamburger Menu
-export function MobileHeader({ onMenuClick }) {
+// Mobile Header with Hamburger Menu and Search
+export function MobileHeader({ onMenuClick, onSearchClick }) {
     return (
         <header className="mobile-header safe-area-top">
             <button onClick={onMenuClick} className="hamburger-btn">
                 <Bars3Icon className="w-6 h-6" />
             </button>
             <h1 className="text-white font-bold text-lg">AcadWorld</h1>
-            <div className="w-11" /> {/* Spacer for centering */}
+            <button onClick={onSearchClick} className="hamburger-btn">
+                <MagnifyingGlassIcon className="w-5 h-5" />
+            </button>
         </header>
     );
 }
@@ -264,11 +267,15 @@ export function MobileHeader({ onMenuClick }) {
 // Responsive Dashboard Layout
 export function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
     // Close sidebar on escape key
     useEffect(() => {
         const handleEscape = (e) => {
-            if (e.key === 'Escape') setSidebarOpen(false);
+            if (e.key === 'Escape') {
+                setSidebarOpen(false);
+                setMobileSearchOpen(false);
+            }
         };
         window.addEventListener('keydown', handleEscape);
         return () => window.removeEventListener('keydown', handleEscape);
@@ -288,20 +295,37 @@ export function DashboardLayout({ children }) {
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-slate-50">
-            <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
+            <MobileHeader
+                onMenuClick={() => setSidebarOpen(true)}
+                onSearchClick={() => setMobileSearchOpen(true)}
+            />
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            {/* Desktop Top Bar with Search */}
-            <div className="hidden lg:block fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200">
-                <div className="flex items-center justify-between h-16 px-6">
-                    <NavBarSearch />
-                    <div className="flex items-center gap-4">
-                        {/* Placeholder for notifications */}
+            {/* Mobile Search Modal */}
+            {mobileSearchOpen && (
+                <div className="lg:hidden fixed inset-0 z-50 bg-white">
+                    <div className="flex items-center gap-3 p-4 border-b border-slate-200">
+                        <button
+                            onClick={() => setMobileSearchOpen(false)}
+                            className="p-2 hover:bg-slate-100 rounded-lg"
+                        >
+                            <XMarkIcon className="w-5 h-5 text-slate-600" />
+                        </button>
+                        <div className="flex-1">
+                            <NavBarSearch onClose={() => setMobileSearchOpen(false)} />
+                        </div>
                     </div>
+                </div>
+            )}
+
+            {/* Desktop Top Bar with Search */}
+            <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+                <div className="flex items-center h-14 px-6 w-full max-w-4xl">
+                    <NavBarSearch />
                 </div>
             </div>
 
-            <main className="main-content lg:pt-16">
+            <main className="main-content lg:pt-14">
                 {children}
             </main>
         </div>
