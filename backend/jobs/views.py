@@ -78,9 +78,12 @@ class RecommendedJobsView(generics.ListAPIView):
 
     def get_queryset(self):
         try:
-            teacher_profile = self.request.user.teacher_profile
-            teacher_subjects = teacher_profile.subjects or []
-        except TeacherProfile.DoesNotExist:
+            # Try to get profile using new or legacy name
+            profile = getattr(self.request.user, 'educator_profile', None) or \
+                     getattr(self.request.user, 'teacher_profile', None)
+            
+            teacher_subjects = profile.subjects or [] if profile else []
+        except Exception:
             teacher_subjects = []
         
         if not teacher_subjects:

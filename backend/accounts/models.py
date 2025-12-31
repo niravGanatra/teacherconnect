@@ -85,3 +85,13 @@ class User(AbstractUser):
         self.deleted_at = timezone.now()
         self.is_active = False  # Also deactivate the user
         self.save()
+
+    @property
+    def teacher_profile(self):
+        """
+        Backward compatibility alias for educator_profile.
+        Allows legacy code to access user.teacher_profile.
+        """
+        if hasattr(self, 'educator_profile'):
+            return self.educator_profile
+        return None
