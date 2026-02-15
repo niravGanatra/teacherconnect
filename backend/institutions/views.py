@@ -329,6 +329,8 @@ class CourseViewSet(viewsets.ModelViewSet):
              
         serializer.save(institution=institution)
 
+
+class VerifyEmailDomainView(generics.GenericAPIView):
     """
     Check if an email domain matches an institution website.
     Used for real-time feedback during institution creation.
