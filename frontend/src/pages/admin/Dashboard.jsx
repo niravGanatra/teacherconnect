@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            const response = await adminAPI.getStats();
+            const response = await adminAPI.getDashboardStats();
             setStats(response.data);
         } catch (err) {
             setError('Failed to load dashboard statistics');
