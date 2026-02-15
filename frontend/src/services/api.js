@@ -377,14 +377,18 @@ export const adminAPI = {
     // User management
     getUsers: (params = {}) => api.get('/admin/users/', { params }),
     updateUser: (id, data) => api.patch(`/admin/users/${id}/`, data),
-    deleteUser: (id) => api.delete(`/admin/users/${id}/`),
+    deleteUser: (id) => api.delete(`/admin/users/${id}/delete/`),
     restoreUser: (id) => api.post(`/admin/users/${id}/restore/`),
+    verifyUser: (id) => api.post(`/admin/users/${id}/verify/`),
+    unverifyUser: (id) => api.delete(`/admin/users/${id}/verify/`),
+    toggleUserActive: (id) => api.post(`/admin/users/${id}/toggle-active/`),
 
     // Job management
     getAllJobs: (params = {}) => api.get('/admin/jobs/', { params }),
     updateJobAdmin: (id, data) => api.patch(`/admin/jobs/${id}/`, data),
     deleteJobAdmin: (id) => api.delete(`/admin/jobs/${id}/`),
     restoreJob: (id) => api.post(`/admin/jobs/${id}/restore/`),
+    toggleJob: (id) => api.post(`/admin/jobs/${id}/toggle/`),
 
     // Content moderation
     getPosts: (params = {}) => api.get('/admin/posts/', { params }),
@@ -394,6 +398,7 @@ export const adminAPI = {
     // Institution verification
     getInstitutions: (params = {}) => api.get('/admin/institutions/', { params }),
     verifyInstitution: (id) => api.post(`/admin/institutions/${id}/verify/`),
+    rejectInstitution: (id) => api.delete(`/admin/institutions/${id}/verify/`),
 
     // Activity report for analytics
     getActivityReport: (params = {}) => api.get('/admin/activity-report/', { params }),

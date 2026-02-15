@@ -4,8 +4,8 @@ set -e
 echo "Running migrations..."
 python manage.py migrate --noinput
 
-echo "Creating superuser..."
-python manage.py createsuperuser --noinput --email admin@acadworld.com --username admin || echo "Superuser already exists"
+echo "Creating admin user..."
+python manage.py create_admin || echo "Admin user setup complete"
 
 echo "Seeding data..."
 python manage.py seed_data || echo "Seed data may already exist"

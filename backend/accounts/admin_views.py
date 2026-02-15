@@ -34,7 +34,7 @@ class AdminStatsView(APIView):
 
         # User stats
         total_users = User.objects.count()
-        teachers_count = User.objects.filter(user_type='TEACHER').count()
+        teachers_count = User.objects.filter(user_type__in=['TEACHER', 'EDUCATOR']).count()
         institutions_count = User.objects.filter(user_type='INSTITUTION').count()
         new_users_30d = User.objects.filter(created_at__gte=last_30_days).count()
         new_users_7d = User.objects.filter(created_at__gte=last_7_days).count()

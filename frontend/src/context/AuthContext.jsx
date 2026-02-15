@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
             }
         } else if (userData.user_type === 'INSTITUTION') {
             derivedRoles.push(ROLES.INSTITUTION_ADMIN);
-        } else if (userData.user_type === 'ADMIN') {
+        } else if (userData.user_type === 'ADMIN' || userData.user_type === 'SUPER_ADMIN') {
             derivedRoles.push(ROLES.ADMIN);
         }
 

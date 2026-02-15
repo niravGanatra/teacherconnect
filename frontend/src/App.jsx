@@ -59,7 +59,9 @@ function ProtectedRoute({ children, allowedTypes = [] }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedTypes.length > 0 && !allowedTypes.includes(user.user_type)) {
+  // Normalize SUPER_ADMIN to ADMIN for type checks
+  const normalizedType = user.user_type === 'SUPER_ADMIN' ? 'ADMIN' : user.user_type;
+  if (allowedTypes.length > 0 && !allowedTypes.includes(user.user_type) && !allowedTypes.includes(normalizedType)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -74,7 +76,7 @@ function DashboardRouter() {
     return <LoadingScreen />;
   }
 
-  if (user?.user_type === 'ADMIN') {
+  if (user?.user_type === 'ADMIN' || user?.user_type === 'SUPER_ADMIN') {
     return <Navigate to="/admin" replace />;
   }
 
