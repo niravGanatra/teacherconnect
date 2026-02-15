@@ -3,7 +3,10 @@ Serializers for Institution Pages
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Institution
+from .models import (
+    Institution, Campus, Course, Accreditation, InstitutionStats,
+    InstitutionContact, InstitutionAcademic, InstitutionInfrastructure, InstitutionSocial
+)
 
 User = get_user_model()
 
@@ -15,6 +18,41 @@ class InstitutionAdminSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email']
 
 
+class CampusSerializer(serializers.ModelSerializer):
+    """Serializer for Campus details"""
+    class Meta:
+        model = Campus
+        fields = [
+            'id', 'name', 'code', 'campus_type', 'status',
+            'city', 'state', 'country', 'pincode',
+            'email', 'phone', 'head_name'
+        ]
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    """Serializer for Courses"""
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'level', 'stream', 'duration']
+
+
+class AccreditationSerializer(serializers.ModelSerializer):
+    """Serializer for Accreditation"""
+    class Meta:
+        model = Accreditation
+        fields = ['id', 'authority_name', 'grade', 'valid_until', 'doc_link']
+
+
+class InstitutionStatsSerializer(serializers.ModelSerializer):
+    """Serializer for Institution Stats"""
+    class Meta:
+        model = InstitutionStats
+        fields = [
+            'avg_annual_admissions', 'pass_percentage', 
+            'placement_assistance', 'top_recruiters'
+        ]
+
+
 class InstitutionListSerializer(serializers.ModelSerializer):
     """Serializer for listing institutions (minimal data)"""
     follower_count = serializers.IntegerField(read_only=True)
@@ -24,7 +62,7 @@ class InstitutionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Institution
         fields = [
-            'id', 'name', 'slug', 'institution_type', 'logo', 
+            'id', 'name', 'brand_name', 'slug', 'institution_type', 'logo', 
             'tagline', 'city', 'state', 'status',
             'follower_count', 'alumni_count', 'is_following'
         ]
@@ -43,20 +81,27 @@ class InstitutionDetailSerializer(serializers.ModelSerializer):
     admin_count = serializers.IntegerField(read_only=True)
     is_following = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
+    
     admins = InstitutionAdminSerializer(many=True, read_only=True)
+    campuses = CampusSerializer(many=True, read_only=True)
+    courses = CourseSerializer(many=True, read_only=True)
+    accreditations = AccreditationSerializer(many=True, read_only=True)
+    stats = InstitutionStatsSerializer(read_only=True)
+    
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     
     class Meta:
         model = Institution
         fields = [
-            'id', 'name', 'slug', 'institution_type',
-            'logo', 'cover_image', 'tagline', 'description',
-            'website', 'founded_year', 'student_count_range',
-            'address', 'city', 'state', 'country',
-            'contact_email', 'contact_phone',
+            'id', 'name', 'brand_name', 'slug', 'institution_type', 'ownership_type',
+            'logo', 'cover_image', 'tagline', 'description', 'vision_mission',
+            'website', 'establishment_year', 
+            'address', 'city', 'state', 'country', 'pincode',
+            'official_email', 'official_phone',
             'status', 'verified_domain',
             'follower_count', 'alumni_count', 'admin_count',
             'is_following', 'is_admin', 'admins',
+            'campuses', 'courses', 'accreditations', 'stats',
             'created_by', 'created_by_username',
             'created_at', 'updated_at'
         ]
@@ -77,15 +122,15 @@ class InstitutionDetailSerializer(serializers.ModelSerializer):
 
 class InstitutionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating a new institution page"""
-    verification_email = serializers.EmailField(write_only=True, required=False)
     
     class Meta:
         model = Institution
         fields = [
-            'name', 'institution_type', 'logo', 'cover_image',
-            'tagline', 'description', 'website', 'founded_year',
-            'student_count_range', 'address', 'city', 'state', 'country',
-            'contact_email', 'contact_phone', 'verification_email'
+            'name', 'brand_name', 'institution_type', 'ownership_type',
+            'logo', 'cover_image', 'tagline', 'description', 
+            'website', 'establishment_year', 
+            'address', 'city', 'state', 'country', 'pincode',
+            'official_email', 'official_phone'
         ]
     
     def validate_name(self, value):
@@ -95,7 +140,6 @@ class InstitutionCreateSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        verification_email = validated_data.pop('verification_email', None)
         user = self.context['request'].user
         
         # Create the institution
@@ -107,15 +151,19 @@ class InstitutionCreateSerializer(serializers.ModelSerializer):
         # Add creator as admin
         institution.admins.add(user)
         
-        # Check domain verification
-        if verification_email and institution.website:
-            from .utils import verify_email_domain
-            result = verify_email_domain(verification_email, institution.website)
-            
-            if result['verified']:
-                institution.status = 'VERIFIED'
-                institution.verified_domain = result['email_domain']
-                institution.save()
+        # Create default Main Campus
+        Campus.objects.create(
+            institution=institution,
+            name="Main Campus",
+            city=validated_data.get('city', ''),
+            state=validated_data.get('state', ''),
+            country=validated_data.get('country', 'India'),
+            pincode=validated_data.get('pincode', ''),
+            address=validated_data.get('address', ''),
+            email=validated_data.get('official_email', ''),
+            phone=validated_data.get('official_phone', ''),
+            campus_type='MAIN'
+        )
         
         return institution
 
@@ -126,10 +174,12 @@ class InstitutionUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Institution
         fields = [
-            'name', 'institution_type', 'logo', 'cover_image',
-            'tagline', 'description', 'website', 'founded_year',
-            'student_count_range', 'address', 'city', 'state', 'country',
-            'contact_email', 'contact_phone'
+            'name', 'brand_name', 'institution_type', 'ownership_type',
+            'logo', 'cover_image', 'tagline', 'description', 'vision_mission',
+            'website', 'establishment_year', 
+            'address', 'city', 'state', 'country', 'pincode',
+            'official_email', 'official_phone', 
+            'fee_range', 'is_scholarship_available'
         ]
     
     def validate_name(self, value):

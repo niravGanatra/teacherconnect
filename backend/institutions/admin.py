@@ -8,7 +8,11 @@ from .models import (
     InstitutionAcademic, 
     InstitutionInfrastructure, 
     InstitutionSocial,
-    InstitutionReview
+    InstitutionReview,
+    Campus,
+    Course,
+    Accreditation,
+    InstitutionStats
 )
 
 
@@ -93,50 +97,86 @@ class InstitutionSocialInline(admin.StackedInline):
         }),
     )
 
-
-class InstitutionReviewInline(admin.TabularInline):
-    model = InstitutionReview
+class InstitutionStatsInline(admin.StackedInline):
+    model = InstitutionStats
     extra = 0
-    readonly_fields = ['reviewer', 'rating', 'title', 'content', 'relationship', 'created_at']
-    fields = ['reviewer', 'rating', 'relationship', 'is_approved', 'is_featured', 'created_at']
-    can_delete = True
+    can_delete = False
+    verbose_name = "Statistics"
+    verbose_name_plural = "Statistics"
+    fieldsets = (
+        ('Admissions', {
+            'fields': ('avg_annual_admissions', 'pass_percentage', 'placement_assistance')
+        }),
+        ('Alumni', {
+            'fields': ('alumni_count_manual', 'top_recruiters', 'placement_partners'),
+            'classes': ('collapse',)
+        }),
+    )
+
+class CampusInline(admin.StackedInline):
+    model = Campus
+    extra = 0
+    show_change_link = True
+    verbose_name = "Campus"
+    verbose_name_plural = "Campuses"
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('name', 'city', 'state', 'country', 'pincode', 'status')
+        }),
+        ('Contact', {
+            'fields': ('email', 'phone', 'whatsapp'),
+            'classes': ('collapse',)
+        }),
+    )
+
+class AccreditationInline(admin.TabularInline):
+    model = Accreditation
+    extra = 0
+    verbose_name = "Accreditation"
+    verbose_name_plural = "Accreditations"
+    fields = ('authority_name', 'grade', 'valid_until')
+
+class CourseInline(admin.TabularInline):
+    model = Course
+    extra = 0
+    verbose_name = "Course"
+    verbose_name_plural = "Courses"
+    fields = ('name', 'level', 'stream', 'duration')
 
 
 @admin.register(Institution)
 class InstitutionAdmin(admin.ModelAdmin):
-    list_display = ['name', 'institution_type', 'status', 'is_hiring', 'is_verified', 'follower_count', 'created_at']
-    list_filter = ['institution_type', 'status', 'is_hiring']
-    search_fields = ['name', 'slug', 'tagline']
+    list_display = ('name', 'institution_type', 'ownership_type', 'status', 'is_verified', 'created_at')
+    list_filter = ('institution_type', 'ownership_type', 'status', 'is_hiring')
+    search_fields = ('name', 'brand_name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
-    readonly_fields = ['created_at', 'updated_at', 'follower_count', 'alumni_count']
-    
+    readonly_fields = ['created_at', 'last_updated_date']
     inlines = [
-        InstitutionContactInline,
-        InstitutionAcademicInline,
-        InstitutionInfrastructureInline,
+        InstitutionContactInline, 
+        InstitutionAcademicInline, 
         InstitutionSocialInline,
-        InstitutionReviewInline,
+        InstitutionStatsInline,
+        CampusInline,
+        AccreditationInline,
+        CourseInline
     ]
-    
+    actions = ['verify_institutions', 'reject_institutions']
+
     fieldsets = (
         ('Identity', {
-            'fields': ('name', 'slug', 'institution_type', 'logo', 'cover_image')
+            'fields': ('name', 'brand_name', 'slug', 'institution_type', 'ownership_type', 'logo', 'cover_image')
         }),
         ('Details', {
-            'fields': ('tagline', 'description', 'website', 'founded_year', 'student_count_range')
+            'fields': ('tagline', 'description', 'establishment_year', 'notable_alumni')
         }),
-        ('Status', {
-            'fields': ('is_hiring', 'notable_alumni')
+        ('Status & Verification', {
+            'fields': ('is_hiring', 'status', 'verified_domain', 'verification_notes')
         }),
         ('Administration', {
-            'fields': ('admins', 'created_by', 'status', 'verified_domain', 'verification_notes')
-        }),
-        ('Metrics', {
-            'fields': ('follower_count', 'alumni_count'),
-            'classes': ('collapse',)
+            'fields': ('admins', 'created_by')
         }),
         ('Metadata', {
-            'fields': ('created_at', 'updated_at'),
+            'fields': ('created_at', 'last_updated_date'),
             'classes': ('collapse',)
         }),
     )
