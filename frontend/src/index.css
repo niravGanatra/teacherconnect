@@ -504,7 +504,7 @@ body {
 @media (min-width: 1024px) {
   .main-content {
     margin-left: 256px;
-    padding: 1.5rem;
+    padding: calc(56px + 1.5rem) 1.5rem 1.5rem;
   }
 }
 

@@ -229,7 +229,7 @@ export function Sidebar({ isOpen, onClose }) {
                                 {/* Role badge */}
                                 <div className="mt-1.5 flex items-center gap-1">
                                     <span className="px-2 py-0.5 text-[10px] font-medium bg-white/10 text-white/80 rounded-full capitalize">
-                                        {activeMode?.replace('_', ' ') || 'User'}
+                                        {activeMode === 'super_admin' ? 'Admin' : activeMode?.replace('_', ' ') || 'User'}
                                     </span>
                                 </div>
                             </div>
@@ -325,7 +325,7 @@ export function DashboardLayout({ children }) {
                 </div>
             </div>
 
-            <main className="main-content lg:pt-14">
+            <main className="main-content">
                 {children}
             </main>
         </div>

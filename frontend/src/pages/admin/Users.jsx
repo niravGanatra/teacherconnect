@@ -103,10 +103,12 @@ export default function AdminUsers() {
     const getUserTypeIcon = (type) => {
         switch (type) {
             case 'TEACHER':
+            case 'EDUCATOR':
                 return <UserIcon className="w-4 h-4" />;
             case 'INSTITUTION':
                 return <BuildingOfficeIcon className="w-4 h-4" />;
             case 'ADMIN':
+            case 'SUPER_ADMIN':
                 return <ShieldCheckIcon className="w-4 h-4" />;
             default:
                 return <UserIcon className="w-4 h-4" />;
@@ -116,8 +118,10 @@ export default function AdminUsers() {
     const getUserTypeBadge = (type) => {
         const styles = {
             TEACHER: 'bg-blue-100 text-blue-700',
+            EDUCATOR: 'bg-blue-100 text-blue-700',
             INSTITUTION: 'bg-purple-100 text-purple-700',
             ADMIN: 'bg-red-100 text-red-700',
+            SUPER_ADMIN: 'bg-red-100 text-red-700',
         };
         return styles[type] || 'bg-gray-100 text-gray-700';
     };
@@ -257,8 +261,8 @@ export default function AdminUsers() {
                                                         onClick={() => handleToggleActive(user.id)}
                                                         disabled={actionLoading === user.id}
                                                         className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${user.is_active
-                                                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                                                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                                                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                                            : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                                                             }`}
                                                     >
                                                         {user.is_active ? 'Deactivate' : 'Activate'}
