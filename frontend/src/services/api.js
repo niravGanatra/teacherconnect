@@ -382,20 +382,27 @@ export const adminAPI = {
 
     // Job management
     getAllJobs: (params = {}) => api.get('/admin/jobs/', { params }),
+    getJobs: (params = {}) => api.get('/admin/jobs/', { params }),  // alias
     updateJobAdmin: (id, data) => api.patch(`/admin/jobs/${id}/`, data),
     deleteJobAdmin: (id) => api.delete(`/admin/jobs/${id}/`),
+    deleteJob: (id) => api.delete(`/admin/jobs/${id}/`),  // alias
     restoreJob: (id) => api.post(`/admin/jobs/${id}/restore/`),
     toggleJob: (id) => api.post(`/admin/jobs/${id}/toggle/`),
 
     // Content moderation
     getPosts: (params = {}) => api.get('/admin/posts/', { params }),
     deletePostAdmin: (id) => api.delete(`/admin/posts/${id}/`),
+    deletePost: (id) => api.delete(`/admin/posts/${id}/`),  // alias
     restorePost: (id) => api.post(`/admin/posts/${id}/restore/`),
 
     // Institution verification
     getInstitutions: (params = {}) => api.get('/admin/institutions/', { params }),
     verifyInstitution: (id) => api.post(`/admin/institutions/${id}/verify/`),
     rejectInstitution: (id) => api.delete(`/admin/institutions/${id}/verify/`),
+    unverifyInstitution: (id) => api.delete(`/admin/institutions/${id}/verify/`),  // alias
+
+    // Activity report (stub - endpoint not yet implemented on backend)
+    getActivityReport: (params = {}) => Promise.resolve({ data: { results: [] } }),
 
 };
 
