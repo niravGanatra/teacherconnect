@@ -59,8 +59,12 @@ function ProtectedRoute({ children, allowedTypes = [] }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Normalize SUPER_ADMIN to ADMIN for type checks
-  const normalizedType = user.user_type === 'SUPER_ADMIN' ? 'ADMIN' : user.user_type;
+  // Normalize backend types to frontend route-guard types
+  const normalizedType = (() => {
+    if (user.user_type === 'SUPER_ADMIN') return 'ADMIN';
+    if (user.user_type === 'EDUCATOR') return 'TEACHER';
+    return user.user_type;
+  })();
   if (allowedTypes.length > 0 && !allowedTypes.includes(user.user_type) && !allowedTypes.includes(normalizedType)) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -80,7 +84,7 @@ function DashboardRouter() {
     return <Navigate to="/admin" replace />;
   }
 
-  if (user?.user_type === 'TEACHER') {
+  if (user?.user_type === 'TEACHER' || user?.user_type === 'EDUCATOR') {
     return <TeacherDashboard />;
   }
 
@@ -332,6 +336,32 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={['INSTITUTION']}>
             <Applicants />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Institution aliases for sidebar links */}
+      <Route
+        path="/institution/dashboard"
+        element={
+          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+            <InstitutionDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/manage"
+        element={
+          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+            <InstitutionProfileEdit />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applicants"
+        element={
+          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+            <Navigate to="/my-jobs" replace />
           </ProtectedRoute>
         }
       />

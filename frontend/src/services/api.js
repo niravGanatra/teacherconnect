@@ -151,10 +151,10 @@ export const profileAPI = {
         }
         return api.patch('/profiles/institution/me/', data);
     },
-    getInstitutionById: (id) => api.get(`/profiles/institutions/${id}/`),
+    getInstitutionById: (id) => api.get(`/profiles/institution/${id}/`),
 
     // Search teachers (for institutions)
-    searchTeachers: (params = {}) => api.get('/profiles/teachers/', { params }),
+    searchTeachers: (params = {}) => api.get('/profiles/teachers/search/', { params }),
 
     // LinkedIn-style profile sections for teachers
     // Experience
@@ -232,35 +232,32 @@ export const jobsAPI = {
     deleteJob: (id) => api.delete(`/jobs/${id}/`),
 
     // Institution: Get my job listings
-    getMyJobs: () => api.get('/jobs/my-jobs/'),
+    getMyJobs: () => api.get('/jobs/my-listings/'),
 
     // Alias for getMyJobs (used by Dashboard and MyJobs pages)
-    getMyListings: () => api.get('/jobs/my-jobs/'),
+    getMyListings: () => api.get('/jobs/my-listings/'),
 
 
     // Teacher: Apply to job
     applyToJob: (jobId, data) => api.post(`/jobs/${jobId}/apply/`, data),
 
-    // Teacher: Check if applied
-    checkApplication: (jobId) => api.get(`/jobs/${jobId}/application-status/`),
-
     // Teacher: Withdraw application
-    withdrawApplication: (jobId) => api.delete(`/jobs/${jobId}/withdraw/`),
+    withdrawApplication: (applicationId) => api.delete(`/jobs/applications/${applicationId}/withdraw/`),
 
     // Teacher: Get my applications
     getMyApplications: () => api.get('/jobs/my-applications/'),
 
-    // Institution: Get applications for a job
-    getJobApplications: (jobId, params = {}) => api.get(`/jobs/${jobId}/applications/`, { params }),
+    // Institution: Get applicants for a job
+    getJobApplications: (jobId, params = {}) => api.get(`/jobs/${jobId}/applicants/`, { params }),
 
     // Institution: Update application status
-    updateApplicationStatus: (applicationId, data) => api.patch(`/applications/${applicationId}/`, data),
+    updateApplicationStatus: (applicationId, data) => api.patch(`/jobs/applications/${applicationId}/status/`, data),
 
     // Teacher: Save job
     saveJob: (jobId) => api.post(`/jobs/${jobId}/save/`),
 
-    // Teacher: Unsave job
-    unsaveJob: (jobId) => api.delete(`/jobs/${jobId}/unsave/`),
+    // Teacher: Unsave job (toggle - same endpoint as save)
+    unsaveJob: (jobId) => api.post(`/jobs/${jobId}/save/`),
 
     // Teacher: Get saved jobs
     getSavedJobs: () => api.get('/jobs/saved/'),
@@ -301,8 +298,8 @@ export const feedAPI = {
     // Like post
     likePost: (id) => api.post(`/feed/posts/${id}/like/`),
 
-    // Unlike post
-    unlikePost: (id) => api.delete(`/feed/posts/${id}/unlike/`),
+    // Unlike post (toggle - same endpoint as like)
+    unlikePost: (id) => api.post(`/feed/posts/${id}/like/`),
 
     // Get comments
     getComments: (postId) => api.get(`/feed/posts/${postId}/comments/`),
@@ -316,8 +313,8 @@ export const feedAPI = {
     // Follow user
     followUser: (userId) => api.post(`/feed/follow/${userId}/`),
 
-    // Unfollow user
-    unfollowUser: (userId) => api.delete(`/feed/unfollow/${userId}/`),
+    // Unfollow user (toggle - same endpoint as follow)
+    unfollowUser: (userId) => api.post(`/feed/follow/${userId}/`),
 
     // Get current user's followers
     getFollowers: () => api.get('/feed/followers/'),
@@ -356,11 +353,11 @@ export const eventsAPI = {
     // Delete event
     deleteEvent: (id) => api.delete(`/events/${id}/`),
 
-    // RSVP to event
-    rsvpEvent: (id, status = 'CONFIRMED') => api.post(`/events/${id}/rsvp/`, { status }),
+    // Join event (RSVP)
+    rsvpEvent: (id) => api.post(`/events/${id}/join/`),
 
-    // Cancel RSVP
-    cancelRsvp: (id) => api.delete(`/events/${id}/cancel-rsvp/`),
+    // Leave event (toggle - same endpoint as join)
+    cancelRsvp: (id) => api.post(`/events/${id}/join/`),
 
     // Get my events (organized by me)
     getMyEvents: () => api.get('/events/my-events/'),
@@ -400,8 +397,6 @@ export const adminAPI = {
     verifyInstitution: (id) => api.post(`/admin/institutions/${id}/verify/`),
     rejectInstitution: (id) => api.delete(`/admin/institutions/${id}/verify/`),
 
-    // Activity report for analytics
-    getActivityReport: (params = {}) => api.get('/admin/activity-report/', { params }),
 };
 
 
@@ -546,17 +541,11 @@ export const coursesAPI = {
     // Update lesson progress
     updateProgress: (lessonId, data) => api.patch(`/courses/lesson/${lessonId}/progress/`, data),
 
-    // Get progress for a course
-    getProgress: (slug) => api.get(`/courses/${slug}/progress/`),
-
     // Get my certificates
     getCertificates: () => api.get('/courses/my/certificates/'),
 
     // Get my badges
     getBadges: () => api.get('/courses/my/badges/'),
-
-    // Verify certificate (public)
-    verifyCertificate: (credentialId) => api.get(`/certificates/verify/${credentialId}/`),
 
     // Instructor APIs
     getInstructorCourses: () => api.get('/courses/instructor/courses/'),
