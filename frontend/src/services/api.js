@@ -453,6 +453,27 @@ export const institutionPagesAPI = {
     adminList: (params = {}) => api.get('/institutions/admin/', { params }),
     adminVerify: (id) => api.post(`/institutions/${id}/admin-verify/`),
     adminReject: (id, data) => api.post(`/institutions/${id}/admin-reject/`, data),
+
+    // Check email domain (for creation wizard)
+    checkEmail: (data) => api.post('/institutions/verify-email/', data),
+};
+
+// Campus API
+export const campusAPI = {
+    list: (params = {}) => api.get('/institutions/campuses/', { params }),
+    get: (id) => api.get(`/institutions/campuses/${id}/`),
+    create: (data) => api.post('/institutions/campuses/', data),
+    update: (id, data) => api.patch(`/institutions/campuses/${id}/`, data),
+    delete: (id) => api.delete(`/institutions/campuses/${id}/`),
+};
+
+// Course API (Institution Catalog)
+export const institutionCourseAPI = {
+    list: (params = {}) => api.get('/institutions/courses/', { params }),
+    get: (id) => api.get(`/institutions/courses/${id}/`),
+    create: (data) => api.post('/institutions/courses/', data),
+    update: (id, data) => api.patch(`/institutions/courses/${id}/`, data),
+    delete: (id) => api.delete(`/institutions/courses/${id}/`),
 };
 
 // Network API (Connections & Follow)

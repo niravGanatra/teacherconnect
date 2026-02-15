@@ -4,8 +4,10 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Card, Button, Spinner, Badge } from '../../components/common';
-import { institutionsAPI } from '../../services/api';
+import { Card, Button, Spinner, Badge, Modal } from '../../components/common';
+import { institutionPagesAPI, campusAPI } from '../../services/api';
+import InstitutionHeader from '../../components/institution/InstitutionHeader';
+import CampusForm from '../../components/institution/CampusForm';
 import {
     BuildingOfficeIcon,
     MapPinIcon,
@@ -28,6 +30,7 @@ import { CheckBadgeIcon as CheckBadgeSolid, StarIcon as StarSolid } from '@heroi
 
 const TABS = [
     { id: 'overview', name: 'Overview', icon: BuildingOfficeIcon },
+    { id: 'campuses', name: 'Campuses', icon: MapPinIcon },
     { id: 'academics', name: 'Academics', icon: AcademicCapIcon },
     { id: 'faculty', name: 'Faculty', icon: UserGroupIcon },
     { id: 'reviews', name: 'Reviews', icon: StarIcon },
@@ -83,94 +86,97 @@ export default function InstitutionProfilePage() {
         );
     }
 
+    // Handle follow/unfollow
+    const handleFollow = async () => {
+        try {
+            const response = await institutionPagesAPI.follow(institution.slug);
+            setInstitution(prev => ({
+                ...prev,
+                is_following: response.data.is_following,
+                follower_count: response.data.follower_count
+            }));
+        } catch (error) {
+            console.error('Failed to update follow status:', error);
+        }
+    };
+
     const {
         contact_details,
         academic_details,
         infrastructure_details,
-        social_details
+        social_details,
+        campuses
     } = institution;
 
-    // Header Section
-    const Header = () => (
-        <div className="relative">
-            {/* Cover Image */}
-            <div className="h-48 md:h-64 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
-                {institution.cover_image && (
-                    <img
-                        src={institution.cover_image}
-                        alt=""
-                        className="w-full h-full object-cover"
-                    />
+    // Modal state
+    const [showAddCampus, setShowAddCampus] = useState(false);
+
+    // Campuses Tab
+    const CampusesTab = () => (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-slate-800">Campuses ({campuses?.length || 0})</h3>
+                {institution.is_admin && (
+                    <Button size="sm" onClick={() => setShowAddCampus(true)}>Add Campus</Button>
                 )}
             </div>
 
-            {/* Logo & Info */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="relative -mt-16 sm:-mt-20 flex flex-col sm:flex-row items-start gap-4">
-                    {/* Logo */}
-                    <div className="w-32 h-32 bg-white rounded-xl shadow-lg border-4 border-white overflow-hidden flex-shrink-0">
-                        {institution.logo ? (
-                            <img
-                                src={institution.logo}
-                                alt={institution.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                                <BuildingOfficeIcon className="w-12 h-12 text-slate-400" />
+            {campuses?.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {campuses.map(campus => (
+                        <Card key={campus.id} className="p-4 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h4 className="font-semibold text-slate-800 text-lg">{campus.name}</h4>
+                                    <Badge
+                                        variant={campus.campus_type === 'MAIN' ? 'primary' : 'default'}
+                                        className="mt-1"
+                                    >
+                                        {campus.campus_type} Campus
+                                    </Badge>
+                                </div>
+                                <div className={`px-2 py-1 rounded text-xs font-medium ${campus.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                                    }`}>
+                                    {campus.status}
+                                </div>
                             </div>
-                        )}
-                    </div>
 
-                    {/* Info */}
-                    <div className="flex-1 pt-2">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-                                {institution.name}
-                            </h1>
-                            {institution.is_verified && (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                                    <CheckBadgeSolid className="w-4 h-4" />
-                                    Verified
-                                </span>
-                            )}
-                            {institution.is_hiring && (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full animate-pulse">
-                                    <BriefcaseIcon className="w-4 h-4" />
-                                    Hiring Now
-                                </span>
-                            )}
-                        </div>
+                            <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                <p className="flex items-start gap-2">
+                                    <MapPinIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                    <span>
+                                        {campus.city}, {campus.state}
+                                    </span>
+                                </p>
+                                {campus.email && (
+                                    <p className="flex items-center gap-2">
+                                        <EnvelopeIcon className="w-4 h-4" />
+                                        {campus.email}
+                                    </p>
+                                )}
+                                {campus.phone && (
+                                    <p className="flex items-center gap-2">
+                                        <PhoneIcon className="w-4 h-4" />
+                                        {campus.phone}
+                                    </p>
+                                )}
+                            </div>
 
-                        {institution.tagline && (
-                            <p className="text-slate-600 mb-2">{institution.tagline}</p>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                            <span className="flex items-center gap-1">
-                                <BuildingOfficeIcon className="w-4 h-4" />
-                                {institution.institution_type}
-                            </span>
-                            {contact_details?.city && (
-                                <span className="flex items-center gap-1">
-                                    <MapPinIcon className="w-4 h-4" />
-                                    {contact_details.city}, {contact_details.state}
-                                </span>
-                            )}
-                            {institution.founded_year && (
-                                <span>Est. {institution.founded_year}</span>
-                            )}
-                        </div>
-
-                        <div className="flex gap-2 mt-4">
-                            <Button variant="primary">Enquire for Admission</Button>
-                            <Button variant="outline">Follow</Button>
-                        </div>
-                    </div>
+                            <div className="mt-4 pt-4 border-t flex gap-2">
+                                <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                            </div>
+                        </Card>
+                    ))}
                 </div>
-            </div>
+            ) : (
+                <Card className="p-8 text-center text-slate-500">
+                    <BuildingOfficeIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No campus information available.</p>
+                </Card>
+            )}
         </div>
     );
+
 
     // Sidebar
     const Sidebar = () => (
@@ -435,6 +441,7 @@ export default function InstitutionProfilePage() {
     const renderTab = () => {
         switch (activeTab) {
             case 'overview': return <OverviewTab />;
+            case 'campuses': return <CampusesTab />;
             case 'academics': return <AcademicsTab />;
             case 'faculty': return <FacultyTab />;
             case 'reviews': return <ReviewsTab />;
@@ -444,7 +451,15 @@ export default function InstitutionProfilePage() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <Header />
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <InstitutionHeader
+                    institution={institution}
+                    onFollow={handleFollow}
+                    isFollowing={institution.is_following}
+                    followerCount={institution.follower_count}
+                    isAdmin={institution.is_admin}
+                />
+            </div>
 
             {/* Mobile Contact Tab */}
             <div className="lg:hidden px-4 py-2 sticky top-0 bg-white shadow-sm z-10">
@@ -454,8 +469,8 @@ export default function InstitutionProfilePage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-slate-100 text-slate-600'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
                                 }`}
                         >
                             {tab.name}
@@ -495,8 +510,8 @@ export default function InstitutionProfilePage() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px ${activeTab === tab.id
-                                                ? 'border-blue-600 text-blue-600'
-                                                : 'border-transparent text-slate-500 hover:text-slate-700'
+                                            ? 'border-blue-600 text-blue-600'
+                                            : 'border-transparent text-slate-500 hover:text-slate-700'
                                             }`}
                                     >
                                         <Icon className="w-4 h-4" />

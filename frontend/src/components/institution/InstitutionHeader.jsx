@@ -10,6 +10,8 @@ import {
     GlobeAltIcon,
     CalendarIcon,
     CheckBadgeIcon,
+    BriefcaseIcon,
+    BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 
 export default function InstitutionHeader({
@@ -42,11 +44,23 @@ export default function InstitutionHeader({
                     />
                 )}
 
+            </div>
+
+            {/* Status Badges - Absolute positioned on cover image */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                 {/* Verified Badge */}
                 {institution.status === 'VERIFIED' && (
-                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
                         <CheckBadgeIcon className="w-5 h-5 text-blue-500" />
                         <span className="text-sm font-medium text-slate-700">Verified</span>
+                    </div>
+                )}
+
+                {/* Hiring Badge */}
+                {institution.is_hiring && (
+                    <div className="flex items-center gap-1 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm animate-pulse">
+                        <BriefcaseIcon className="w-4 h-4 text-white" />
+                        <span className="text-sm font-medium text-white">Hiring</span>
                     </div>
                 )}
             </div>
@@ -73,9 +87,25 @@ export default function InstitutionHeader({
                 </div>
 
                 {/* Institution Name */}
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
-                    {institution.name}
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+                    {institution.brand_name || institution.name}
                 </h1>
+
+                {institution.brand_name && institution.brand_name !== institution.name && (
+                    <p className="text-sm text-slate-500 mb-2">
+                        {institution.name}
+                    </p>
+                )}
+
+                {/* Ownership Badge */}
+                {institution.ownership_type && (
+                    <div className="flex justify-center mb-3">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                            <BuildingOfficeIcon className="w-3 h-3" />
+                            {institution.ownership_type.replace('_', ' ')}
+                        </span>
+                    </div>
+                )}
 
                 {/* Tagline */}
                 {institution.tagline && (

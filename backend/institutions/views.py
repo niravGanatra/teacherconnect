@@ -9,13 +9,16 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db.models import Count, F
 
-from .models import Institution
+from rest_framework.exceptions import PermissionDenied
+from .models import Institution, Campus, Course
 from .serializers import (
     InstitutionListSerializer,
     InstitutionDetailSerializer,
     InstitutionCreateSerializer,
     InstitutionUpdateSerializer,
     AlumniSerializer,
+    CampusSerializer,
+    CourseSerializer,
 )
 from .permissions import IsInstitutionAdminOrReadOnly, CanCreateInstitution
 from profiles.models import Education
@@ -65,6 +68,17 @@ class InstitutionViewSet(viewsets.ModelViewSet):
             alumni_count=Count('alumni_education__profile__user', distinct=True),
             admin_count=Count('admins', distinct=True)
         )
+        
+        # Prefetch for detail view effectiveness
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related(
+                'campuses', 
+                'courses', 
+                'accreditations', 
+                'admins', 
+                'stats'
+            )
+
         
         # Search filter
         search = self.request.query_params.get('search')
@@ -258,7 +272,63 @@ class InstitutionViewSet(viewsets.ModelViewSet):
             )
 
 
-class VerifyEmailDomainView(generics.GenericAPIView):
+class CampusViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Campus CRUD operations.
+    """
+    serializer_class = CampusSerializer
+    permission_classes = [IsAuthenticated, IsInstitutionAdminOrReadOnly]
+    
+    def get_queryset(self):
+        queryset = Campus.objects.all()
+        
+        # Filter by institution
+        institution_slug = self.request.query_params.get('institution')
+        if institution_slug:
+            queryset = queryset.filter(institution__slug=institution_slug)
+            
+        return queryset
+
+    def perform_create(self, serializer):
+        # Allow creating campus for an institution if user is admin of that institution
+        institution_id = self.request.data.get('institution_id')
+        institution = get_object_or_404(Institution, id=institution_id)
+        
+        # Check permission
+        if not institution.admins.filter(id=self.request.user.id).exists():
+             raise PermissionDenied("You do not have permission to add a campus to this institution.")
+             
+        serializer.save(institution=institution)
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Course CRUD operations.
+    """
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated, IsInstitutionAdminOrReadOnly]
+    
+    def get_queryset(self):
+        queryset = Course.objects.all()
+        
+        # Filter by institution
+        institution_slug = self.request.query_params.get('institution')
+        if institution_slug:
+            queryset = queryset.filter(institution__slug=institution_slug)
+            
+        return queryset
+
+    def perform_create(self, serializer):
+        # Allow creating course for an institution if user is admin
+        institution_id = self.request.data.get('institution_id')
+        institution = get_object_or_404(Institution, id=institution_id)
+        
+        # Check permission
+        if not institution.admins.filter(id=self.request.user.id).exists():
+             raise PermissionDenied("You do not have permission to add a course to this institution.")
+             
+        serializer.save(institution=institution)
+
     """
     Check if an email domain matches an institution website.
     Used for real-time feedback during institution creation.
