@@ -31,19 +31,19 @@ urlpatterns = [
     path('users/<uuid:pk>/verify/', AdminUserVerifyView.as_view(), name='admin-user-verify'),
     path('users/<uuid:pk>/toggle-active/', AdminUserToggleActiveView.as_view(), name='admin-user-toggle'),
     
-    # Job moderation (integer PKs)
+    # Job moderation (UUID PKs — JobListing.id is UUIDField)
     path('jobs/', AdminJobsListView.as_view(), name='admin-jobs'),
-    path('jobs/<int:pk>/toggle/', AdminJobToggleView.as_view(), name='admin-job-toggle'),
-    path('jobs/<int:pk>/', AdminJobDeleteView.as_view(), name='admin-job-delete'),
-    path('jobs/<int:pk>/restore/', AdminJobDeleteView.as_view(), name='admin-job-restore'),
-    
-    # Institution verification (integer PKs)
+    path('jobs/<uuid:pk>/toggle/', AdminJobToggleView.as_view(), name='admin-job-toggle'),
+    path('jobs/<uuid:pk>/', AdminJobDeleteView.as_view(), name='admin-job-delete'),
+    path('jobs/<uuid:pk>/restore/', AdminJobDeleteView.as_view(), name='admin-job-restore'),
+
+    # Institution verification (UUID PKs — InstitutionProfile.id is UUIDField)
     path('institutions/', AdminInstitutionsListView.as_view(), name='admin-institutions'),
-    path('institutions/<int:pk>/verify/', AdminInstitutionVerifyView.as_view(), name='admin-institution-verify'),
-    
-    # Content moderation (integer PKs)
+    path('institutions/<uuid:pk>/verify/', AdminInstitutionVerifyView.as_view(), name='admin-institution-verify'),
+
+    # Content moderation (UUID PKs — Post.id is UUIDField)
     path('posts/', AdminPostsListView.as_view(), name='admin-posts'),
-    path('posts/<int:pk>/', AdminPostDeleteView.as_view(), name='admin-post-delete'),
-    path('posts/<int:pk>/restore/', AdminPostDeleteView.as_view(), name='admin-post-restore'),
+    path('posts/<uuid:pk>/', AdminPostDeleteView.as_view(), name='admin-post-delete'),
+    path('posts/<uuid:pk>/restore/', AdminPostDeleteView.as_view(), name='admin-post-restore'),
 ]
 

@@ -270,11 +270,14 @@ export default function NavBarSearch() {
                                     currentIndex++;
                                     const itemIndex = currentIndex;
                                     return (
-                                        <button
+                                        <div
                                             key={search}
+                                            role="button"
+                                            tabIndex={0}
                                             onClick={() => setQuery(search)}
+                                            onKeyDown={(e) => e.key === 'Enter' && setQuery(search)}
                                             className={`
-                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                                                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer
                                                 ${highlightedIndex === itemIndex ? 'bg-blue-50' : 'hover:bg-slate-50'}
                                             `}
                                         >
@@ -286,7 +289,7 @@ export default function NavBarSearch() {
                                             >
                                                 <XMarkIcon className="w-3.5 h-3.5 text-slate-400" />
                                             </button>
-                                        </button>
+                                        </div>
                                     );
                                 })}
                             </div>

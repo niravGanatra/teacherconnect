@@ -95,6 +95,16 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         except Exception:
             return []
 
+    def validate_profile_photo(self, value):
+        """Validate profile photo format and size."""
+        if value:
+            ext = os.path.splitext(value.name)[1].lower()
+            if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                raise serializers.ValidationError('Only JPG, PNG, GIF, and WebP images are allowed.')
+            if value.size > 5 * 1024 * 1024:
+                raise serializers.ValidationError('Profile photo must be under 5MB.')
+        return value
+
     def validate_demo_video_file(self, value):
         """Validate video file format and size."""
         if value:
@@ -102,7 +112,7 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             ext = os.path.splitext(value.name)[1].lower()
             if ext not in ['.mp4', '.mov', '.webm']:
                 raise serializers.ValidationError('Only MP4, MOV, and WebM video formats are allowed.')
-            
+
             # Check file size (50MB max)
             if value.size > 50 * 1024 * 1024:
                 raise serializers.ValidationError('Video file must be under 50MB.')

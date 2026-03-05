@@ -31,6 +31,7 @@ export default function SearchResults() {
 
     const [results, setResults] = useState({ people: [], institutions: [], jobs: [], fdps: [], total: 0 });
     const [loading, setLoading] = useState(true);
+    const [searchError, setSearchError] = useState(false);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Extract filters from URL
@@ -70,11 +71,13 @@ export default function SearchResults() {
 
         const fetchResults = async () => {
             setLoading(true);
+            setSearchError(false);
             try {
                 const response = await searchAPI.search(query, type, { location });
                 setResults(response.data);
             } catch (error) {
                 console.error('Search failed:', error);
+                setSearchError(true);
             } finally {
                 setLoading(false);
             }
@@ -340,6 +343,15 @@ export default function SearchResults() {
                     {loading ? (
                         <div className="flex items-center justify-center py-16">
                             <Spinner size="lg" />
+                        </div>
+                    ) : searchError ? (
+                        <div className="text-center py-16">
+                            <MagnifyingGlassIcon className="w-12 h-12 text-red-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-700">Search unavailable</h3>
+                            <p className="text-slate-500 mt-1">Something went wrong. Please try again.</p>
+                            <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>
+                                Retry
+                            </Button>
                         </div>
                     ) : (
                         <div className="space-y-8">

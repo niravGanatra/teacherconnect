@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import SelectableChipGroup from '../../components/common/SelectableChipGroup';
 import {
     AcademicCapIcon,
@@ -47,6 +47,7 @@ const SUBJECT_OPTIONS = [
 
 export default function EducatorOnboarding() {
     const navigate = useNavigate();
+    const { register } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -107,6 +108,7 @@ export default function EducatorOnboarding() {
             setError(validationError);
             return;
         }
+        setError('');
         if (currentStep < 4) {
             setCurrentStep(currentStep + 1);
         }
@@ -129,10 +131,12 @@ export default function EducatorOnboarding() {
         setError('');
 
         try {
-            // Register user
-            await authAPI.register({
+            // Register and auto-login via AuthContext
+            const result = await register({
                 email: formData.email,
+                username: formData.email,
                 password: formData.password,
+                password_confirm: formData.confirm_password,
                 first_name: formData.first_name,
                 last_name: formData.last_name,
                 user_type: 'EDUCATOR',
@@ -147,8 +151,11 @@ export default function EducatorOnboarding() {
                 },
             });
 
-            // Redirect to login or dashboard
-            navigate('/login?registered=true');
+            if (result.success) {
+                navigate('/dashboard');
+            } else {
+                setError(result.error || 'Registration failed. Please try again.');
+            }
         } catch (err) {
             setError(err.response?.data?.detail || 'Registration failed. Please try again.');
         } finally {

@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import {
     BuildingOffice2Icon,
     ArrowLeftIcon,
@@ -36,6 +36,7 @@ const BLOCKED_DOMAINS = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
 
 export default function InstitutionOnboarding() {
     const navigate = useNavigate();
+    const { register } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -93,6 +94,7 @@ export default function InstitutionOnboarding() {
             setError(validationError);
             return;
         }
+        setError('');
         if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
         }
@@ -115,9 +117,11 @@ export default function InstitutionOnboarding() {
         setError('');
 
         try {
-            await authAPI.register({
+            const result = await register({
                 email: formData.email,
+                username: formData.email,
                 password: formData.password,
+                password_confirm: formData.confirm_password,
                 user_type: 'INSTITUTION',
                 profile_data: {
                     institution_name: formData.institution_name,
@@ -126,7 +130,11 @@ export default function InstitutionOnboarding() {
                 },
             });
 
-            navigate('/login?registered=true');
+            if (result.success) {
+                navigate('/dashboard');
+            } else {
+                setError(result.error || 'Registration failed. Please try again.');
+            }
         } catch (err) {
             setError(err.response?.data?.detail || 'Registration failed. Please try again.');
         } finally {
@@ -288,39 +296,22 @@ export default function InstitutionOnboarding() {
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold text-slate-800 mb-2">Verification</h2>
                             <p className="text-sm text-slate-500 mb-6">
-                                Upload a verification document to unlock full features (optional now)
+                                Almost done! You can upload verification documents from your institution profile settings after logging in.
                             </p>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Registration Certificate / Letterhead
-                                </label>
-                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
-                                    <input
-                                        type="file"
-                                        accept=".pdf,.jpg,.jpeg,.png"
-                                        onChange={(e) => updateField('verification_document', e.target.files[0])}
-                                        className="hidden"
-                                        id="verification-upload"
-                                    />
-                                    <label htmlFor="verification-upload" className="cursor-pointer">
-                                        <DocumentCheckIcon className="w-12 h-12 mx-auto text-slate-400 mb-3" />
-                                        <p className="text-slate-600">
-                                            {formData.verification_document
-                                                ? formData.verification_document.name
-                                                : 'Click to upload (PDF, JPG, PNG)'}
-                                        </p>
-                                    </label>
+                            <div className="flex items-start gap-4 p-5 bg-purple-50 rounded-xl border border-purple-100">
+                                <DocumentCheckIcon className="w-10 h-10 text-purple-400 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-medium text-purple-800 mb-1">Verification available after sign-up</p>
+                                    <p className="text-sm text-purple-600">
+                                        Upload your Registration Certificate or official Letterhead from your institution profile to receive:
+                                    </p>
+                                    <ul className="list-disc list-inside space-y-1 text-purple-600 text-sm mt-2">
+                                        <li>Verified badge on your institution profile</li>
+                                        <li>Priority listing in search results</li>
+                                        <li>Access to bulk purchase discounts for FDPs</li>
+                                    </ul>
                                 </div>
-                            </div>
-
-                            <div className="bg-purple-50 rounded-lg p-4 text-purple-700 text-sm">
-                                <p className="font-medium mb-1">Why verification matters:</p>
-                                <ul className="list-disc list-inside space-y-1 text-purple-600">
-                                    <li>Verified badge on your institution profile</li>
-                                    <li>Priority listing in search results</li>
-                                    <li>Access to bulk purchase discounts for FDPs</li>
-                                </ul>
                             </div>
                         </div>
                     )}

@@ -1,10 +1,15 @@
 """
 Global Search views.
-Uses database-agnostic search (icontains) for compatibility.
+Uses database-agnostic search (icontains) for SQLite/PostgreSQL compatibility.
+
+TODO: Upgrade to PostgreSQL full-text search (SearchVector + SearchRank) once the
+production database is confirmed to be PostgreSQL-only. This will add relevance
+ranking, stemming, and cross-field phrase matching (e.g. "John Doe" matching
+first_name=John + last_name=Doe). See django.contrib.postgres.search.
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
 from profiles.models import TeacherProfile, InstitutionProfile, UserPrivacySettings, VisibilityChoice
@@ -32,7 +37,8 @@ class GlobalSearchView(APIView):
     def get(self, request):
         query = request.query_params.get('q', '').strip()
         search_type = request.query_params.get('type', 'ALL').upper()
-        limit = int(request.query_params.get('limit', 20))
+        # Cap limit to 100 to prevent large DB scans from crafted requests
+        limit = min(int(request.query_params.get('limit', 20)), 100)
         
         # Teacher-specific filters
         board_filter = request.query_params.get('boards', '')
@@ -82,7 +88,11 @@ class GlobalSearchView(APIView):
             if search_type in ['ALL', 'JOBS']:
                 results['jobs'] = self._search_jobs(query, limit)
 
-            results['total'] = len(results['people']) + len(results['institutions']) + len(results['jobs'])
+            # Per-type counts let the frontend show "View all N people" links
+            results['people_count'] = len(results['people'])
+            results['institutions_count'] = len(results['institutions'])
+            results['jobs_count'] = len(results['jobs'])
+            results['total'] = results['people_count'] + results['institutions_count'] + results['jobs_count']
         except Exception as e:
             # Log and return empty results on error
             import logging
@@ -114,12 +124,14 @@ class GlobalSearchView(APIView):
         """Search teacher profiles with filters and prioritization."""
         excluded_ids = self._get_excluded_user_ids()
 
-        # Base query
+        # Base query — includes subject fields so "search by subject" works
         queryset = TeacherProfile.objects.filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
             Q(headline__icontains=query) |
-            Q(current_school__icontains=query)
+            Q(current_school__icontains=query) |
+            Q(expert_subjects__icontains=query) |
+            Q(subjects__icontains=query)
         ).exclude(
             user_id__in=excluded_ids
         ).exclude(
@@ -264,7 +276,7 @@ class AutocompleteView(APIView):
     GET /api/search/autocomplete/?q=query
     Returns compact results for dropdown (top 3 per category).
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
@@ -389,7 +401,7 @@ class UniversalSearchAPIView(APIView):
     Universal Search API: Aggregates results from Educators, Institutions, Jobs, FDPs.
     Returns: { "results": [ { "type": "educator", "id": 1, ... } ] }
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         query = request.query_params.get('q', '').strip()
@@ -470,10 +482,11 @@ class UniversalSearchAPIView(APIView):
         except Exception:
             pass
 
-        # 4. FDPs
+        # 4. FDPs — only published courses exposed to search
         try:
             fdps = Course.objects.filter(
-                Q(title__icontains=query)
+                Q(title__icontains=query),
+                is_published=True
             ).select_related('instructor')[:3]
             
             for fdp in fdps:

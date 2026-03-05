@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/niravganatra/teacherConnect/frontend && npm run dev"],
+      "port": 3000
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/niravganatra/teacherConnect/backend && source venv/bin/activate && python manage.py runserver 8000"],
+      "port": 8000
+    }
+  ]
+}

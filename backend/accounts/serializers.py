@@ -41,10 +41,10 @@ class RegisterSerializer(serializers.ModelSerializer):
                 "password": "Password fields didn't match."
             })
         
-        # Validate user_type
-        if attrs.get('user_type') not in ['TEACHER', 'INSTITUTION']:
+        # Validate user_type — accept both canonical 'EDUCATOR' and legacy 'TEACHER'
+        if attrs.get('user_type') not in ['EDUCATOR', 'TEACHER', 'INSTITUTION']:
             raise serializers.ValidationError({
-                "user_type": "User type must be TEACHER or INSTITUTION."
+                "user_type": "User type must be EDUCATOR or INSTITUTION."
             })
         
         return attrs

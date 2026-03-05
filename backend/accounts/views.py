@@ -88,7 +88,37 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
+
+        # Persist onboarding profile_data collected by the registration wizard
+        profile_data = request.data.get('profile_data')
+        if profile_data and isinstance(profile_data, dict):
+            if user.user_type in ['EDUCATOR', 'TEACHER']:
+                from profiles.models import EducatorProfile
+                profile, _ = EducatorProfile.objects.get_or_create(user=user)
+                safe_fields = [
+                    'current_role', 'experience_years', 'current_school',
+                    'boards', 'grades_taught', 'expert_subjects', 'linkedin_url',
+                ]
+                for field in safe_fields:
+                    if field in profile_data:
+                        setattr(profile, field, profile_data[field])
+                profile.first_name = profile.first_name or request.data.get('first_name', '')
+                profile.last_name = profile.last_name or request.data.get('last_name', '')
+                profile.save()
+            elif user.user_type == 'INSTITUTION':
+                from profiles.models import InstitutionProfile
+                profile, _ = InstitutionProfile.objects.get_or_create(
+                    user=user,
+                    defaults={'institution_name': profile_data.get('institution_name', user.username)}
+                )
+                if profile_data.get('institution_name'):
+                    profile.institution_name = profile_data['institution_name']
+                if profile_data.get('institution_type'):
+                    profile.institution_type = profile_data['institution_type']
+                if profile_data.get('website_url'):
+                    profile.website_url = profile_data['website_url']
+                profile.save()
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
@@ -239,8 +269,8 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
-            # Get refresh token from cookie
-            refresh_token = request.COOKIES.get('refresh_token')
+            # Accept refresh token from body (localStorage flow) or cookie (HttpOnly cookie flow)
+            refresh_token = request.data.get('refresh') or request.COOKIES.get('refresh_token')
             
             if refresh_token:
                 try:

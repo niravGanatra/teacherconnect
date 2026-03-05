@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/Sidebar';
-import { Card, Badge, Button, Spinner } from '../../components/common';
+import { Card, Badge, Button } from '../../components/common';
+import ProfileSkeleton from '../../components/common/ProfileSkeleton';
 import { useAuth } from '../../context/AuthContext';
 import { profileAPI } from '../../services/api';
 import {
@@ -57,9 +58,7 @@ export default function TeacherProfileView() {
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="flex items-center justify-center h-64">
-                    <Spinner size="lg" />
-                </div>
+                <ProfileSkeleton />
             </DashboardLayout>
         );
     }
@@ -93,8 +92,8 @@ export default function TeacherProfileView() {
                         {/* Profile Photo */}
                         <div className="absolute -top-12 md:-top-16 left-4 md:left-6">
                             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] flex items-center justify-center shadow-lg">
-                                {profile.photo ? (
-                                    <img src={profile.photo} alt={fullName} className="w-full h-full rounded-full object-cover" />
+                                {profile.profile_photo ? (
+                                    <img src={profile.profile_photo} alt={fullName} className="w-full h-full rounded-full object-cover" />
                                 ) : (
                                     <span className="text-3xl md:text-4xl font-bold text-white">
                                         {profile.first_name?.charAt(0) || 'T'}{profile.last_name?.charAt(0) || ''}
@@ -244,7 +243,7 @@ export default function TeacherProfileView() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-slate-900">{edu.degree}</h3>
-                                        <p className="text-slate-600">{edu.institution}</p>
+                                        <p className="text-slate-600">{edu.school}</p>
                                         {edu.year && (
                                             <p className="text-sm text-slate-500 mt-1">{edu.year}</p>
                                         )}

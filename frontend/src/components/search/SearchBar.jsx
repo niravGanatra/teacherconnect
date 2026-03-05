@@ -58,10 +58,10 @@ export default function SearchBar({ onSearch, compact = false }) {
         setLoading(true);
         try {
             const response = await searchAPI.autocomplete(searchQuery);
-            // Filter out any malformed results (safety check)
+            // AutocompleteView returns 'educators' key; handle both for resilience
             const data = response.data;
             setResults({
-                people: (data.people || []).filter(p => p.id),
+                people: (data.educators || data.people || []).filter(p => p.id),
                 institutions: (data.institutions || []).filter(i => i.id),
                 jobs: (data.jobs || []).filter(j => j.id),
             });
@@ -265,6 +265,15 @@ export default function SearchBar({ onSearch, compact = false }) {
                                     </div>
                                 </button>
                             ))}
+                        </div>
+                    )}
+
+                    {/* No results message */}
+                    {query.length >= 2 && !loading && !hasResults && !showRecentSearches && (
+                        <div className="px-4 py-6 text-center">
+                            <MagnifyingGlassIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm text-slate-500">No results for "{query}"</p>
+                            <p className="text-xs text-slate-400 mt-1">Try different keywords</p>
                         </div>
                     )}
 

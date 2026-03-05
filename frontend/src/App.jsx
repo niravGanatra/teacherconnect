@@ -84,7 +84,7 @@ function DashboardRouter() {
     return <Navigate to="/admin" replace />;
   }
 
-  if (user?.user_type === 'TEACHER' || user?.user_type === 'EDUCATOR') {
+  if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
     return <TeacherDashboard />;
   }
 
@@ -103,7 +103,7 @@ function ProfileRouter() {
     return <LoadingScreen />;
   }
 
-  if (user?.user_type === 'TEACHER') {
+  if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
     return <TeacherProfileView />;
   }
 
@@ -122,7 +122,7 @@ function ProfileEditRouter() {
     return <LoadingScreen />;
   }
 
-  if (user?.user_type === 'TEACHER') {
+  if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
     return <TeacherProfileEdit />;
   }
 

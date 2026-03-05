@@ -91,8 +91,8 @@ export function AuthProvider({ children }) {
     const deriveRoles = useCallback((userData, profileData) => {
         const derivedRoles = [];
 
-        // Base role from user_type
-        if (userData.user_type === 'TEACHER') {
+        // Base role from user_type — accept both canonical 'EDUCATOR' and legacy 'TEACHER'
+        if (userData.user_type === 'EDUCATOR' || userData.user_type === 'TEACHER') {
             derivedRoles.push(ROLES.TEACHER);
 
             // Check if also an instructor (has courses)
@@ -172,7 +172,7 @@ export function AuthProvider({ children }) {
     const fetchProfile = async (userType) => {
         try {
             let profileData = null;
-            if (userType === 'TEACHER') {
+            if (userType === 'EDUCATOR' || userType === 'TEACHER') {
                 const response = await profileAPI.getTeacherProfile();
                 profileData = response.data;
                 setProfile(profileData);
@@ -273,7 +273,7 @@ export function AuthProvider({ children }) {
 
     const updateProfile = async (data) => {
         try {
-            if (user?.user_type === 'TEACHER') {
+            if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
                 const response = await profileAPI.updateTeacherProfile(data);
                 setProfile(response.data);
                 return { success: true };
@@ -330,9 +330,9 @@ export function AuthProvider({ children }) {
 
         // Convenience flags
         isAuthenticated: !!user,
-        isTeacher: user?.user_type === 'TEACHER',
+        isTeacher: user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER',
         isInstitution: user?.user_type === 'INSTITUTION',
-        isAdmin: user?.user_type === 'ADMIN',
+        isAdmin: user?.user_type === 'ADMIN' || user?.user_type === 'SUPER_ADMIN',
         isInstitutionAdmin: roles.includes(ROLES.INSTITUTION_ADMIN),
         isInstructor: roles.includes(ROLES.INSTRUCTOR),
 

@@ -165,7 +165,7 @@ class ExperienceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return experiences for the current user's profile only."""
-        profile = TeacherProfile.objects.get(user=self.request.user)
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         return Experience.objects.filter(profile=profile)
 
     def perform_create(self, serializer):
@@ -185,7 +185,7 @@ class EducationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return education entries for the current user's profile only."""
-        profile = TeacherProfile.objects.get(user=self.request.user)
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         return Education.objects.filter(profile=profile)
 
     def perform_create(self, serializer):
@@ -204,7 +204,7 @@ class SkillViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return skills for the current user's profile only."""
-        profile = TeacherProfile.objects.get(user=self.request.user)
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         return Skill.objects.filter(profile=profile)
 
     def perform_create(self, serializer):
@@ -224,7 +224,7 @@ class CertificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return certifications for the current user's profile only."""
-        profile = TeacherProfile.objects.get(user=self.request.user)
+        profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         return Certification.objects.filter(profile=profile)
 
     def perform_create(self, serializer):
