@@ -4,6 +4,7 @@ Implements three user types: EDUCATOR, INSTITUTION, SUPER_ADMIN
 Uses UUID as primary key for IDOR protection.
 """
 import uuid
+import secrets
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -95,3 +96,31 @@ class User(AbstractUser):
         if hasattr(self, 'educator_profile'):
             return self.educator_profile
         return None
+
+
+class EmailVerification(models.Model):
+    """
+    Stores a one-time email verification token for new user accounts.
+    token is generated with secrets.token_urlsafe(32) — 43-char URL-safe string.
+    When verified, both EmailVerification.is_verified and User.is_verified are set to True.
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='email_verification'
+    )
+    token = models.CharField(max_length=64, unique=True)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'email_verifications'
+        verbose_name = 'Email Verification'
+        verbose_name_plural = 'Email Verifications'
+
+    def __str__(self):
+        return f"EmailVerification({self.user.email}, verified={self.is_verified})"
+
+    @classmethod
+    def generate_token(cls):
+        return secrets.token_urlsafe(32)

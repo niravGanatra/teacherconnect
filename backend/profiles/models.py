@@ -401,6 +401,36 @@ class Skill(models.Model):
         return self.name
 
 
+class Endorsement(models.Model):
+    """
+    Tracks individual endorsements of a Skill by other users.
+    Replaces the simple endorsements_count integer with a proper relation
+    so we can show avatar stacks and check is_endorsed_by_me.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    skill = models.ForeignKey(
+        Skill,
+        on_delete=models.CASCADE,
+        related_name='endorsements',
+    )
+    endorser = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_endorsements',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'skill_endorsements'
+        unique_together = ('skill', 'endorser')
+        ordering = ['created_at']
+        verbose_name = 'Endorsement'
+        verbose_name_plural = 'Endorsements'
+
+    def __str__(self):
+        return f"{self.endorser.email} endorsed '{self.skill.name}'"
+
+
 class Certification(models.Model):
     """
     Licenses and certifications for teacher profiles (LinkedIn-style).

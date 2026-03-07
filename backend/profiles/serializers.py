@@ -3,7 +3,7 @@ Serializers for Teacher and Institution profiles.
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification
+from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification, Endorsement
 import os
 
 User = get_user_model()
@@ -49,7 +49,9 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
     teaching_modes_display = serializers.SerializerMethodField()
     boards_display = serializers.SerializerMethodField()
     grades_taught_display = serializers.SerializerMethodField()
-    
+    completion_score = serializers.SerializerMethodField(read_only=True)
+    incomplete_steps = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = TeacherProfile
         fields = [
@@ -67,6 +69,8 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             'resume', 'portfolio_url',
             'phone', 'city', 'state',
             'is_searchable', 'contact_visible',
+            # Computed completion fields (read-only)
+            'completion_score', 'incomplete_steps',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -94,6 +98,98 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             return [GRADE_LABELS.get(g, g) for g in (obj.grades_taught or [])]
         except Exception:
             return []
+
+    def get_completion_score(self, obj):
+        """
+        Compute a 0-100 profile completion score based on weighted criteria.
+        Weights: photo=15, bio=15, school=15, skills=15, boards=10,
+                 grades=10, subjects=10, city=10.
+        """
+        score = 0
+        if obj.profile_photo:
+            score += 15
+        if obj.bio and len(obj.bio.strip()) >= 50:
+            score += 15
+        if obj.current_school and obj.current_school.strip():
+            score += 15
+        if obj.skills:
+            score += 15
+        if obj.boards:
+            score += 10
+        if obj.grades_taught:
+            score += 10
+        subjects = list(obj.expert_subjects or []) + list(obj.subjects or [])
+        if subjects:
+            score += 10
+        if obj.city and obj.city.strip():
+            score += 10
+        return score
+
+    def get_incomplete_steps(self, obj):
+        """
+        Return list of not-yet-completed steps, each with field, label, points,
+        and action_url. Sorted by points descending (highest value first).
+        """
+        steps = []
+        if not obj.profile_photo:
+            steps.append({
+                'field': 'profile_photo',
+                'label': 'Add a profile photo',
+                'points': 15,
+                'action_url': '/profile/edit#photo',
+            })
+        if not (obj.bio and len(obj.bio.strip()) >= 50):
+            steps.append({
+                'field': 'bio',
+                'label': 'Write a bio (minimum 50 characters)',
+                'points': 15,
+                'action_url': '/profile/edit#bio',
+            })
+        if not (obj.current_school and obj.current_school.strip()):
+            steps.append({
+                'field': 'current_school',
+                'label': 'Add your current school or institution',
+                'points': 15,
+                'action_url': '/profile/edit#school',
+            })
+        if not obj.skills:
+            steps.append({
+                'field': 'skills',
+                'label': 'Add at least one skill or expertise',
+                'points': 15,
+                'action_url': '/profile/edit#skills',
+            })
+        if not obj.boards:
+            steps.append({
+                'field': 'boards',
+                'label': 'Select at least one board (CBSE, ICSE…)',
+                'points': 10,
+                'action_url': '/profile/edit#boards',
+            })
+        if not obj.grades_taught:
+            steps.append({
+                'field': 'grades',
+                'label': 'Select at least one grade level',
+                'points': 10,
+                'action_url': '/profile/edit#grades',
+            })
+        subjects = list(obj.expert_subjects or []) + list(obj.subjects or [])
+        if not subjects:
+            steps.append({
+                'field': 'subjects',
+                'label': 'Add at least one subject you teach',
+                'points': 10,
+                'action_url': '/profile/edit#subjects',
+            })
+        if not (obj.city and obj.city.strip()):
+            steps.append({
+                'field': 'city',
+                'label': 'Add your city or location',
+                'points': 10,
+                'action_url': '/profile/edit#location',
+            })
+        steps.sort(key=lambda s: s['points'], reverse=True)
+        return steps
 
     def validate_profile_photo(self, value):
         """Validate profile photo format and size."""
@@ -255,12 +351,66 @@ class EducationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class EndorserSerializer(serializers.Serializer):
+    """Minimal user info for endorser avatars in skill cards."""
+    id = serializers.UUIDField()
+    name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        try:
+            p = obj.educator_profile
+            name = f"{p.first_name} {p.last_name}".strip()
+            return name or obj.username
+        except Exception:
+            return obj.username or str(obj.email)
+
+    def get_avatar_url(self, obj):
+        try:
+            p = obj.educator_profile
+            if p.profile_photo:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(p.profile_photo.url)
+                return p.profile_photo.url
+        except Exception:
+            pass
+        return None
+
+
 class SkillSerializer(serializers.ModelSerializer):
-    """Serializer for Skill entries."""
+    """
+    Full skill serializer with live endorsement data.
+    - endorsement_count: derived from Endorsement rows (not cached int)
+    - top_endorsers: first 5 endorsers with id/name/avatar_url
+    - is_endorsed_by_me: bool, requires request in context
+    """
+    endorsement_count = serializers.SerializerMethodField()
+    top_endorsers = serializers.SerializerMethodField()
+    is_endorsed_by_me = serializers.SerializerMethodField()
+
     class Meta:
         model = Skill
-        fields = ['id', 'name', 'endorsements_count', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'endorsements_count', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'endorsement_count', 'top_endorsers', 'is_endorsed_by_me', 'created_at']
+        read_only_fields = ['id', 'endorsement_count', 'top_endorsers', 'is_endorsed_by_me', 'created_at']
+
+    def get_endorsement_count(self, obj):
+        return obj.endorsements.count()
+
+    def get_top_endorsers(self, obj):
+        top_5 = (
+            obj.endorsements
+            .select_related('endorser__educator_profile')
+            .order_by('created_at')[:5]
+        )
+        users = [e.endorser for e in top_5]
+        return EndorserSerializer(users, many=True, context=self.context).data
+
+    def get_is_endorsed_by_me(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.endorsements.filter(endorser=request.user).exists()
 
 
 class CertificationSerializer(serializers.ModelSerializer):

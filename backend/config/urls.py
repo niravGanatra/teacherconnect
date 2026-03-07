@@ -20,10 +20,14 @@ urlpatterns = [
     path('api/search/', include('search.urls')),
     path('api/courses/', include('courses.urls')),
     path('api/payment/', include('payments.urls')),
+    path('api/notifications/', include('notifications.urls')),
 
     
     # Admin API (protected by IsAdminUser permission)
     path('api/admin/', include('accounts.admin_urls')),
+
+    # Social (follow system + activity feed)
+    path('api/social/', include('social.urls')),
 ]
 
 

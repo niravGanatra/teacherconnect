@@ -125,6 +125,9 @@ export const authAPI = {
         const refresh = localStorage.getItem('refreshToken');
         return api.post('/auth/refresh/', { refresh });
     },
+    // Email verification
+    verifyEmail: (token) => api.get(`/auth/verify-email/${token}/`),
+    resendVerification: (email) => api.post('/auth/resend-verification/', { email }),
 };
 
 // Profile API
@@ -200,10 +203,21 @@ export const educationAPI = {
 
 // Skills API (separate export for profile sections)
 export const skillsAPI = {
+    // Own-profile CRUD via SkillViewSet (legacy, still used by profileAPI)
     list: () => api.get('/profiles/skills/'),
     create: (data) => api.post('/profiles/skills/', data),
     update: (id, data) => api.patch(`/profiles/skills/${id}/`, data),
     delete: (id) => api.delete(`/profiles/skills/${id}/`),
+
+    // User-scoped endpoints (for SkillsSection component)
+    // Returns rich data: endorsement_count, top_endorsers[], is_endorsed_by_me
+    listForUser: (userId) => api.get(`/profiles/${userId}/skills/`),
+    addForUser: (userId, data) => api.post(`/profiles/${userId}/skills/`, data),
+    deleteForUser: (userId, skillId) => api.delete(`/profiles/${userId}/skills/${skillId}/`),
+
+    // Endorsement toggle
+    endorse: (skillId) => api.post(`/profiles/skills/${skillId}/endorse/`),
+    unendorse: (skillId) => api.delete(`/profiles/skills/${skillId}/endorse/`),
 };
 
 // Certifications API (separate export for profile sections)
@@ -578,6 +592,53 @@ export const coursesAPI = {
 
     // Code Redemption (Educator)
     redeemCode: (code) => api.post('/courses/redeem/', { code }),
+
+    // Alias used by FDPMarketplace
+    listCourses: (params = {}) => api.get('/courses/', { params }),
+
+    // Trending & Featured FDPs
+    getTrending: () => api.get('/courses/trending/'),
+    getFeatured: () => api.get('/courses/featured/'),
+};
+
+// Bookmark (Save for Later) API
+export const bookmarkAPI = {
+    // Save an FDP (idempotent – returns 200 whether new or existing)
+    save: (fdpId) => api.post(`/courses/${fdpId}/bookmark/`),
+    // Remove a saved FDP
+    remove: (fdpId) => api.delete(`/courses/${fdpId}/bookmark/`),
+    // List all saved FDPs for the current user
+    list: (params = {}) => api.get('/courses/bookmarks/', { params }),
+};
+
+// Certificate Showcase API
+export const certificateAPI = {
+    // List certificates for any user (own profile = all; others = public only)
+    listUserCertificates: (userId) => api.get(`/profiles/${userId}/certificates/`),
+    // Own certificates (all, including private)
+    myCertificates: () => api.get('/courses/my/certificates/'),
+    // Toggle is_public on own certificate
+    togglePublic: (id) => api.patch(`/courses/certificates/${id}/`),
+    // Download PDF as blob
+    downloadPdf: (id) => api.get(`/courses/certificates/${id}/download/`, { responseType: 'blob' }),
+};
+
+// Social API (follow system + activity feed)
+export const socialAPI = {
+    follow: (userId) => api.post(`/social/follow/${userId}/`),
+    unfollow: (userId) => api.delete(`/social/unfollow/${userId}/`),
+    isFollowing: (userId) => api.get(`/social/is-following/${userId}/`),
+    getFollowers: (userId, page = 1) => api.get(`/social/followers/${userId}/`, { params: { page } }),
+    getFollowing: (userId, page = 1) => api.get(`/social/following/${userId}/`, { params: { page } }),
+    getFeed: (page = 1) => api.get('/social/feed/', { params: { page } }),
+};
+
+// Notifications API
+export const notificationAPI = {
+    getNotifications: (page = 1) => api.get('/notifications/', { params: { page } }),
+    getUnreadCount: () => api.get('/notifications/unread-count/'),
+    markRead: (id) => api.post(`/notifications/${id}/read/`),
+    markAllRead: () => api.post('/notifications/mark-all-read/'),
 };
 
 // Payments API (Razorpay)

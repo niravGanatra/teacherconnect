@@ -333,14 +333,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }) {
             <div className="flex min-h-full items-center justify-center p-4">
                 <div className={`
           relative bg-white rounded-xl shadow-xl w-full ${sizes[size]}
+          max-h-[90vh] flex flex-col
           transform transition-all animate-fade-in
         `}>
                     {title && (
-                        <div className="px-6 py-4 border-b border-slate-100">
+                        <div className="px-6 py-4 border-b border-slate-100 flex-shrink-0">
                             <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
                         </div>
                     )}
-                    <div className="px-6 py-4">
+                    <div className="px-6 py-4 overflow-y-auto">
                         {children}
                     </div>
                 </div>

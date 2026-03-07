@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Card, Badge, Button, Spinner, EmptyState, Select } from '../../components/common';
 import { coursesAPI } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext';
+import BookmarkButton from '../../components/fdp/BookmarkButton';
 import {
     AcademicCapIcon,
     ClockIcon,
@@ -19,7 +20,89 @@ import {
     CurrencyRupeeIcon,
     BuildingLibraryIcon,
     MagnifyingGlassIcon,
+    FireIcon,
+    StarIcon,
+    ChevronRightIcon,
 } from '@heroicons/react/24/outline';
+
+/* ─────────────────────────────────────────────
+   Horizontal Scroll Row (Featured / Trending)
+   ───────────────────────────────────────────── */
+function HorizontalFDPRow({ title, icon: Icon, accentColor, items, loading, viewAllHref }) {
+    if (!loading && items.length === 0) return null;
+
+    return (
+        <div className="mb-8">
+            {/* Row header */}
+            <div className="flex items-center justify-between mb-3 px-1">
+                <h2 className={`text-base font-semibold flex items-center gap-2 ${accentColor}`}>
+                    <Icon className="w-5 h-5" />
+                    {title}
+                </h2>
+                <Link
+                    to={viewAllHref}
+                    className="text-xs font-medium text-slate-500 hover:text-[#1e3a5f] flex items-center gap-1 transition"
+                >
+                    View all <ChevronRightIcon className="w-3.5 h-3.5" />
+                </Link>
+            </div>
+
+            {/* Scroll container */}
+            <div className="flex gap-4 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory
+                            [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {loading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex-none w-64 snap-start">
+                            <div className="h-36 rounded-xl bg-slate-100 animate-pulse" />
+                            <div className="mt-2 h-4 rounded bg-slate-100 animate-pulse w-3/4" />
+                            <div className="mt-1 h-3 rounded bg-slate-100 animate-pulse w-1/2" />
+                        </div>
+                    ))
+                    : items.map((fdp) => (
+                        <Link
+                            key={fdp.id}
+                            to={`/fdp/${fdp.id}`}
+                            className="flex-none w-64 snap-start group"
+                        >
+                            <div className="rounded-xl overflow-hidden border border-slate-200 bg-white hover:shadow-md transition-shadow">
+                                {/* Thumbnail */}
+                                <div className="h-36 relative bg-gradient-to-br from-blue-50 to-indigo-100">
+                                    {fdp.thumbnail ? (
+                                        <img src={fdp.thumbnail} alt={fdp.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <AcademicCapIcon className="w-12 h-12 text-blue-200" />
+                                        </div>
+                                    )}
+                                    {fdp.price === 0 || fdp.is_free ? (
+                                        <span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">FREE</span>
+                                    ) : null}
+                                </div>
+                                {/* Info */}
+                                <div className="p-3">
+                                    <p className="text-sm font-medium text-slate-900 line-clamp-2 leading-snug group-hover:text-[#1e3a5f]">
+                                        {fdp.title}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1">{fdp.instructor_name}</p>
+                                    <div className="flex items-center justify-between mt-2">
+                                        <span className="text-xs text-slate-400">
+                                            {fdp.total_lessons ?? 0} lessons
+                                        </span>
+                                        {fdp.price > 0 && (
+                                            <span className="text-xs font-semibold text-slate-700">
+                                                ₹{fdp.price}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                    ))
+                }
+            </div>
+        </div>
+    );
+}
 
 export default function FDPMarketplace() {
     const { user, hasRole } = useAuth();
@@ -27,6 +110,9 @@ export default function FDPMarketplace() {
 
     const [fdps, setFdps] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [featured, setFeatured] = useState([]);
+    const [trending, setTrending] = useState([]);
+    const [rowsLoading, setRowsLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
         audience: '',
@@ -34,7 +120,28 @@ export default function FDPMarketplace() {
 
     useEffect(() => {
         fetchFDPs();
+        fetchRows();
     }, []);
+
+    const fetchRows = async () => {
+        setRowsLoading(true);
+        try {
+            const [featuredRes, trendingRes] = await Promise.allSettled([
+                coursesAPI.getFeatured(),
+                coursesAPI.getTrending(),
+            ]);
+            if (featuredRes.status === 'fulfilled') {
+                const d = featuredRes.value.data;
+                setFeatured(Array.isArray(d) ? d : (d?.results || []));
+            }
+            if (trendingRes.status === 'fulfilled') {
+                const d = trendingRes.value.data;
+                setTrending(Array.isArray(d) ? d : (d?.results || []));
+            }
+        } finally {
+            setRowsLoading(false);
+        }
+    };
 
     const fetchFDPs = async () => {
         try {
@@ -98,6 +205,26 @@ export default function FDPMarketplace() {
                 )}
             </div>
 
+            {/* ── Featured Programs row ── */}
+            <HorizontalFDPRow
+                title="Featured Programs"
+                icon={StarIcon}
+                accentColor="text-amber-600"
+                items={featured}
+                loading={rowsLoading}
+                viewAllHref="/fdp?filter=featured"
+            />
+
+            {/* ── Trending This Month row ── */}
+            <HorizontalFDPRow
+                title="Trending This Month"
+                icon={FireIcon}
+                accentColor="text-rose-600"
+                items={trending}
+                loading={rowsLoading}
+                viewAllHref="/fdp?filter=trending"
+            />
+
             {/* Filters */}
             <Card className="p-4 mb-6">
                 <div className="flex flex-col md:flex-row gap-4">
@@ -155,6 +282,14 @@ export default function FDPMarketplace() {
                                         BESTSELLER
                                     </span>
                                 )}
+                                {/* Bookmark button — top-right corner */}
+                                <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm">
+                                    <BookmarkButton
+                                        fdpId={fdp.id}
+                                        initialIsBookmarked={fdp.is_bookmarked || false}
+                                        size="md"
+                                    />
+                                </div>
                             </div>
 
                             <div className="p-5">

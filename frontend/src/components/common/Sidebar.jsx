@@ -7,6 +7,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, ROLES } from '../../context/AuthContext';
 import { getDashboardPath, getRoleDisplayName, getRoleIcon } from '../../utils/loginRedirect';
 import NavBarSearch from './NavBarSearch';
+import NotificationBell from '../notifications/NotificationBell';
 import {
     HomeIcon,
     BriefcaseIcon,
@@ -39,6 +40,7 @@ const NAV_ITEMS = [
     // Educator items
     { to: '/jobs', icon: BriefcaseIcon, label: 'Faculty Jobs', roles: [ROLES.EDUCATOR] },
     { to: '/fdp', icon: AcademicCapIcon, label: 'Faculty Development', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
+    { to: '/saved', icon: BookmarkIcon, label: 'Saved', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN, ROLES.INSTRUCTOR] },
     { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.EDUCATOR, ROLES.INSTRUCTOR] },
     { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
     { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
@@ -257,9 +259,12 @@ export function MobileHeader({ onMenuClick, onSearchClick }) {
                 <Bars3Icon className="w-6 h-6" />
             </button>
             <h1 className="text-white font-bold text-lg">AcadWorld</h1>
-            <button onClick={onSearchClick} className="hamburger-btn">
-                <MagnifyingGlassIcon className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+                <NotificationBell variant="dark" />
+                <button onClick={onSearchClick} className="hamburger-btn">
+                    <MagnifyingGlassIcon className="w-5 h-5" />
+                </button>
+            </div>
         </header>
     );
 }
@@ -320,8 +325,9 @@ export function DashboardLayout({ children }) {
 
             {/* Desktop Top Bar with Search */}
             <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200 shadow-sm">
-                <div className="flex items-center h-14 px-6 w-full max-w-4xl">
+                <div className="flex items-center h-14 px-6 w-full max-w-4xl gap-3">
                     <NavBarSearch />
+                    <NotificationBell />
                 </div>
             </div>
 

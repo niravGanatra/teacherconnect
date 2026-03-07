@@ -11,6 +11,8 @@ from .views import (
     LogoutView,
     CookieTokenRefreshView,
     CSRFTokenView,
+    VerifyEmailView,
+    ResendVerificationView,
 )
 
 urlpatterns = [
@@ -21,4 +23,7 @@ urlpatterns = [
     path('me/', CurrentUserView.as_view(), name='current_user'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('csrf/', CSRFTokenView.as_view(), name='csrf_token'),
+    # Email verification
+    path('verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),
+    path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
 ]

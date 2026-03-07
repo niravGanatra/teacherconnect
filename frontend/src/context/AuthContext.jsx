@@ -221,9 +221,11 @@ export function AuthProvider({ children }) {
 
             return { success: true, user: userData, primary_role: primary_role || userRoles[0] };
         } catch (err) {
-            const message = err.response?.data?.error || 'Login failed. Please try again.';
+            const data = err.response?.data || {};
+            const message = data.error || 'Login failed. Please try again.';
             setError(message);
-            return { success: false, error: message };
+            // Pass back code + email so Login.jsx can show the verification banner
+            return { success: false, error: message, code: data.code, email: data.email };
         }
     };
 

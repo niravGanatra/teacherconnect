@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from accounts.permissions import IsTeacher, IsInstitution
-from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification
+from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification, Endorsement
 from .serializers import (
     TeacherProfileSerializer,
     TeacherProfilePublicSerializer,
@@ -62,6 +62,33 @@ class TeacherProfileDetailView(generics.RetrieveAPIView):
     queryset = TeacherProfile.objects.filter(is_searchable=True)
     lookup_field = 'user__id'
     lookup_url_kwarg = 'user_id'
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Notify profile owner — deduplicate within 1 hour
+        if instance.user_id != request.user.pk:
+            try:
+                from django.utils import timezone
+                from datetime import timedelta
+                from notifications.utils import notify
+                from notifications.models import Notification
+                already_notified = Notification.objects.filter(
+                    recipient=instance.user,
+                    actor=request.user,
+                    verb='viewed your profile',
+                    created_at__gte=timezone.now() - timedelta(hours=1),
+                ).exists()
+                if not already_notified:
+                    notify(
+                        recipient=instance.user,
+                        actor=request.user,
+                        verb='viewed your profile',
+                        target=instance,
+                    )
+            except Exception:
+                pass
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class TeacherSearchView(generics.ListAPIView):
@@ -211,6 +238,124 @@ class SkillViewSet(viewsets.ModelViewSet):
         """Automatically associate skill with current user's profile."""
         profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
         serializer.save(profile=profile)
+
+
+class UserSkillsView(APIView):
+    """
+    GET  /api/profiles/<user_id>/skills/  — list all skills (with endorsement data) for a user
+    POST /api/profiles/<user_id>/skills/  — add a skill (own profile only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        from django.contrib.auth import get_user_model
+        from django.shortcuts import get_object_or_404
+        User = get_user_model()
+        user = get_object_or_404(User, id=user_id)
+        profile, _ = TeacherProfile.objects.get_or_create(user=user)
+        skills = (
+            Skill.objects
+            .filter(profile=profile)
+            .prefetch_related('endorsements__endorser__educator_profile')
+        )
+        serializer = SkillSerializer(skills, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request, user_id):
+        if str(request.user.id) != str(user_id):
+            return Response({'error': 'Can only add skills to your own profile.'}, status=status.HTTP_403_FORBIDDEN)
+        profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+        name = request.data.get('name', '').strip()
+        if not name:
+            return Response({'error': 'Skill name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(name) > 100:
+            return Response({'error': 'Skill name must be 100 characters or fewer.'}, status=status.HTTP_400_BAD_REQUEST)
+        skill, created = Skill.objects.get_or_create(profile=profile, name=name)
+        if not created:
+            return Response({'error': 'You already have this skill.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SkillSerializer(skill, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UserSkillDeleteView(APIView):
+    """
+    DELETE /api/profiles/<user_id>/skills/<skill_id>/  — remove own skill
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, user_id, skill_id):
+        if str(request.user.id) != str(user_id):
+            return Response({'error': 'Can only delete your own skills.'}, status=status.HTTP_403_FORBIDDEN)
+        from django.shortcuts import get_object_or_404
+        profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+        skill = get_object_or_404(Skill, id=skill_id, profile=profile)
+        skill.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class EndorseSkillView(APIView):
+    """
+    POST   /api/profiles/skills/<uuid:pk>/endorse/  — endorse a skill
+    DELETE /api/profiles/skills/<uuid:pk>/endorse/  — remove endorsement
+    Blocks self-endorsement with 400.
+    Creates/deletes Endorsement rows; keeps Skill.endorsements_count in sync.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from django.shortcuts import get_object_or_404
+        skill = get_object_or_404(
+            Skill.objects.select_related('profile__user'),
+            pk=pk,
+        )
+
+        # Block self-endorsement
+        if skill.profile.user == request.user:
+            return Response(
+                {'error': 'You cannot endorse your own skill.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        endorsement, created = Endorsement.objects.get_or_create(
+            skill=skill, endorser=request.user
+        )
+
+        if created:
+            # Sync cached counter
+            skill.endorsements_count = skill.endorsements.count()
+            skill.save(update_fields=['endorsements_count'])
+
+            # Notify skill owner
+            try:
+                from notifications.utils import notify
+                notify(
+                    recipient=skill.profile.user,
+                    actor=request.user,
+                    verb=f'endorsed your skill "{skill.name}"',
+                    target=skill,
+                )
+            except Exception:
+                pass
+
+        serializer = SkillSerializer(skill, context={'request': request})
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        from django.shortcuts import get_object_or_404
+        skill = get_object_or_404(
+            Skill.objects.select_related('profile__user'),
+            pk=pk,
+        )
+        try:
+            endorsement = Endorsement.objects.get(skill=skill, endorser=request.user)
+            endorsement.delete()
+            skill.endorsements_count = skill.endorsements.count()
+            skill.save(update_fields=['endorsements_count'])
+        except Endorsement.DoesNotExist:
+            pass  # Idempotent — already un-endorsed
+
+        serializer = SkillSerializer(skill, context={'request': request})
+        return Response(serializer.data)
 
 
 class CertificationViewSet(viewsets.ModelViewSet):

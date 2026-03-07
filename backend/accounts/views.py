@@ -162,7 +162,15 @@ class LoginView(APIView):
             return Response({
                 'error': 'User account is disabled.'
             }, status=status.HTTP_401_UNAUTHORIZED)
-        
+
+        # Email verification check
+        if not user.is_verified:
+            return Response({
+                'error': 'Please verify your email before logging in. Check your inbox.',
+                'code': 'email_not_verified',
+                'email': user.email,
+            }, status=status.HTTP_403_FORBIDDEN)
+
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
@@ -294,6 +302,90 @@ class LogoutView(APIView):
             })
             clear_auth_cookies(response)
             return response
+
+
+class VerifyEmailView(APIView):
+    """
+    GET /api/auth/verify-email/{token}/
+    Marks user's email as verified; returns 200 on success or 400 on invalid token.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        from .models import EmailVerification
+        try:
+            ev = EmailVerification.objects.select_related('user').get(token=token)
+        except EmailVerification.DoesNotExist:
+            return Response(
+                {'error': 'Invalid or expired verification link.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not ev.is_verified:
+            ev.is_verified = True
+            ev.save(update_fields=['is_verified'])
+            # Sync to User.is_verified
+            ev.user.is_verified = True
+            ev.user.save(update_fields=['is_verified'])
+
+        return Response({'message': 'Email verified successfully! You can now log in.'})
+
+
+class ResendVerificationView(APIView):
+    """
+    POST /api/auth/resend-verification/
+    Body: { "email": "user@example.com" }
+    Re-generates token and resends the verification email.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response(
+                {'error': 'Email is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Don't reveal whether the email exists
+            return Response({'message': 'If that email exists, a verification link has been sent.'})
+
+        if user.is_verified:
+            return Response({'message': 'Email is already verified. Please log in.'})
+
+        from .models import EmailVerification
+        from django.core.mail import send_mail
+        from django.conf import settings as dj_settings
+
+        # Create or refresh token
+        ev, _ = EmailVerification.objects.get_or_create(user=user)
+        ev.token = EmailVerification.generate_token()
+        ev.is_verified = False
+        ev.save(update_fields=['token', 'is_verified'])
+
+        frontend_url = getattr(dj_settings, 'FRONTEND_URL', 'http://localhost:3000')
+        platform_name = getattr(dj_settings, 'PLATFORM_NAME', 'AcadWorld')
+        verify_url = f"{frontend_url}/verify-email/{ev.token}"
+
+        try:
+            send_mail(
+                subject=f'Verify your email — {platform_name}',
+                message=(
+                    f'Hi {user.first_name or user.email},\n\n'
+                    f'Click the link to verify your email:\n\n{verify_url}\n\n'
+                    f'— The {platform_name} Team'
+                ),
+                from_email=getattr(dj_settings, 'DEFAULT_FROM_EMAIL', 'noreply@acadworld.com'),
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        return Response({'message': 'Verification email resent. Please check your inbox.'})
 
 
 class CSRFTokenView(APIView):

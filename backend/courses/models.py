@@ -126,7 +126,11 @@ class Course(models.Model):
     # Settings
     is_published = models.BooleanField(default=False)
     issue_certificate = models.BooleanField(default=True)
-    
+
+    # Trending & Featured
+    trending_score = models.FloatField(default=0.0)
+    is_featured = models.BooleanField(default=False)
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -181,6 +185,34 @@ class Course(models.Model):
 
 # Terminology alias for UI clarity
 FDP = Course
+
+
+class Bookmark(models.Model):
+    """
+    User bookmark / "Save for later" on a Course/FDP.
+    unique_together prevents duplicate bookmarks.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='bookmarks',
+    )
+    fdp = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='bookmarked_by',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'fdp_bookmarks'
+        unique_together = ('user', 'fdp')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.email} → {self.fdp.title}"
 
 
 class CourseSection(models.Model):
@@ -349,10 +381,14 @@ class Certificate(models.Model):
     
     # Credential
     credential_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    
+    certificate_number = models.CharField(max_length=50, unique=True, blank=True, default='')
+
     # Generated PDF
     file = models.FileField(upload_to='certificates/', blank=True, null=True)
-    
+
+    # Visibility
+    is_public = models.BooleanField(default=True, help_text='User can hide certificate from profile')
+
     # Dates
     issued_at = models.DateTimeField(auto_now_add=True)
 

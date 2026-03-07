@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 import {
     BuildingOffice2Icon,
     ArrowLeftIcon,
@@ -117,7 +118,7 @@ export default function InstitutionOnboarding() {
         setError('');
 
         try {
-            const result = await register({
+            await authAPI.register({
                 email: formData.email,
                 username: formData.email,
                 password: formData.password,
@@ -129,14 +130,11 @@ export default function InstitutionOnboarding() {
                     institution_type: formData.institution_type,
                 },
             });
-
-            if (result.success) {
-                navigate('/dashboard');
-            } else {
-                setError(result.error || 'Registration failed. Please try again.');
-            }
+            navigate(`/check-email?email=${encodeURIComponent(formData.email)}`);
         } catch (err) {
-            setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+            const errData = err.response?.data || {};
+            const msg = errData.email?.[0] || errData.error || errData.detail || 'Registration failed. Please try again.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -181,7 +179,7 @@ export default function InstitutionOnboarding() {
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8">
                     {/* Error Message */}
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">

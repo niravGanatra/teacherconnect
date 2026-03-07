@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'search',
     'courses',
     'payments',
+    'social',
 ]
 
 
@@ -155,6 +156,9 @@ else:
     # Local storage fallback for development
     MEDIA_URL = 'media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -218,8 +222,9 @@ CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'  # 'None' required for cro
 CSRF_COOKIE_HTTPONLY = False  # Must be readable by JavaScript to send in X-CSRFToken header
 CSRF_COOKIE_SECURE = not DEBUG  # Must be True when SameSite=None
 
-# Frontend URL (for email links)
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://acadworld.com')
+# Frontend URL (for email links, verification URLs, etc.)
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+PLATFORM_NAME = os.getenv('PLATFORM_NAME', 'AcadWorld')
 
 # Email Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')

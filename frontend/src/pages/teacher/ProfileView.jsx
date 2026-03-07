@@ -7,7 +7,12 @@ import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button } from '../../components/common';
 import ProfileSkeleton from '../../components/common/ProfileSkeleton';
 import { useAuth } from '../../context/AuthContext';
-import { profileAPI } from '../../services/api';
+import { profileAPI, socialAPI } from '../../services/api';
+import FollowButton from '../../components/social/FollowButton';
+import FollowersModal from '../../components/social/FollowersModal';
+import ProfileCompletionCard from '../../components/profile/ProfileCompletionCard';
+import SkillsSection from '../../components/profile/SkillsSection';
+import EarnedCertificatesSection from '../../components/profile/EarnedCertificatesSection';
 import {
     UserCircleIcon,
     PencilIcon,
@@ -30,10 +35,24 @@ export default function TeacherProfileView() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
+    const [followerCount, setFollowerCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [modal, setModal] = useState(null); // 'followers' | 'following' | null
 
     useEffect(() => {
         fetchProfile();
     }, [id]);
+
+    useEffect(() => {
+        const targetId = id || user?.id;
+        if (!targetId) return;
+        socialAPI.isFollowing(targetId)
+            .then((res) => {
+                setFollowerCount(res.data.follower_count);
+                setFollowingCount(res.data.following_count);
+            })
+            .catch(() => {});
+    }, [id, user?.id]);
 
     const fetchProfile = async () => {
         try {
@@ -146,6 +165,25 @@ export default function TeacherProfileView() {
                                 )}
                             </div>
 
+                            {/* Follow Stats + Button */}
+                            <div className="flex flex-wrap items-center gap-4 mt-3">
+                                <button
+                                    onClick={() => setModal('followers')}
+                                    className="text-sm text-slate-600 hover:text-slate-900"
+                                >
+                                    <span className="font-semibold text-slate-900">{followerCount}</span> Followers
+                                </button>
+                                <button
+                                    onClick={() => setModal('following')}
+                                    className="text-sm text-slate-600 hover:text-slate-900"
+                                >
+                                    <span className="font-semibold text-slate-900">{followingCount}</span> Following
+                                </button>
+                                {!isOwnProfile && (
+                                    <FollowButton userId={id} onCountChange={setFollowerCount} />
+                                )}
+                            </div>
+
                             {/* Quick Stats */}
                             <div className="flex flex-wrap gap-2 mt-4">
                                 {profile.subjects?.length > 0 && (
@@ -167,6 +205,14 @@ export default function TeacherProfileView() {
                         </div>
                     </div>
                 </Card>
+
+                {/* Profile Completion Card — own profile only */}
+                {isOwnProfile && profile.completion_score !== undefined && (
+                    <ProfileCompletionCard
+                        score={profile.completion_score}
+                        incompleteSteps={profile.incomplete_steps ?? []}
+                    />
+                )}
 
                 {/* About Section */}
                 {profile.bio && (
@@ -254,22 +300,17 @@ export default function TeacherProfileView() {
                     </Card>
                 )}
 
-                {/* Skills Section */}
-                {profile.skills?.length > 0 && (
-                    <Card className="p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
-                            <SparklesIcon className="w-5 h-5 text-[#1e3a5f]" />
-                            Skills
-                        </h2>
-                        <div className="flex flex-wrap gap-2">
-                            {profile.skills.map((skill, index) => (
-                                <span key={index} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm font-medium hover:bg-slate-200 transition-colors">
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </Card>
-                )}
+                {/* Skills & Endorsements Section */}
+                <SkillsSection
+                    userId={id || user?.id}
+                    isOwnProfile={isOwnProfile}
+                />
+
+                {/* Earned Certificates Section (course-completion, PDF-backed) */}
+                <EarnedCertificatesSection
+                    userId={id || user?.id}
+                    isOwnProfile={isOwnProfile}
+                />
 
                 {/* Certifications Section */}
                 {profile.certifications?.length > 0 && (
@@ -351,6 +392,14 @@ export default function TeacherProfileView() {
                     </Card>
                 )}
             </div>
+
+            {modal && (
+                <FollowersModal
+                    userId={id || user?.id}
+                    mode={modal}
+                    onClose={() => setModal(null)}
+                />
+            )}
         </DashboardLayout>
     );
 }

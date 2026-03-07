@@ -3,8 +3,8 @@ Serializers for LMS Course models.
 """
 from rest_framework import serializers
 from .models import (
-    Course, CourseSection, Lesson, Enrollment, 
-    LessonProgress, Certificate, BadgeDefinition, UserBadge
+    Course, CourseSection, Lesson, Enrollment,
+    LessonProgress, Certificate, BadgeDefinition, UserBadge, Bookmark
 )
 
 
@@ -36,7 +36,8 @@ class CourseListSerializer(serializers.ModelSerializer):
     total_lessons = serializers.IntegerField(read_only=True)
     enrollment_count = serializers.IntegerField(read_only=True)
     is_free = serializers.BooleanField(read_only=True)
-    
+    is_bookmarked = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = [
@@ -44,7 +45,7 @@ class CourseListSerializer(serializers.ModelSerializer):
             'price', 'original_price', 'is_free',
             'difficulty', 'language',
             'instructor_name', 'total_duration', 'total_lessons',
-            'enrollment_count',
+            'enrollment_count', 'is_bookmarked',
         ]
 
     def get_instructor_name(self, obj):
@@ -52,6 +53,12 @@ class CourseListSerializer(serializers.ModelSerializer):
             profile = obj.instructor.teacher_profile
             return f"{profile.first_name} {profile.last_name}".strip() or obj.instructor.email
         return obj.instructor.email
+
+    def get_is_bookmarked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Bookmark.objects.filter(user=request.user, fdp=obj).exists()
+        return False
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):
@@ -65,7 +72,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     enrollment_count = serializers.IntegerField(read_only=True)
     is_free = serializers.BooleanField(read_only=True)
     is_enrolled = serializers.SerializerMethodField()
-    
+    is_bookmarked = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = [
@@ -77,7 +85,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'instructor_name', 'instructor_photo',
             'sections', 'total_duration', 'total_lessons', 'total_sections',
             'enrollment_count', 'issue_certificate',
-            'is_enrolled',
+            'is_enrolled', 'is_bookmarked',
         ]
 
     def get_instructor_name(self, obj):
@@ -95,6 +103,12 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Enrollment.objects.filter(user=request.user, course=obj).exists()
+        return False
+
+    def get_is_bookmarked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Bookmark.objects.filter(user=request.user, fdp=obj).exists()
         return False
 
 
@@ -125,21 +139,49 @@ class LessonProgressSerializer(serializers.ModelSerializer):
 
 
 class CertificateSerializer(serializers.ModelSerializer):
-    """Serializer for certificates."""
-    course_title = serializers.CharField(source='course.title', read_only=True)
+    """Serializer for course-completion certificates (showcase on profile)."""
+    fdp_title = serializers.CharField(source='course.title', read_only=True)
+    fdp_organizer = serializers.SerializerMethodField()
     course_thumbnail = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
     verification_url = serializers.CharField(read_only=True)
-    
+
     class Meta:
         model = Certificate
         fields = [
-            'id', 'credential_id', 'course_title', 'course_thumbnail',
-            'file', 'issued_at', 'verification_url',
+            'id', 'credential_id', 'certificate_number',
+            'fdp_title', 'fdp_organizer', 'course_thumbnail',
+            'pdf_url', 'issued_at', 'is_public', 'verification_url',
         ]
+        read_only_fields = [
+            'id', 'credential_id', 'certificate_number',
+            'fdp_title', 'fdp_organizer', 'course_thumbnail',
+            'pdf_url', 'issued_at', 'verification_url',
+        ]
+
+    def get_fdp_organizer(self, obj):
+        if obj.course.accreditation_body:
+            return obj.course.accreditation_body
+        try:
+            p = obj.course.instructor.teacher_profile
+            return f"{p.first_name} {p.last_name}".strip() or obj.course.instructor.email
+        except Exception:
+            return obj.course.instructor.email
 
     def get_course_thumbnail(self, obj):
         if obj.course.thumbnail:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.course.thumbnail.url)
             return obj.course.thumbnail.url
+        return None
+
+    def get_pdf_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
         return None
 
 
@@ -157,6 +199,18 @@ class UserBadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserBadge
         fields = ['id', 'badge', 'awarded_at', 'is_displayed']
+
+
+# ============ BOOKMARK SERIALIZER ============
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    """Serializer for a user's saved FDPs — returns the full FDP card data."""
+    fdp = CourseListSerializer(read_only=True)
+
+    class Meta:
+        model = Bookmark
+        fields = ['id', 'fdp', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 # ============ FDP / BULK PURCHASE SERIALIZERS ============

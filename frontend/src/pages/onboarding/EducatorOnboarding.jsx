@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 import SelectableChipGroup from '../../components/common/SelectableChipGroup';
 import {
     AcademicCapIcon,
@@ -131,8 +132,9 @@ export default function EducatorOnboarding() {
         setError('');
 
         try {
-            // Register and auto-login via AuthContext
-            const result = await register({
+            // Call registration API directly — do NOT auto-login
+            // (user must verify email before first login)
+            await authAPI.register({
                 email: formData.email,
                 username: formData.email,
                 password: formData.password,
@@ -150,14 +152,12 @@ export default function EducatorOnboarding() {
                     linkedin_url: formData.linkedin_url,
                 },
             });
-
-            if (result.success) {
-                navigate('/dashboard');
-            } else {
-                setError(result.error || 'Registration failed. Please try again.');
-            }
+            // Redirect to check-email page (verification required)
+            navigate(`/check-email?email=${encodeURIComponent(formData.email)}`);
         } catch (err) {
-            setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+            const errData = err.response?.data || {};
+            const msg = errData.email?.[0] || errData.error || errData.detail || 'Registration failed. Please try again.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -202,7 +202,7 @@ export default function EducatorOnboarding() {
                 </div>
 
                 {/* Form Card */}
-                <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8">
                     {/* Error Message */}
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -215,7 +215,7 @@ export default function EducatorOnboarding() {
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold text-slate-800 mb-6">Basic Information</h2>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-2">First Name *</label>
                                     <input

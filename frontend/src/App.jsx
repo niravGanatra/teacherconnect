@@ -8,6 +8,8 @@ import { LoadingScreen, ErrorBoundary } from './components/common';
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import CheckEmail from './pages/auth/CheckEmail';
+import VerifyEmail from './pages/auth/VerifyEmail';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
 
@@ -38,18 +40,22 @@ import JobBoard from './pages/jobs/JobBoard';
 import JobDetail from './pages/jobs/JobDetail';
 import JobAlerts from './pages/jobs/JobAlerts';
 import FDPMarketplace from './pages/courses/FDPMarketplace';
+import FDPDetail from './pages/courses/FDPDetail';
 import FDPBulkPurchase from './pages/courses/FDPBulkPurchase';
 import RedeemCode from './pages/courses/RedeemCode';
 import MyLearning from './pages/courses/MyLearning';
+import SavedItemsPage from './pages/courses/SavedItemsPage';
 import Events from './pages/events/Events';
 import InstitutionPage from './pages/InstitutionPage';
 import JobsLayout from './components/jobs/JobsLayout';
 
 import SearchResults from './pages/search/SearchResults';
+import NotificationsPage from './pages/notifications/NotificationsPage';
+import HomePage from './pages/social/HomePage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, hasAnyRole } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
@@ -59,13 +65,8 @@ function ProtectedRoute({ children, allowedTypes = [] }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Normalize backend types to frontend route-guard types
-  const normalizedType = (() => {
-    if (user.user_type === 'SUPER_ADMIN') return 'ADMIN';
-    if (user.user_type === 'EDUCATOR') return 'TEACHER';
-    return user.user_type;
-  })();
-  if (allowedTypes.length > 0 && !allowedTypes.includes(user.user_type) && !allowedTypes.includes(normalizedType)) {
+  // Use hasAnyRole which checks derived lowercase roles — avoids EDUCATOR vs educator mismatch
+  if (allowedTypes.length > 0 && !hasAnyRole(allowedTypes)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -160,8 +161,9 @@ function AppRoutes() {
         path="/register/institution"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <InstitutionOnboarding />}
       />
-
-
+      {/* Email verification routes — always public */}
+      <Route path="/check-email" element={<CheckEmail />} />
+      <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
       {/* Protected Routes - All Users */}
       <Route
@@ -200,11 +202,31 @@ function AppRoutes() {
         }
       />
 
+      {/* FDP detail — must be before /fdp/:id/bulk */}
+      <Route
+        path="/fdp/:id"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN, ROLES.INSTRUCTOR, ROLES.SUPER_ADMIN]}>
+            <FDPDetail />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/fdp/:id/bulk"
         element={
           <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN, ROLES.SUPER_ADMIN]}>
             <FDPBulkPurchase />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Saved / Bookmarked FDPs */}
+      <Route
+        path="/saved"
+        element={
+          <ProtectedRoute>
+            <SavedItemsPage />
           </ProtectedRoute>
         }
       />
@@ -297,7 +319,7 @@ function AppRoutes() {
       <Route
         path="/feed"
         element={
-          <ProtectedRoute allowedTypes={['TEACHER']}>
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR]}>
             <Feed />
           </ProtectedRoute>
         }
@@ -306,7 +328,7 @@ function AppRoutes() {
       <Route
         path="/my-applications"
         element={
-          <ProtectedRoute allowedTypes={['TEACHER']}>
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR]}>
             <MyApplications />
           </ProtectedRoute>
         }
@@ -315,7 +337,7 @@ function AppRoutes() {
       <Route
         path="/saved-jobs"
         element={
-          <ProtectedRoute allowedTypes={['TEACHER']}>
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR]}>
             <SavedJobs />
           </ProtectedRoute>
         }
@@ -408,6 +430,26 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={['ADMIN']}>
             <AdminContent />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Notifications */}
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Activity Feed */}
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <HomePage />
           </ProtectedRoute>
         }
       />

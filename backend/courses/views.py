@@ -8,15 +8,49 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import (
-    Course, CourseSection, Lesson, Enrollment, 
-    LessonProgress, Certificate, UserBadge
+    Course, CourseSection, Lesson, Enrollment,
+    LessonProgress, Certificate, UserBadge, Bookmark
 )
 from .serializers import (
     CourseListSerializer, CourseDetailSerializer,
     CourseSectionSerializer, LessonSerializer,
     EnrollmentSerializer, LessonProgressSerializer,
-    CertificateSerializer, UserBadgeSerializer
+    CertificateSerializer, UserBadgeSerializer, BookmarkSerializer
 )
+
+
+class TrendingFDPView(generics.ListAPIView):
+    """GET /api/fdps/trending/ — top 6 published FDPs by trending_score."""
+    permission_classes = [AllowAny]
+    serializer_class = CourseListSerializer
+    pagination_class = None  # Return plain list, no pagination wrapper
+
+    def get_queryset(self):
+        return (
+            Course.objects
+            .filter(is_published=True)
+            .order_by('-trending_score')[:6]
+        )
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
+
+
+class FeaturedFDPView(generics.ListAPIView):
+    """GET /api/fdps/featured/ — editorially featured published FDPs."""
+    permission_classes = [AllowAny]
+    serializer_class = CourseListSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return Course.objects.filter(is_published=True, is_featured=True).order_by('-created_at')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
 
 
 class CourseListView(generics.ListAPIView):
@@ -48,13 +82,26 @@ class CourseListView(generics.ListAPIView):
 
 
 class CourseDetailView(generics.RetrieveAPIView):
-    """Get course detail by slug."""
+    """Get course detail by slug OR UUID id."""
     permission_classes = [AllowAny]
     serializer_class = CourseDetailSerializer
     lookup_field = 'slug'
 
     def get_queryset(self):
         return Course.objects.filter(is_published=True)
+
+    def get_object(self):
+        """Allow lookup by UUID (id) as well as slug."""
+        import uuid as uuid_lib
+        slug_or_id = self.kwargs.get('slug', '')
+        qs = self.get_queryset()
+        try:
+            uid = uuid_lib.UUID(str(slug_or_id))
+            obj = get_object_or_404(qs, id=uid)
+        except (ValueError, AttributeError):
+            obj = get_object_or_404(qs, slug=slug_or_id)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 
 class EnrollCourseView(APIView):
@@ -84,7 +131,19 @@ class EnrollCourseView(APIView):
             course=course,
             price_paid=0
         )
-        
+
+        try:
+            from notifications.utils import notify
+            if course.instructor and course.instructor != request.user:
+                notify(
+                    recipient=course.instructor,
+                    actor=request.user,
+                    verb=f'enrolled in your course "{course.title}"',
+                    target=course,
+                )
+        except Exception:
+            pass
+
         return Response({
             'message': 'Enrolled successfully',
             'enrollment_id': str(enrollment.id)
@@ -148,12 +207,78 @@ class UpdateLessonProgressView(APIView):
 
 
 class MyCertificatesView(generics.ListAPIView):
-    """List current user's certificates."""
+    """List current user's certificates (own profile — all)."""
     permission_classes = [IsAuthenticated]
     serializer_class = CertificateSerializer
 
     def get_queryset(self):
-        return Certificate.objects.filter(user=self.request.user)
+        return Certificate.objects.filter(user=self.request.user).select_related('course', 'user')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
+
+
+class UserCertificatesListView(generics.ListAPIView):
+    """
+    GET /api/profiles/<user_id>/certificates/
+    Public: returns only is_public=True certs.
+    Own profile (authenticated): returns all.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = CertificateSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        qs = Certificate.objects.filter(user_id=user_id).select_related('course', 'user')
+        # If viewing own profile, show all (including private)
+        if self.request.user.is_authenticated and str(self.request.user.id) == str(user_id):
+            return qs
+        return qs.filter(is_public=True)
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
+
+
+class CertificateTogglePublicView(APIView):
+    """
+    PATCH /api/courses/certificates/<id>/
+    Toggle is_public on own certificate.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        cert = get_object_or_404(Certificate, id=pk, user=request.user)
+        cert.is_public = not cert.is_public
+        cert.save(update_fields=['is_public'])
+        serializer = CertificateSerializer(cert, context={'request': request})
+        return Response(serializer.data)
+
+
+class CertificateDownloadView(APIView):
+    """
+    GET /api/courses/certificates/<id>/download/
+    Stream the PDF for download. Auth required; public certs also accessible.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        from django.http import FileResponse
+        cert = get_object_or_404(Certificate, id=pk)
+
+        # Only allow owner or public cert download
+        is_owner = str(cert.user_id) == str(request.user.id)
+        if not is_owner and not cert.is_public:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not cert.file:
+            return Response({'error': 'PDF not yet generated'}, status=status.HTTP_404_NOT_FOUND)
+
+        fname = f"certificate_{cert.certificate_number or cert.credential_id}.pdf"
+        return FileResponse(cert.file.open('rb'), as_attachment=True, filename=fname)
 
 
 class MyBadgesView(generics.ListAPIView):
@@ -374,3 +499,47 @@ class RedeemCodeView(APIView):
             'course': course.title
         })
 
+
+# ============ BOOKMARK VIEWS ============
+
+class BookmarkFDPView(APIView):
+    """
+    POST   /api/courses/<uuid:fdp_id>/bookmark/  — save an FDP (idempotent)
+    DELETE /api/courses/<uuid:fdp_id>/bookmark/  — remove bookmark
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, fdp_id):
+        course = get_object_or_404(Course, id=fdp_id)
+        _bookmark, _created = Bookmark.objects.get_or_create(
+            user=request.user, fdp=course
+        )
+        serializer = CourseListSerializer(course, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, fdp_id):
+        Bookmark.objects.filter(user=request.user, fdp_id=fdp_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MyBookmarksView(generics.ListAPIView):
+    """
+    GET /api/courses/bookmarks/  — paginated list of saved FDPs for the current user.
+    Returns bookmark objects that each embed the FDP card data.
+    Ordered by most recently bookmarked first.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookmarkSerializer
+
+    def get_queryset(self):
+        return (
+            Bookmark.objects
+            .filter(user=self.request.user)
+            .select_related('fdp__instructor')
+            .order_by('-created_at')
+        )
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx

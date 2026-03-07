@@ -19,6 +19,9 @@ import {
 export default function TeacherProfile() {
     const { profile, updateProfile } = useAuth();
     const [profileData, setProfileData] = useState(null);
+    const BOARD_OPTIONS = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'CAMBRIDGE', 'NIOS', 'OTHER'];
+    const GRADE_OPTIONS = ['Pre-Primary', 'K-5', '6-8', '9-10', '11-12', 'UG', 'PG', 'Competitive Exams'];
+
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -34,6 +37,8 @@ export default function TeacherProfile() {
         contact_visible: false,
         subjects: [],
         skills: [],
+        boards: [],
+        grades_taught: [],
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -65,6 +70,8 @@ export default function TeacherProfile() {
                 contact_visible: data.contact_visible ?? false,
                 subjects: Array.isArray(data.subjects) ? data.subjects : [],
                 skills: Array.isArray(data.skills) ? data.skills : [],
+                boards: Array.isArray(data.boards) ? data.boards : [],
+                grades_taught: Array.isArray(data.grades_taught) ? data.grades_taught : [],
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -114,6 +121,37 @@ export default function TeacherProfile() {
             skills: prev.skills.filter(s => s !== skill)
         }));
     };
+
+    const handleToggleBoard = (board) => {
+        setFormData(prev => ({
+            ...prev,
+            boards: prev.boards.includes(board)
+                ? prev.boards.filter(b => b !== board)
+                : [...prev.boards, board],
+        }));
+    };
+
+    const handleToggleGrade = (grade) => {
+        setFormData(prev => ({
+            ...prev,
+            grades_taught: prev.grades_taught.includes(grade)
+                ? prev.grades_taught.filter(g => g !== grade)
+                : [...prev.grades_taught, grade],
+        }));
+    };
+
+    // Scroll to hash anchor when edit page loads from a completion-card link
+    useEffect(() => {
+        if (!loading) {
+            const hash = window.location.hash;
+            if (hash) {
+                const el = document.querySelector(hash);
+                if (el) {
+                    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }
+            }
+        }
+    }, [loading]);
 
     const handlePhotoUpload = async (file, type) => {
         const formDataUpload = new FormData();
@@ -180,7 +218,7 @@ export default function TeacherProfile() {
             )}
 
             {/* LinkedIn-style Profile Header */}
-            <Card className="mb-6 overflow-hidden">
+            <Card id="photo" className="mb-6 overflow-hidden">
                 {/* Background/Cover Photo */}
                 <div className="relative">
                     <ImageUpload
@@ -238,7 +276,7 @@ export default function TeacherProfile() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Info */}
-                <Card className="p-6">
+                <Card id="bio" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Basic Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
@@ -278,7 +316,7 @@ export default function TeacherProfile() {
                 </Card>
 
                 {/* Professional Info */}
-                <Card className="p-6">
+                <Card id="school" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Professional Details</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
@@ -310,7 +348,7 @@ export default function TeacherProfile() {
                 </Card>
 
                 {/* Subjects */}
-                <Card className="p-6">
+                <Card id="subjects" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Subjects You Teach</h2>
                     <div className="flex flex-wrap gap-2 mb-4">
                         {formData.subjects.map((subject) => (
@@ -340,7 +378,7 @@ export default function TeacherProfile() {
                 </Card>
 
                 {/* Skills */}
-                <Card className="p-6">
+                <Card id="skills" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Skills</h2>
                     <div className="flex flex-wrap gap-2 mb-4">
                         {formData.skills.map((skill) => (
@@ -369,8 +407,55 @@ export default function TeacherProfile() {
                     </div>
                 </Card>
 
+                {/* Teaching Preferences: Boards & Grades */}
+                <Card id="boards" className="p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Teaching Preferences</h2>
+                    <div className="space-y-5">
+                        {/* Boards */}
+                        <div id="grades">
+                            <p className="text-sm font-medium text-slate-700 mb-2">Boards</p>
+                            <div className="flex flex-wrap gap-2">
+                                {BOARD_OPTIONS.map((board) => (
+                                    <button
+                                        key={board}
+                                        type="button"
+                                        onClick={() => handleToggleBoard(board)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.boards.includes(board)
+                                                ? 'bg-purple-600 text-white border-purple-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-purple-400'
+                                        }`}
+                                    >
+                                        {board === 'STATE' ? 'State Board' : board}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Grades */}
+                        <div>
+                            <p className="text-sm font-medium text-slate-700 mb-2">Grade Levels</p>
+                            <div className="flex flex-wrap gap-2">
+                                {GRADE_OPTIONS.map((grade) => (
+                                    <button
+                                        key={grade}
+                                        type="button"
+                                        onClick={() => handleToggleGrade(grade)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.grades_taught.includes(grade)
+                                                ? 'bg-purple-600 text-white border-purple-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-purple-400'
+                                        }`}
+                                    >
+                                        {grade}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
                 {/* Contact */}
-                <Card className="p-6">
+                <Card id="location" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Contact Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Input

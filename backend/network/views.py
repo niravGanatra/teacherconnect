@@ -85,6 +85,17 @@ class SendConnectionRequestView(APIView):
             message=message
         )
 
+        try:
+            from notifications.utils import notify
+            notify(
+                recipient=recipient,
+                actor=request.user,
+                verb='sent you a connection request',
+                target=conn_request,
+            )
+        except Exception:
+            pass
+
         return Response({
             'message': 'Connection request sent.',
             'request': ConnectionRequestSerializer(conn_request).data

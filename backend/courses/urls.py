@@ -7,8 +7,17 @@ from . import views
 app_name = 'courses'
 
 urlpatterns = [
+    # Trending & Featured — must be before <slug:slug>/ to avoid capture
+    path('trending/', views.TrendingFDPView.as_view(), name='trending'),
+    path('featured/', views.FeaturedFDPView.as_view(), name='featured'),
+
     # Course listing and detail
     path('', views.CourseListView.as_view(), name='course-list'),
+
+    # Bookmarks — must be declared before <slug:slug>/ to avoid slug capture
+    path('bookmarks/', views.MyBookmarksView.as_view(), name='my-bookmarks'),
+    path('<uuid:fdp_id>/bookmark/', views.BookmarkFDPView.as_view(), name='fdp-bookmark'),
+
     path('<slug:slug>/', views.CourseDetailView.as_view(), name='course-detail'),
     
     # Enrollment
@@ -20,8 +29,10 @@ urlpatterns = [
     # Lesson progress
     path('lesson/<uuid:lesson_id>/progress/', views.UpdateLessonProgressView.as_view(), name='lesson-progress'),
     
-    # Certificates
+    # Certificates — my list, toggle public, PDF download
     path('my/certificates/', views.MyCertificatesView.as_view(), name='my-certificates'),
+    path('certificates/<uuid:pk>/', views.CertificateTogglePublicView.as_view(), name='certificate-toggle'),
+    path('certificates/<uuid:pk>/download/', views.CertificateDownloadView.as_view(), name='certificate-download'),
     
     # Badges
     path('my/badges/', views.MyBadgesView.as_view(), name='my-badges'),
