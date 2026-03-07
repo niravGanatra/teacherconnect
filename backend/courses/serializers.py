@@ -86,6 +86,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             'sections', 'total_duration', 'total_lessons', 'total_sections',
             'enrollment_count', 'issue_certificate',
             'is_enrolled', 'is_bookmarked',
+            # Admin-managed lifecycle fields
+            'is_active', 'status', 'disabled_reason',
         ]
 
     def get_instructor_name(self, obj):

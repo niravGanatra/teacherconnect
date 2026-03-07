@@ -16,6 +16,10 @@ from .admin_views import (
     AdminInstitutionVerifyView,
     AdminPostsListView,
     AdminPostDeleteView,
+    AdminFDPListView,
+    AdminFDPDisableView,
+    AdminFDPEnableView,
+    AdminFDPFeatureToggleView,
 )
 
 urlpatterns = [
@@ -45,5 +49,11 @@ urlpatterns = [
     path('posts/', AdminPostsListView.as_view(), name='admin-posts'),
     path('posts/<uuid:pk>/', AdminPostDeleteView.as_view(), name='admin-post-delete'),
     path('posts/<uuid:pk>/restore/', AdminPostDeleteView.as_view(), name='admin-post-restore'),
+
+    # FDP (Faculty Development Program) management
+    path('fdps/', AdminFDPListView.as_view(), name='admin-fdp-list'),
+    path('fdps/<uuid:fdp_id>/disable/', AdminFDPDisableView.as_view(), name='admin-fdp-disable'),
+    path('fdps/<uuid:fdp_id>/enable/', AdminFDPEnableView.as_view(), name='admin-fdp-enable'),
+    path('fdps/<uuid:fdp_id>/feature/', AdminFDPFeatureToggleView.as_view(), name='admin-fdp-feature'),
 ]
 

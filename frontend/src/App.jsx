@@ -34,6 +34,7 @@ import AdminUsers from './pages/admin/Users';
 import AdminJobs from './pages/admin/Jobs';
 import AdminInstitutions from './pages/admin/Institutions';
 import AdminContent from './pages/admin/Content';
+import FDPManagement from './pages/admin/FDPManagement';
 
 // Shared Pages
 import JobBoard from './pages/jobs/JobBoard';
@@ -347,7 +348,7 @@ function AppRoutes() {
       <Route
         path="/my-jobs"
         element={
-          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <MyJobs />
           </ProtectedRoute>
         }
@@ -356,7 +357,7 @@ function AppRoutes() {
       <Route
         path="/applicants/:jobId"
         element={
-          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <Applicants />
           </ProtectedRoute>
         }
@@ -366,7 +367,7 @@ function AppRoutes() {
       <Route
         path="/institution/dashboard"
         element={
-          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <InstitutionDashboard />
           </ProtectedRoute>
         }
@@ -374,7 +375,7 @@ function AppRoutes() {
       <Route
         path="/institution/manage"
         element={
-          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <InstitutionProfileEdit />
           </ProtectedRoute>
         }
@@ -382,7 +383,7 @@ function AppRoutes() {
       <Route
         path="/applicants"
         element={
-          <ProtectedRoute allowedTypes={['INSTITUTION']}>
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <Navigate to="/my-jobs" replace />
           </ProtectedRoute>
         }
@@ -392,7 +393,7 @@ function AppRoutes() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedTypes={['ADMIN']}>
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
@@ -401,7 +402,7 @@ function AppRoutes() {
       <Route
         path="/admin/users"
         element={
-          <ProtectedRoute allowedTypes={['ADMIN']}>
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <AdminUsers />
           </ProtectedRoute>
         }
@@ -410,7 +411,7 @@ function AppRoutes() {
       <Route
         path="/admin/jobs"
         element={
-          <ProtectedRoute allowedTypes={['ADMIN']}>
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <AdminJobs />
           </ProtectedRoute>
         }
@@ -419,7 +420,7 @@ function AppRoutes() {
       <Route
         path="/admin/institutions"
         element={
-          <ProtectedRoute allowedTypes={['ADMIN']}>
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <AdminInstitutions />
           </ProtectedRoute>
         }
@@ -428,8 +429,17 @@ function AppRoutes() {
       <Route
         path="/admin/content"
         element={
-          <ProtectedRoute allowedTypes={['ADMIN']}>
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <AdminContent />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/fdps"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
+            <FDPManagement />
           </ProtectedRoute>
         }
       />

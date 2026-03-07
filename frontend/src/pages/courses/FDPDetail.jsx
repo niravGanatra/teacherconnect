@@ -16,11 +16,13 @@ import {
     PlayCircleIcon,
     DocumentTextIcon,
     CheckCircleIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Card, Badge, Button, Spinner } from '../../components/common';
 import { coursesAPI } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext';
 import BookmarkButton from '../../components/fdp/BookmarkButton';
+import { DashboardLayout } from '../../components/common/Sidebar';
 
 const DIFFICULTY_COLOR = {
     BEGINNER: 'success',
@@ -75,28 +77,33 @@ export default function FDPDetail() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Spinner size="lg" />
-            </div>
+            <DashboardLayout>
+                <div className="flex items-center justify-center h-64">
+                    <Spinner size="lg" />
+                </div>
+            </DashboardLayout>
         );
     }
 
     if (error && !fdp) {
         return (
-            <div className="text-center py-16">
-                <AcademicCapIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                <h2 className="text-xl font-semibold text-slate-700 mb-2">Program not found</h2>
-                <p className="text-slate-400 mb-6">{error}</p>
-                <Link to="/fdp">
-                    <Button variant="outline">Back to Marketplace</Button>
-                </Link>
-            </div>
+            <DashboardLayout>
+                <div className="text-center py-16">
+                    <AcademicCapIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                    <h2 className="text-xl font-semibold text-slate-700 mb-2">Program not found</h2>
+                    <p className="text-slate-400 mb-6">{error}</p>
+                    <Link to="/fdp">
+                        <Button variant="outline">Back to Marketplace</Button>
+                    </Link>
+                </div>
+            </DashboardLayout>
         );
     }
 
     if (!fdp) return null;
 
     return (
+        <DashboardLayout>
         <div className="max-w-5xl mx-auto space-y-6">
             {/* Back */}
             <button
@@ -106,6 +113,24 @@ export default function FDPDetail() {
                 <ArrowLeftIcon className="w-4 h-4" />
                 Back to Marketplace
             </button>
+
+            {/* Disabled banner — visible to owner / institution admin */}
+            {fdp.status === 'disabled' && (
+                <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-4">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-semibold text-red-800">This program has been disabled by the platform administrator.</p>
+                        {fdp.disabled_reason && (
+                            <p className="text-sm text-red-700 mt-1">
+                                <span className="font-medium">Reason: </span>{fdp.disabled_reason}
+                            </p>
+                        )}
+                        <p className="text-xs text-red-500 mt-1">
+                            This program is no longer visible in the public marketplace. Contact support to resolve the issue.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Hero */}
             <Card className="overflow-hidden">
@@ -309,5 +334,6 @@ export default function FDPDetail() {
                 </div>
             </div>
         </div>
+        </DashboardLayout>
     );
 }

@@ -1,84 +1,115 @@
 /**
- * Responsive Sidebar Component with Role-Based Navigation
- * Renders different links based on user roles.
+ * Responsive Sidebar — API-driven, role-aware navigation.
+ *
+ * Menu items are fetched from GET /api/navigation/menu/ via the
+ * useSidebarMenu() hook. Each item may carry a live badge count
+ * (unread notifications, user count, pending FDP count, etc.)
+ * that is resolved server-side.
+ *
+ * Exported components:
+ *   Sidebar          – slide-in drawer on mobile, fixed on desktop
+ *   MobileHeader     – top bar with hamburger + bell + search
+ *   DashboardLayout  – full responsive wrapper (use instead of bare <main>)
  */
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, ROLES } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { getDashboardPath, getRoleDisplayName, getRoleIcon } from '../../utils/loginRedirect';
+import { getIcon } from '../../utils/sidebarIcons';
 import NavBarSearch from './NavBarSearch';
 import NotificationBell from '../notifications/NotificationBell';
+import useSidebarMenu from '../../hooks/useSidebarMenu';
 import {
-    HomeIcon,
-    BriefcaseIcon,
-    CalendarIcon,
-    DocumentTextIcon,
-    UserCircleIcon,
-    BuildingOfficeIcon,
-    UsersIcon,
-    BookmarkIcon,
-    ArrowRightOnRectangleIcon,
-    NewspaperIcon,
     Bars3Icon,
     XMarkIcon,
-    AcademicCapIcon,
-    BookOpenIcon,
-    PresentationChartBarIcon,
+    ArrowRightOnRectangleIcon,
+    MagnifyingGlassIcon,
     ChevronUpDownIcon,
     CheckIcon,
-    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
-/**
- * Navigation items configuration
- * Each item specifies which roles can see it
- */
-const NAV_ITEMS = [
-    // Common items (no role restriction)
-    { to: '/feed', icon: NewspaperIcon, label: 'Feed', roles: [] },
 
-    // Educator items
-    { to: '/jobs', icon: BriefcaseIcon, label: 'Faculty Jobs', roles: [ROLES.EDUCATOR] },
-    { to: '/fdp', icon: AcademicCapIcon, label: 'Faculty Development', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
-    { to: '/saved', icon: BookmarkIcon, label: 'Saved', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN, ROLES.INSTRUCTOR] },
-    { to: '/learning', icon: BookOpenIcon, label: 'My Learning', roles: [ROLES.EDUCATOR, ROLES.INSTRUCTOR] },
-    { to: '/events', icon: CalendarIcon, label: 'Events', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
-    { to: '/profile', icon: UserCircleIcon, label: 'My Profile', roles: [ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN] },
-
-    // Instructor items
-    { to: '/instructor/studio', icon: PresentationChartBarIcon, label: 'Course Studio', roles: [ROLES.INSTRUCTOR] },
-    { to: '/instructor/courses', icon: AcademicCapIcon, label: 'My Courses', roles: [ROLES.INSTRUCTOR] },
-
-    // Institution items
-    { to: '/institution/dashboard', icon: HomeIcon, label: 'Dashboard', roles: [ROLES.INSTITUTION_ADMIN] },
-    { to: '/institution/manage', icon: BuildingOfficeIcon, label: 'Manage Profile', roles: [ROLES.INSTITUTION_ADMIN] },
-    { to: '/my-jobs', icon: BriefcaseIcon, label: 'Posted Jobs', roles: [ROLES.INSTITUTION_ADMIN] },
-    { to: '/applicants', icon: UsersIcon, label: 'Applicants', roles: [ROLES.INSTITUTION_ADMIN] },
+// ─────────────────────────────────────────────────────────────────────────────
+//  Badge chip — small coloured circle with a number
+// ─────────────────────────────────────────────────────────────────────────────
+function BadgeChip({ count }) {
+    if (!count || count <= 0) return null;
+    return (
+        <span className="
+            ml-auto min-w-[20px] h-5 px-1.5
+            bg-red-500 text-white text-[11px] font-bold
+            rounded-full flex items-center justify-center
+            leading-none flex-shrink-0
+        ">
+            {count > 99 ? '99+' : count}
+        </span>
+    );
+}
 
 
-    // Admin items
-    { to: '/admin', icon: HomeIcon, label: 'Admin Dashboard', roles: [ROLES.SUPER_ADMIN] },
-    { to: '/admin/users', icon: UsersIcon, label: 'Users', roles: [ROLES.SUPER_ADMIN] },
-    { to: '/admin/institutions', icon: BuildingOfficeIcon, label: 'Institutions', roles: [ROLES.SUPER_ADMIN] },
-    { to: '/admin/jobs', icon: BriefcaseIcon, label: 'Jobs', roles: [ROLES.SUPER_ADMIN] },
-    { to: '/admin/content', icon: DocumentTextIcon, label: 'Content', roles: [ROLES.SUPER_ADMIN] },
-];
+// ─────────────────────────────────────────────────────────────────────────────
+//  Skeleton loader — shown while the menu is fetching
+// ─────────────────────────────────────────────────────────────────────────────
+function MenuSkeleton() {
+    return (
+        <div className="flex-1 p-3 space-y-1 animate-pulse" aria-hidden="true">
+            {[...Array(6)].map((_, i) => (
+                <div
+                    key={i}
+                    className="h-11 rounded-lg bg-white/10"
+                    style={{ opacity: 1 - i * 0.12 }}
+                />
+            ))}
+        </div>
+    );
+}
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Single sidebar item — icon + label + badge + active highlight
+// ─────────────────────────────────────────────────────────────────────────────
+function SidebarItem({ item, onNavigate }) {
+    const Icon = getIcon(item.icon);
+
+    return (
+        <NavLink
+            to={item.path}
+            onClick={onNavigate}
+            className={({ isActive }) => `
+                sidebar-link text-sm
+                ${isActive ? 'active' : ''}
+            `}
+            end={item.path === '/'}
+        >
+            <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+            <span className="flex-1 truncate">{item.label}</span>
+            <BadgeChip count={item.badge} />
+        </NavLink>
+    );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Sidebar component
+// ─────────────────────────────────────────────────────────────────────────────
 export function Sidebar({ isOpen, onClose }) {
     const {
         user,
         logout,
-        roles,
         activeMode,
         switchMode,
         hasMultipleRoles,
-        hasAnyRole
+        roles,
     } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+
+    const navigate  = useNavigate();
+    const location  = useLocation();
     const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-    // Close sidebar on route change (mobile)
+    // Fetch menu items from the API
+    const { menuItems, loading } = useSidebarMenu(user);
+
+    // Close drawer on route change (mobile)
     useEffect(() => {
         onClose?.();
     }, [location.pathname]);
@@ -88,35 +119,28 @@ export function Sidebar({ isOpen, onClose }) {
         navigate('/login');
     };
 
-    // Filter nav items based on user roles
-    const filteredNavItems = NAV_ITEMS.filter(item => {
-        // No role restriction = show to everyone
-        if (item.roles.length === 0) return true;
-        // Check if user has any of the required roles
-        return hasAnyRole(item.roles);
-    });
-
-    // Get switchable roles (exclude 'student' as it's always present)
-    const switchableRoles = roles.filter(r => r !== ROLES.STUDENT);
-
     const handleRoleSwitch = (role) => {
         switchMode(role);
         setShowRoleSwitcher(false);
-        // Navigate to role's dashboard
         navigate(getDashboardPath(role));
     };
 
+    // Roles eligible for the switcher (exclude student)
+    const switchableRoles = (roles || []).filter(r => r !== 'student');
+
     return (
         <>
-            {/* Mobile Overlay */}
+            {/* Dark overlay (mobile) */}
             <div
                 className={`mobile-nav-overlay lg:hidden ${isOpen ? 'open' : ''}`}
                 onClick={onClose}
+                aria-hidden="true"
             />
 
-            {/* Sidebar */}
+            {/* Sidebar panel */}
             <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-                {/* Logo */}
+
+                {/* ── Header ─────────────────────────── */}
                 <div className="p-4 lg:p-6 border-b border-white/10 flex items-center justify-between">
                     <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
                         <span className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm">
@@ -125,39 +149,42 @@ export function Sidebar({ isOpen, onClose }) {
                         <span className="hidden sm:inline">AcadWorld</span>
                         <span className="sm:hidden">AW</span>
                     </h1>
-                    {/* Close button on mobile */}
+                    {/* Close button — mobile only */}
                     <button
                         onClick={onClose}
                         className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        aria-label="Close menu"
                     >
                         <XMarkIcon className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
-                    {filteredNavItems.map((link) => (
-                        <NavLink
-                            key={link.to}
-                            to={link.to}
-                            className={({ isActive }) => `
-                                sidebar-link text-sm lg:text-base
-                                ${isActive ? 'active' : ''}
-                            `}
-                        >
-                            <link.icon className="w-5 h-5 flex-shrink-0" />
-                            <span className="truncate">{link.label}</span>
-                        </NavLink>
-                    ))}
-                </nav>
+                {/* ── Navigation ─────────────────────── */}
+                {loading ? (
+                    <MenuSkeleton />
+                ) : (
+                    <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
+                        {menuItems.map(item => (
+                            <SidebarItem
+                                key={item.id}
+                                item={item}
+                                onNavigate={onClose}
+                            />
+                        ))}
+                    </nav>
+                )}
 
-                {/* Role Switcher (for multi-role users) */}
+                {/* ── Role switcher (multi-role users) ─ */}
                 {hasMultipleRoles && switchableRoles.length > 1 && (
                     <div className="px-3 lg:px-4 py-2 border-t border-white/10">
                         <div className="relative">
                             <button
-                                onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors text-sm"
+                                onClick={() => setShowRoleSwitcher(v => !v)}
+                                className="
+                                    w-full flex items-center justify-between gap-2
+                                    px-3 py-2 bg-white/10 rounded-lg
+                                    hover:bg-white/20 transition-colors text-sm
+                                "
                             >
                                 <span className="flex items-center gap-2">
                                     <span>{getRoleIcon(activeMode)}</span>
@@ -166,19 +193,24 @@ export function Sidebar({ isOpen, onClose }) {
                                 <ChevronUpDownIcon className="w-4 h-4" />
                             </button>
 
-                            {/* Role Dropdown */}
                             {showRoleSwitcher && (
-                                <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-800 rounded-lg shadow-lg overflow-hidden z-10">
+                                <div className="
+                                    absolute bottom-full left-0 right-0 mb-1
+                                    bg-slate-800 rounded-lg shadow-lg overflow-hidden z-10
+                                ">
                                     <div className="py-1">
-                                        <div className="px-3 py-1 text-xs text-white/50 uppercase">
+                                        <p className="px-3 py-1 text-xs text-white/50 uppercase tracking-wide">
                                             Switch View
-                                        </div>
-                                        {switchableRoles.map((role) => (
+                                        </p>
+                                        {switchableRoles.map(role => (
                                             <button
                                                 key={role}
                                                 onClick={() => handleRoleSwitch(role)}
-                                                className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-white/10 ${activeMode === role ? 'text-blue-400' : 'text-white'
-                                                    }`}
+                                                className={`
+                                                    w-full flex items-center gap-2 px-3 py-2 text-sm
+                                                    hover:bg-white/10
+                                                    ${activeMode === role ? 'text-blue-400' : 'text-white'}
+                                                `}
                                             >
                                                 <span>{getRoleIcon(role)}</span>
                                                 <span className="flex-1 text-left">{getRoleDisplayName(role)}</span>
@@ -194,12 +226,11 @@ export function Sidebar({ isOpen, onClose }) {
                     </div>
                 )}
 
-                {/* User Info & Logout */}
+                {/* ── User card + Sign-out ────────────── */}
                 <div className="p-3 lg:p-4 border-t border-white/10 safe-area-bottom">
-                    {/* Enhanced User Profile Card */}
                     <div className="mb-3 p-3 bg-gradient-to-r from-white/10 to-white/5 rounded-xl backdrop-blur-sm">
                         <div className="flex items-center gap-3">
-                            {/* Avatar with gradient ring and online indicator */}
+                            {/* Avatar */}
                             <div className="relative flex-shrink-0">
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 via-blue-500 to-purple-600 p-0.5">
                                     <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center overflow-hidden">
@@ -211,16 +242,17 @@ export function Sidebar({ isOpen, onClose }) {
                                             />
                                         ) : (
                                             <span className="text-lg font-bold text-white">
-                                                {user?.first_name?.charAt(0) || user?.username?.charAt(0).toUpperCase() || 'U'}
+                                                {user?.first_name?.charAt(0) ||
+                                                    user?.username?.charAt(0)?.toUpperCase() || 'U'}
                                             </span>
                                         )}
                                     </div>
                                 </div>
-                                {/* Online status indicator */}
+                                {/* Online indicator */}
                                 <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-slate-800 shadow-lg" />
                             </div>
 
-                            {/* User Details */}
+                            {/* Details */}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-white truncate">
                                     {user?.first_name && user?.last_name
@@ -228,10 +260,12 @@ export function Sidebar({ isOpen, onClose }) {
                                         : user?.username}
                                 </p>
                                 <p className="text-xs text-white/50 truncate mt-0.5">{user?.email}</p>
-                                {/* Role badge */}
                                 <div className="mt-1.5 flex items-center gap-1">
                                     <span className="px-2 py-0.5 text-[10px] font-medium bg-white/10 text-white/80 rounded-full capitalize">
-                                        {activeMode === 'super_admin' ? 'Admin' : activeMode?.replace('_', ' ') || 'User'}
+                                        {user?.user_type === 'SUPER_ADMIN' ? 'Admin'
+                                            : user?.user_type === 'INSTITUTION' ? 'Institution Admin'
+                                            : user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER' ? 'Educator'
+                                            : activeMode?.replace('_', ' ') || 'User'}
                                     </span>
                                 </div>
                             </div>
@@ -251,17 +285,20 @@ export function Sidebar({ isOpen, onClose }) {
     );
 }
 
-// Mobile Header with Hamburger Menu and Search
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Mobile header — hamburger + logo + bell + search
+// ─────────────────────────────────────────────────────────────────────────────
 export function MobileHeader({ onMenuClick, onSearchClick }) {
     return (
         <header className="mobile-header safe-area-top">
-            <button onClick={onMenuClick} className="hamburger-btn">
+            <button onClick={onMenuClick} className="hamburger-btn" aria-label="Open menu">
                 <Bars3Icon className="w-6 h-6" />
             </button>
             <h1 className="text-white font-bold text-lg">AcadWorld</h1>
             <div className="flex items-center gap-1">
                 <NotificationBell variant="dark" />
-                <button onClick={onSearchClick} className="hamburger-btn">
+                <button onClick={onSearchClick} className="hamburger-btn" aria-label="Search">
                     <MagnifyingGlassIcon className="w-5 h-5" />
                 </button>
             </div>
@@ -269,33 +306,30 @@ export function MobileHeader({ onMenuClick, onSearchClick }) {
     );
 }
 
-// Responsive Dashboard Layout
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DashboardLayout — full responsive wrapper
+// ─────────────────────────────────────────────────────────────────────────────
 export function DashboardLayout({ children }) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen]         = useState(false);
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-    // Close sidebar on escape key
+    // Close on Escape
     useEffect(() => {
-        const handleEscape = (e) => {
+        const onEsc = (e) => {
             if (e.key === 'Escape') {
                 setSidebarOpen(false);
                 setMobileSearchOpen(false);
             }
         };
-        window.addEventListener('keydown', handleEscape);
-        return () => window.removeEventListener('keydown', handleEscape);
+        window.addEventListener('keydown', onEsc);
+        return () => window.removeEventListener('keydown', onEsc);
     }, []);
 
-    // Prevent body scroll when sidebar is open on mobile
+    // Prevent body scroll while sidebar is open on mobile
     useEffect(() => {
-        if (sidebarOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-        };
+        document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
     }, [sidebarOpen]);
 
     return (
@@ -306,13 +340,14 @@ export function DashboardLayout({ children }) {
             />
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            {/* Mobile Search Modal */}
+            {/* Mobile search modal */}
             {mobileSearchOpen && (
                 <div className="lg:hidden fixed inset-0 z-50 bg-white">
                     <div className="flex items-center gap-3 p-4 border-b border-slate-200">
                         <button
                             onClick={() => setMobileSearchOpen(false)}
                             className="p-2 hover:bg-slate-100 rounded-lg"
+                            aria-label="Close search"
                         >
                             <XMarkIcon className="w-5 h-5 text-slate-600" />
                         </button>
@@ -323,7 +358,7 @@ export function DashboardLayout({ children }) {
                 </div>
             )}
 
-            {/* Desktop Top Bar with Search */}
+            {/* Desktop top bar */}
             <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200 shadow-sm">
                 <div className="flex items-center h-14 px-6 w-full max-w-4xl gap-3">
                     <NavBarSearch />

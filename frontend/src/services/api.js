@@ -633,6 +633,19 @@ export const socialAPI = {
     getFeed: (page = 1) => api.get('/social/feed/', { params: { page } }),
 };
 
+// Navigation API (role-based sidebar menu)
+export const navigationAPI = {
+    getMenu: () => api.get('/navigation/menu/'),
+};
+
+// Admin FDP management API (Super Admin only)
+export const adminFDPAPI = {
+    list: (params = {}) => api.get('/admin/fdps/', { params }),
+    disable: (fdpId, reason) => api.post(`/admin/fdps/${fdpId}/disable/`, { reason }),
+    enable: (fdpId) => api.post(`/admin/fdps/${fdpId}/enable/`),
+    toggleFeatured: (fdpId, isFeatured) => api.patch(`/admin/fdps/${fdpId}/feature/`, { is_featured: isFeatured }),
+};
+
 // Notifications API
 export const notificationAPI = {
     getNotifications: (page = 1) => api.get('/notifications/', { params: { page } }),

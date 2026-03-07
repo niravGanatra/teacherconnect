@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>Disable: "{{ fdp.title }}"</h2>
+<p>Provide a reason for disabling this Faculty Development Program. The program owner will be notified.</p>
+
+<form method="post">
+  {% csrf_token %}
+  <fieldset class="module aligned">
+    <div class="form-row">
+      <label for="id_reason"><strong>Disable reason</strong> (min 10 chars, required):</label><br>
+      <textarea id="id_reason" name="reason" rows="5" cols="60"
+        style="margin-top:6px;width:100%;max-width:600px"
+        placeholder="Describe why this program is being disabled..."></textarea>
+    </div>
+  </fieldset>
+
+  <div style="margin-top:12px">
+    <input type="submit" class="default" value="Disable Program"
+      style="background:#ef4444;border-color:#ef4444">
+    &nbsp;
+    <a href="javascript:history.back()" class="button cancel-link">Cancel</a>
+  </div>
+</form>
+{% endblock %}

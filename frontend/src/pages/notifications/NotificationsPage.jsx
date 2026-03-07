@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { notificationAPI } from '../../services/api';
+import { DashboardLayout } from '../../components/common/Sidebar';
 
 function ActorAvatar({ actor }) {
     const initials = actor?.name?.charAt(0)?.toUpperCase() || actor?.username?.charAt(0)?.toUpperCase() || '?';
@@ -92,6 +93,7 @@ export default function NotificationsPage() {
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     return (
+        <DashboardLayout>
         <div className="max-w-2xl mx-auto py-6 px-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
@@ -165,5 +167,6 @@ export default function NotificationsPage() {
                 )}
             </div>
         </div>
+        </DashboardLayout>
     );
 }

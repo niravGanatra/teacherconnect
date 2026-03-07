@@ -28,7 +28,7 @@ class TrendingFDPView(generics.ListAPIView):
     def get_queryset(self):
         return (
             Course.objects
-            .filter(is_published=True)
+            .filter(is_published=True, is_active=True, status='published')
             .order_by('-trending_score')[:6]
         )
 
@@ -45,7 +45,7 @@ class FeaturedFDPView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return Course.objects.filter(is_published=True, is_featured=True).order_by('-created_at')
+        return Course.objects.filter(is_published=True, is_active=True, status='published', is_featured=True).order_by('-created_at')
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -59,8 +59,8 @@ class CourseListView(generics.ListAPIView):
     serializer_class = CourseListSerializer
 
     def get_queryset(self):
-        queryset = Course.objects.filter(is_published=True)
-        
+        queryset = Course.objects.filter(is_published=True, is_active=True, status='published')
+
         # Filter by difficulty
         difficulty = self.request.query_params.get('difficulty')
         if difficulty:
@@ -88,18 +88,38 @@ class CourseDetailView(generics.RetrieveAPIView):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        return Course.objects.filter(is_published=True)
+        return Course.objects.filter(is_published=True, is_active=True, status='published')
 
     def get_object(self):
-        """Allow lookup by UUID (id) as well as slug."""
+        """
+        Allow lookup by UUID (id) as well as slug.
+        If the requesting user is the FDP's instructor (owner), they can also
+        see disabled FDPs so the institution admin can view the disabled banner.
+        """
         import uuid as uuid_lib
         slug_or_id = self.kwargs.get('slug', '')
+        # Start with the public queryset
         qs = self.get_queryset()
         try:
             uid = uuid_lib.UUID(str(slug_or_id))
-            obj = get_object_or_404(qs, id=uid)
+            obj = qs.filter(id=uid).first()
+            if obj is None:
+                # Check if exists but disabled — allow owner access
+                obj = Course.objects.filter(id=uid).first()
+                if obj and self.request.user.is_authenticated and str(obj.instructor_id) == str(self.request.user.id):
+                    pass  # owner can view disabled FDP
+                else:
+                    from django.http import Http404
+                    raise Http404
         except (ValueError, AttributeError):
-            obj = get_object_or_404(qs, slug=slug_or_id)
+            obj = qs.filter(slug=slug_or_id).first()
+            if obj is None:
+                obj = Course.objects.filter(slug=slug_or_id).first()
+                if obj and self.request.user.is_authenticated and str(obj.instructor_id) == str(self.request.user.id):
+                    pass
+                else:
+                    from django.http import Http404
+                    raise Http404
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -109,7 +129,7 @@ class EnrollCourseView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, slug):
-        course = get_object_or_404(Course, slug=slug, is_published=True)
+        course = get_object_or_404(Course, slug=slug, is_published=True, is_active=True, status='published')
         
         # Check if already enrolled
         if Enrollment.objects.filter(user=request.user, course=course).exists():

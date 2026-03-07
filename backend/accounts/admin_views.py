@@ -405,7 +405,7 @@ class AdminPostDeleteView(APIView):
             return Response({'message': 'Post soft deleted successfully.'})
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     def post(self, request, pk):
         """Restore a soft-deleted post."""
         try:
@@ -416,3 +416,208 @@ class AdminPostDeleteView(APIView):
             return Response({'message': 'Post restored successfully.'})
         except Post.DoesNotExist:
             return Response({'error': 'Deleted post not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ============================================================
+# Admin FDP (Faculty Development Program) Views
+# ============================================================
+
+class AdminFDPListView(APIView):
+    """
+    GET /api/admin/fdps/
+    Paginated list of ALL FDPs visible to Super Admin.
+    Supports ?status=&institution=&search= filters.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from courses.models import Course
+        from profiles.models import InstitutionProfile
+
+        queryset = Course.objects.select_related('instructor', 'disabled_by').order_by('-created_at')
+
+        # Filter by status
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        # Filter by institution (instructor user id)
+        institution = request.query_params.get('institution')
+        if institution:
+            queryset = queryset.filter(instructor__id=institution)
+
+        # Full-text search on title / instructor email
+        search = request.query_params.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(instructor__email__icontains=search)
+            )
+
+        # Pagination
+        page = max(int(request.query_params.get('page', 1)), 1)
+        page_size = 20
+        total = queryset.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        results = []
+        for fdp in queryset[start:end]:
+            # Resolve institution name from InstitutionProfile if available
+            institution_name = fdp.instructor.email
+            try:
+                prof = fdp.instructor.institution_profile
+                institution_name = prof.institution_name or fdp.instructor.email
+            except Exception:
+                pass
+
+            results.append({
+                'id': str(fdp.id),
+                'title': fdp.title,
+                'slug': fdp.slug,
+                'institution_name': institution_name,
+                'instructor_id': str(fdp.instructor.id),
+                'status': fdp.status,
+                'is_active': fdp.is_active,
+                'is_featured': fdp.is_featured,
+                'is_published': fdp.is_published,
+                'enrollment_count': fdp.enrollments.count(),
+                'disabled_reason': fdp.disabled_reason,
+                'disabled_at': fdp.disabled_at.isoformat() if fdp.disabled_at else None,
+                'disabled_by_email': fdp.disabled_by.email if fdp.disabled_by else None,
+                'created_at': fdp.created_at.isoformat(),
+            })
+
+        return Response({
+            'results': results,
+            'count': total,
+            'page': page,
+            'page_size': page_size,
+            'num_pages': (total + page_size - 1) // page_size,
+        })
+
+
+class AdminFDPDisableView(APIView):
+    """
+    POST /api/admin/fdps/<uuid:fdp_id>/disable/
+    Disable an FDP. Body: { "reason": "..." }
+    Sends in-app notification to the owning institution.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, fdp_id):
+        from courses.models import Course
+        from django.shortcuts import get_object_or_404
+
+        reason = request.data.get('reason', '').strip()
+        if not reason or len(reason) < 10:
+            return Response(
+                {'error': 'A reason of at least 10 characters is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        fdp = get_object_or_404(Course, id=fdp_id)
+
+        if not fdp.is_active or fdp.status == 'disabled':
+            return Response({'error': 'This FDP is already disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        fdp.is_active = False
+        fdp.status = 'disabled'
+        fdp.disabled_reason = reason
+        fdp.disabled_at = timezone.now()
+        fdp.disabled_by = request.user
+        fdp.save(update_fields=['is_active', 'status', 'disabled_reason', 'disabled_at', 'disabled_by'])
+
+        # Notify the instructor/institution
+        try:
+            from notifications.utils import notify
+            notify(
+                recipient=fdp.instructor,
+                actor=request.user,
+                verb=f'disabled your program "{fdp.title}". Reason: {reason}',
+                target=fdp,
+            )
+        except Exception:
+            pass
+
+        return Response({
+            'message': f'FDP "{fdp.title}" has been disabled.',
+            'id': str(fdp.id),
+            'status': fdp.status,
+            'is_active': fdp.is_active,
+            'disabled_reason': fdp.disabled_reason,
+            'disabled_at': fdp.disabled_at.isoformat(),
+        })
+
+
+class AdminFDPEnableView(APIView):
+    """
+    POST /api/admin/fdps/<uuid:fdp_id>/enable/
+    Re-enable a disabled FDP. Clears all disable fields.
+    Sends in-app notification to the owning institution.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, fdp_id):
+        from courses.models import Course
+        from django.shortcuts import get_object_or_404
+
+        fdp = get_object_or_404(Course, id=fdp_id)
+
+        if fdp.is_active and fdp.status != 'disabled':
+            return Response({'error': 'This FDP is not currently disabled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Restore to published if it was published before, else pending
+        fdp.is_active = True
+        fdp.status = 'published' if fdp.is_published else 'pending'
+        fdp.disabled_reason = ''
+        fdp.disabled_at = None
+        fdp.disabled_by = None
+        fdp.save(update_fields=['is_active', 'status', 'disabled_reason', 'disabled_at', 'disabled_by'])
+
+        # Notify the instructor/institution
+        try:
+            from notifications.utils import notify
+            notify(
+                recipient=fdp.instructor,
+                actor=request.user,
+                verb=f're-enabled your program "{fdp.title}" on the marketplace.',
+                target=fdp,
+            )
+        except Exception:
+            pass
+
+        return Response({
+            'message': f'FDP "{fdp.title}" has been re-enabled.',
+            'id': str(fdp.id),
+            'status': fdp.status,
+            'is_active': fdp.is_active,
+        })
+
+
+class AdminFDPFeatureToggleView(APIView):
+    """
+    PATCH /api/admin/fdps/<uuid:fdp_id>/feature/
+    Toggle the is_featured flag on an FDP.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, fdp_id):
+        from courses.models import Course
+        from django.shortcuts import get_object_or_404
+
+        fdp = get_object_or_404(Course, id=fdp_id)
+
+        # Accept explicit value or toggle
+        if 'is_featured' in request.data:
+            fdp.is_featured = bool(request.data['is_featured'])
+        else:
+            fdp.is_featured = not fdp.is_featured
+
+        fdp.save(update_fields=['is_featured'])
+
+        return Response({
+            'id': str(fdp.id),
+            'title': fdp.title,
+            'is_featured': fdp.is_featured,
+        })

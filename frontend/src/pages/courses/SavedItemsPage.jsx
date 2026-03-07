@@ -19,6 +19,7 @@ import {
 import { Card, Badge, Button } from '../../components/common';
 import { bookmarkAPI } from '../../services/api';
 import BookmarkButton from '../../components/fdp/BookmarkButton';
+import { DashboardLayout } from '../../components/common/Sidebar';
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
@@ -195,6 +196,7 @@ export default function SavedItemsPage() {
     };
 
     return (
+        <DashboardLayout>
         <div>
             {/* Header */}
             <div className="mb-6">
@@ -231,5 +233,6 @@ export default function SavedItemsPage() {
                 </div>
             )}
         </div>
+        </DashboardLayout>
     );
 }

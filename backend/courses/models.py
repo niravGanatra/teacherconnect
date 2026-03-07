@@ -123,9 +123,41 @@ class Course(models.Model):
     what_you_learn = models.JSONField(default=list, blank=True)
     requirements = models.JSONField(default=list, blank=True)
     
+    # Status choices for admin-managed lifecycle
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('pending', 'Pending Approval'),
+        ('published', 'Published'),
+        ('disabled', 'Disabled'),
+    ]
+
     # Settings
     is_published = models.BooleanField(default=False)
     issue_certificate = models.BooleanField(default=True)
+
+    # Admin enable/disable controls
+    is_active = models.BooleanField(
+        default=True,
+        help_text='Super Admin can disable a published FDP from the marketplace'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft',
+        db_index=True,
+    )
+    disabled_reason = models.TextField(
+        blank=True,
+        help_text='Reason provided by admin when disabling this FDP'
+    )
+    disabled_at = models.DateTimeField(null=True, blank=True)
+    disabled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='disabled_fdps',
+    )
 
     # Trending & Featured
     trending_score = models.FloatField(default=0.0)

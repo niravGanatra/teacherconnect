@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Card, Badge, Button, Spinner, EmptyState, Select } from '../../components/common';
 import { coursesAPI } from '../../services/api';
 import { useAuth, ROLES } from '../../context/AuthContext';
+import { DashboardLayout } from '../../components/common/Sidebar';
 import BookmarkButton from '../../components/fdp/BookmarkButton';
 import {
     AcademicCapIcon,
@@ -185,6 +186,7 @@ export default function FDPMarketplace() {
     ];
 
     return (
+        <DashboardLayout>
         <div>
             {/* Header */}
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -365,6 +367,7 @@ export default function FDPMarketplace() {
                 </div>
             )}
         </div>
+        </DashboardLayout>
     );
 }
 

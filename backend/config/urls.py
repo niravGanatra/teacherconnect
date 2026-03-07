@@ -23,6 +23,9 @@ urlpatterns = [
     path('api/notifications/', include('notifications.urls')),
 
     
+    # Navigation menu (role-based sidebar items)
+    path('api/navigation/', include('navigation.urls')),
+
     # Admin API (protected by IsAdminUser permission)
     path('api/admin/', include('accounts.admin_urls')),
 
