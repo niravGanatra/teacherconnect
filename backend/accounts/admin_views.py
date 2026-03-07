@@ -621,3 +621,40 @@ class AdminFDPFeatureToggleView(APIView):
             'title': fdp.title,
             'is_featured': fdp.is_featured,
         })
+
+
+# ============================================================
+# Platform Settings View
+# ============================================================
+
+class AdminPlatformSettingsView(APIView):
+    """
+    GET  /api/admin/settings/  — retrieve current platform settings
+    PATCH /api/admin/settings/ — update one or more settings
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from navigation.models import PlatformSettings
+        settings_obj = PlatformSettings.get()
+        return Response({
+            'fdp_enabled': settings_obj.fdp_enabled,
+            'updated_at': settings_obj.updated_at.isoformat() if settings_obj.updated_at else None,
+        })
+
+    def patch(self, request):
+        from navigation.models import PlatformSettings
+        settings_obj = PlatformSettings.get()
+        changed = False
+
+        if 'fdp_enabled' in request.data:
+            settings_obj.fdp_enabled = bool(request.data['fdp_enabled'])
+            changed = True
+
+        if changed:
+            settings_obj.save()
+
+        return Response({
+            'fdp_enabled': settings_obj.fdp_enabled,
+            'updated_at': settings_obj.updated_at.isoformat() if settings_obj.updated_at else None,
+        })

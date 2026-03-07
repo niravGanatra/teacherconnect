@@ -20,6 +20,7 @@ from .admin_views import (
     AdminFDPDisableView,
     AdminFDPEnableView,
     AdminFDPFeatureToggleView,
+    AdminPlatformSettingsView,
 )
 
 urlpatterns = [
@@ -55,5 +56,8 @@ urlpatterns = [
     path('fdps/<uuid:fdp_id>/disable/', AdminFDPDisableView.as_view(), name='admin-fdp-disable'),
     path('fdps/<uuid:fdp_id>/enable/', AdminFDPEnableView.as_view(), name='admin-fdp-enable'),
     path('fdps/<uuid:fdp_id>/feature/', AdminFDPFeatureToggleView.as_view(), name='admin-fdp-feature'),
+
+    # Platform-wide settings
+    path('settings/', AdminPlatformSettingsView.as_view(), name='admin-platform-settings'),
 ]
 

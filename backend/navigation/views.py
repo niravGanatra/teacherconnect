@@ -29,6 +29,15 @@ class NavigationMenuView(APIView):
         # Deep-copy so we don't mutate the config dict
         items = copy.deepcopy(raw_items)
 
+        # Check platform-wide FDP toggle — hide FDP nav item for non-admins when disabled
+        try:
+            from navigation.models import PlatformSettings
+            platform = PlatformSettings.get()
+            if not platform.fdp_enabled and role_key != 'SUPER_ADMIN':
+                items = [i for i in items if i.get('id') != 'fdps']
+        except Exception:
+            pass  # Never crash the menu
+
         # Resolve badge values lazily only for keys that appear in the menu
         badge_cache = {}
         for item in items:

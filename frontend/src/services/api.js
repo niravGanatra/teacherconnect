@@ -418,6 +418,13 @@ export const adminAPI = {
     // Activity report (stub - endpoint not yet implemented on backend)
     getActivityReport: (params = {}) => Promise.resolve({ data: { results: [] } }),
 
+    // Alias used by Certificates page
+    fetchStats: () => api.get('/admin/stats/'),
+
+    // Platform-wide settings
+    getPlatformSettings: () => api.get('/admin/settings/'),
+    updatePlatformSettings: (data) => api.patch('/admin/settings/', data),
+
 };
 
 

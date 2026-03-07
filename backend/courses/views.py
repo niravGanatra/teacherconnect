@@ -19,6 +19,15 @@ from .serializers import (
 )
 
 
+def _fdp_marketplace_enabled():
+    """Return True if the FDP marketplace is globally enabled."""
+    try:
+        from navigation.models import PlatformSettings
+        return PlatformSettings.get().fdp_enabled
+    except Exception:
+        return True  # safe default
+
+
 class TrendingFDPView(generics.ListAPIView):
     """GET /api/fdps/trending/ — top 6 published FDPs by trending_score."""
     permission_classes = [AllowAny]
@@ -26,6 +35,8 @@ class TrendingFDPView(generics.ListAPIView):
     pagination_class = None  # Return plain list, no pagination wrapper
 
     def get_queryset(self):
+        if not _fdp_marketplace_enabled():
+            return Course.objects.none()
         return (
             Course.objects
             .filter(is_published=True, is_active=True, status='published')
@@ -45,6 +56,8 @@ class FeaturedFDPView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
+        if not _fdp_marketplace_enabled():
+            return Course.objects.none()
         return Course.objects.filter(is_published=True, is_active=True, status='published', is_featured=True).order_by('-created_at')
 
     def get_serializer_context(self):
@@ -59,6 +72,8 @@ class CourseListView(generics.ListAPIView):
     serializer_class = CourseListSerializer
 
     def get_queryset(self):
+        if not _fdp_marketplace_enabled():
+            return Course.objects.none()
         queryset = Course.objects.filter(is_published=True, is_active=True, status='published')
 
         # Filter by difficulty

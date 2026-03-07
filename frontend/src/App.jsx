@@ -35,6 +35,9 @@ import AdminJobs from './pages/admin/Jobs';
 import AdminInstitutions from './pages/admin/Institutions';
 import AdminContent from './pages/admin/Content';
 import FDPManagement from './pages/admin/FDPManagement';
+import AdminCertificates from './pages/admin/Certificates';
+import ActivityReport from './pages/admin/ActivityReport';
+import PlatformSettings from './pages/admin/PlatformSettings';
 
 // Shared Pages
 import JobBoard from './pages/jobs/JobBoard';
@@ -440,6 +443,33 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
             <FDPManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/certificates"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
+            <AdminCertificates />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
+            <ActivityReport />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.ADMIN]}>
+            <PlatformSettings />
           </ProtectedRoute>
         }
       />
