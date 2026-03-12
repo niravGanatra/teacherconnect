@@ -325,7 +325,7 @@ class EndorseSkillView(APIView):
             skill.endorsements_count = skill.endorsements.count()
             skill.save(update_fields=['endorsements_count'])
 
-            # Notify skill owner
+            # Notify skill owner (in-app)
             try:
                 from notifications.utils import notify
                 notify(
@@ -334,6 +334,13 @@ class EndorseSkillView(APIView):
                     verb=f'endorsed your skill "{skill.name}"',
                     target=skill,
                 )
+            except Exception:
+                pass
+
+            # Send transactional email to skill owner
+            try:
+                from emails.utils import send_skill_endorsed_email
+                send_skill_endorsed_email(skill.profile.user, request.user, skill.name)
             except Exception:
                 pass
 

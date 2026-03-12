@@ -3,13 +3,15 @@
  */
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth, ROLES } from './context/AuthContext';
-import { LoadingScreen, ErrorBoundary } from './components/common';
+import { ErrorBoundary } from './components/common';
+import FullPageLoader from './components/ui/FullPageLoader';
 
 // Auth Pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import CheckEmail from './pages/auth/CheckEmail';
 import VerifyEmail from './pages/auth/VerifyEmail';
+import AuthCallback from './pages/auth/AuthCallback';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
 
@@ -25,6 +27,10 @@ import TeacherProfileView from './pages/teacher/ProfileView';
 import InstitutionDashboard from './pages/institution/Dashboard';
 import InstitutionProfileEdit from './pages/institution/Profile';
 import InstitutionProfileView from './pages/institution/ProfileView';
+import InstitutionFaculty from './pages/institution/Faculty';
+import InstitutionCertificates from './pages/institution/Certificates';
+import InstitutionEnrollments from './pages/institution/Enrollments';
+import InstitutionSetup from './pages/institution/Setup';
 import MyJobs from './pages/institution/MyJobs';
 import Applicants from './pages/institution/Applicants';
 
@@ -62,7 +68,7 @@ function ProtectedRoute({ children, allowedTypes = [] }) {
   const { user, loading, isAuthenticated, hasAnyRole } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
+    return <FullPageLoader />;
   }
 
   if (!isAuthenticated) {
@@ -82,7 +88,7 @@ function DashboardRouter() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
+    return <FullPageLoader />;
   }
 
   if (user?.user_type === 'ADMIN' || user?.user_type === 'SUPER_ADMIN') {
@@ -105,7 +111,7 @@ function ProfileRouter() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
+    return <FullPageLoader />;
   }
 
   if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
@@ -124,7 +130,7 @@ function ProfileEditRouter() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
+    return <FullPageLoader />;
   }
 
   if (user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER') {
@@ -143,7 +149,7 @@ function AppRoutes() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen />;
+    return <FullPageLoader />;
   }
 
   return (
@@ -168,6 +174,8 @@ function AppRoutes() {
       {/* Email verification routes — always public */}
       <Route path="/check-email" element={<CheckEmail />} />
       <Route path="/verify-email/:token" element={<VerifyEmail />} />
+      {/* Google OAuth callback — always public */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected Routes - All Users */}
       <Route
@@ -308,6 +316,40 @@ function AppRoutes() {
         }
       />
 
+
+      {/* Institution Admin-Only Routes (must be BEFORE /institution/:slug) */}
+      <Route
+        path="/institution/setup"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <InstitutionSetup />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/faculty"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <InstitutionFaculty />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/certificates"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <InstitutionCertificates />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/enrollments"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <InstitutionEnrollments />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Institution Public Pages */}
       <Route

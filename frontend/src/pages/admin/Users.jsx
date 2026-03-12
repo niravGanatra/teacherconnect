@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
+import SectionSkeleton from '../../components/ui/SectionSkeleton';
 import { adminAPI } from '../../services/api';
 import {
     MagnifyingGlassIcon,
@@ -187,7 +188,7 @@ export default function AdminUsers() {
                 {/* Users Table */}
                 <div className="card overflow-hidden">
                     {loading ? (
-                        <div className="p-8 text-center text-slate-500">Loading users...</div>
+                        <SectionSkeleton variant="table" />
                     ) : users.length === 0 ? (
                         <div className="p-8 text-center text-slate-500">No users found</div>
                     ) : (

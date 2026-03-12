@@ -105,3 +105,10 @@ def check_course_completion(sender, instance, **kwargs):
         )
     except Exception as exc:
         logger.warning(f"Feed post creation failed after certificate issue: {exc}")
+
+    # ── Send certificate email to learner ─────────────────────────────────────
+    try:
+        from emails.utils import send_certificate_issued_email
+        send_certificate_issued_email(cert)
+    except Exception as exc:
+        logger.warning(f"Certificate email failed for {cert_number}: {exc}")

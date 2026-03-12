@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'storages',  # django-storages for S3/R2
     'csp',  # Content Security Policy headers
     # Local apps
+    'emails',       # must come before 'notifications' so our templates take precedence
     'accounts',
     'profiles',
     'institutions',
@@ -238,6 +239,16 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <noreply@acadwor
 
 # Set to True to send emails even in DEBUG mode
 SEND_EMAILS_IN_DEBUG = os.getenv('SEND_EMAILS_IN_DEBUG', 'False').lower() in ('true', '1', 'yes')
+
+# Email address that receives Super Admin platform notifications
+SUPER_ADMIN_EMAIL = os.getenv('SUPER_ADMIN_EMAIL', '')
+
+# =============================================================================
+# Google OAuth 2.0
+# =============================================================================
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback/')
 
 # =============================================================================
 # Content Security Policy (CSP) - XSS Prevention

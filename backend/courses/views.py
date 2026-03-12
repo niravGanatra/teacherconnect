@@ -179,6 +179,13 @@ class EnrollCourseView(APIView):
         except Exception:
             pass
 
+        # Send enrollment confirmation email to the learner
+        try:
+            from emails.utils import send_fdp_enrolled_email
+            send_fdp_enrolled_email(request.user, course)
+        except Exception:
+            pass
+
         return Response({
             'message': 'Enrolled successfully',
             'enrollment_id': str(enrollment.id)

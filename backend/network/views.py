@@ -180,6 +180,13 @@ class ToggleFollowView(APIView):
             follow.delete()
             return Response({'following': False, 'message': 'Unfollowed.'})
 
+        # Send new-follower email notification
+        try:
+            from emails.utils import send_new_follower_email
+            send_new_follower_email(target_user, request.user)
+        except Exception:
+            pass
+
         return Response({'following': True, 'message': 'Now following.'})
 
 

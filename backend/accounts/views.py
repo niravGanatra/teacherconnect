@@ -4,6 +4,7 @@ Implements secure cookie-based JWT authentication with HttpOnly cookies.
 """
 from django.conf import settings
 from django.middleware.csrf import get_token
+from django.http import HttpResponseRedirect
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -357,8 +358,6 @@ class ResendVerificationView(APIView):
             return Response({'message': 'Email is already verified. Please log in.'})
 
         from .models import EmailVerification
-        from django.core.mail import send_mail
-        from django.conf import settings as dj_settings
 
         # Create or refresh token
         ev, _ = EmailVerification.objects.get_or_create(user=user)
@@ -366,22 +365,9 @@ class ResendVerificationView(APIView):
         ev.is_verified = False
         ev.save(update_fields=['token', 'is_verified'])
 
-        frontend_url = getattr(dj_settings, 'FRONTEND_URL', 'http://localhost:3000')
-        platform_name = getattr(dj_settings, 'PLATFORM_NAME', 'AcadWorld')
-        verify_url = f"{frontend_url}/verify-email/{ev.token}"
-
         try:
-            send_mail(
-                subject=f'Verify your email — {platform_name}',
-                message=(
-                    f'Hi {user.first_name or user.email},\n\n'
-                    f'Click the link to verify your email:\n\n{verify_url}\n\n'
-                    f'— The {platform_name} Team'
-                ),
-                from_email=getattr(dj_settings, 'DEFAULT_FROM_EMAIL', 'noreply@acadworld.com'),
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            from emails.utils import send_verify_email
+            send_verify_email(user, ev.token)
         except Exception:
             pass
 
@@ -401,3 +387,279 @@ class CSRFTokenView(APIView):
         return Response({
             'csrfToken': csrf_token
         })
+
+
+class PasswordResetRequestView(APIView):
+    """
+    POST /api/auth/password-reset/
+    Body: { "email": "user@example.com" }
+
+    Generates a 24-hour reset token and sends an HTML email with the link.
+    Always returns 200 so we don't reveal whether the email exists.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response(
+                {'error': 'Email is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({'message': 'If that email exists, a reset link has been sent.'})
+
+        from .models import PasswordResetToken
+        token = PasswordResetToken.generate_token()
+        PasswordResetToken.objects.create(user=user, token=token)
+
+        try:
+            from emails.utils import send_password_reset_email
+            send_password_reset_email(user, token)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).error('Password reset email failed: %s', exc)
+
+        return Response({'message': 'If that email exists, a reset link has been sent.'})
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    POST /api/auth/password-reset/confirm/
+    Body: { "token": "...", "new_password": "..." }
+
+    Validates the token (must be unused and < 24h old) then sets the new password.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token_str = request.data.get('token', '').strip()
+        new_password = request.data.get('new_password', '').strip()
+
+        if not token_str or not new_password:
+            return Response(
+                {'error': 'token and new_password are required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from .models import PasswordResetToken
+        try:
+            prt = PasswordResetToken.objects.select_related('user').get(token=token_str)
+        except PasswordResetToken.DoesNotExist:
+            return Response(
+                {'error': 'Invalid or expired reset link.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not prt.is_valid():
+            return Response(
+                {'error': 'This reset link has expired or has already been used.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = prt.user
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+
+        # Mark token used (and invalidate any other pending tokens for this user)
+        PasswordResetToken.objects.filter(user=user).update(is_used=True)
+
+        return Response({'message': 'Password reset successful. You can now log in.'})
+
+
+# =============================================================================
+# Google OAuth 2.0 Views
+# =============================================================================
+
+class GoogleAuthURLView(APIView):
+    """
+    GET /api/auth/google/        (canonical)
+    GET /api/auth/google/url/    (alias — cleaner name for frontend)
+
+    Returns the Google OAuth authorization URL.
+    The frontend redirects the browser to this URL to start the OAuth flow.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from google_auth_oauthlib.flow import Flow
+
+        client_id = settings.GOOGLE_CLIENT_ID
+        client_secret = settings.GOOGLE_CLIENT_SECRET
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+
+        if not client_id or not client_secret:
+            return Response(
+                {'error': 'Google OAuth is not configured on this server.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        client_config = {
+            'web': {
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+                'token_uri': 'https://oauth2.googleapis.com/token',
+                'redirect_uris': [redirect_uri],
+            }
+        }
+
+        flow = Flow.from_client_config(
+            client_config=client_config,
+            scopes=[
+                'openid',
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile',
+            ],
+        )
+        flow.redirect_uri = redirect_uri
+
+        auth_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='select_account',
+        )
+
+        return Response({'auth_url': auth_url})
+
+
+class GoogleCallbackView(APIView):
+    """
+    GET /api/auth/google/callback/?code=...
+
+    Exchanges the authorization code for tokens, fetches Google user info,
+    then finds or creates the AcadWorld user and issues JWT tokens.
+    Redirects to the frontend /auth/callback page with the tokens.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        import logging
+        logger = logging.getLogger(__name__)
+
+        code = request.GET.get('code')
+        error = request.GET.get('error')
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+
+        if error or not code:
+            return HttpResponseRedirect(f'{frontend_url}/auth/callback?error=access_denied')
+
+        client_id = settings.GOOGLE_CLIENT_ID
+        client_secret = settings.GOOGLE_CLIENT_SECRET
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+
+        try:
+            from google_auth_oauthlib.flow import Flow
+            import requests as http_requests
+
+            client_config = {
+                'web': {
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
+                    'token_uri': 'https://oauth2.googleapis.com/token',
+                    'redirect_uris': [redirect_uri],
+                }
+            }
+
+            flow = Flow.from_client_config(
+                client_config=client_config,
+                scopes=[
+                    'openid',
+                    'https://www.googleapis.com/auth/userinfo.email',
+                    'https://www.googleapis.com/auth/userinfo.profile',
+                ],
+            )
+            flow.redirect_uri = redirect_uri
+
+            # Exchange code for tokens
+            import os
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP in dev
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
+
+            # Fetch user info from Google
+            userinfo_resp = http_requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {credentials.token}'},
+            )
+            userinfo_resp.raise_for_status()
+            google_user = userinfo_resp.json()
+
+            google_id = google_user.get('sub')
+            email = google_user.get('email', '').lower()
+            given_name = google_user.get('given_name', '')
+            family_name = google_user.get('family_name', '')
+            picture = google_user.get('picture', '')
+
+            if not email:
+                return HttpResponseRedirect(f'{frontend_url}/auth/callback?error=no_email')
+
+            # ── Find or create user ───────────────────────────────────────────
+            user = None
+
+            # Case a: user with this google_id exists
+            try:
+                user = User.objects.get(google_id=google_id)
+            except User.DoesNotExist:
+                pass
+
+            if user is None:
+                # Case b/c: look up by email
+                try:
+                    user = User.objects.get(email__iexact=email)
+                    # Link google_id to existing account
+                    if not user.google_id:
+                        user.google_id = google_id
+                        user.is_verified = True
+                        user.save(update_fields=['google_id', 'is_verified'])
+                except User.DoesNotExist:
+                    # Case c: create new user
+                    base_username = email.split('@')[0]
+                    username = base_username
+                    counter = 1
+                    while User.objects.filter(username=username).exists():
+                        username = f'{base_username}{counter}'
+                        counter += 1
+
+                    user = User.objects.create_user(
+                        username=username,
+                        email=email,
+                        password=None,          # No password for Google-only accounts
+                        first_name=given_name,
+                        last_name=family_name,
+                        user_type='EDUCATOR',   # Default role
+                        google_id=google_id,
+                        is_verified=True,       # Google emails are pre-verified
+                    )
+
+                    # Create educator profile with Google avatar
+                    try:
+                        from profiles.models import EducatorProfile
+                        profile, _ = EducatorProfile.objects.get_or_create(user=user)
+                        profile.first_name = given_name
+                        profile.last_name = family_name
+                        if picture:
+                            profile.avatar_url = picture
+                        profile.save()
+                    except Exception as exc:
+                        logger.warning('Could not create educator profile for %s: %s', email, exc)
+
+            # ── Issue JWT tokens ──────────────────────────────────────────────
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            # ── Redirect to frontend callback page ────────────────────────────
+            redirect_url = (
+                f'{frontend_url}/auth/callback'
+                f'?token={access_token}&refresh={refresh_token}'
+            )
+            return HttpResponseRedirect(redirect_url)
+
+        except Exception as exc:
+            logger.error('Google OAuth callback error: %s', exc, exc_info=True)
+            return HttpResponseRedirect(f'{frontend_url}/auth/callback?error=server_error')

@@ -100,7 +100,18 @@ class InstitutionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(state__icontains=state)
         
         return queryset.order_by('name')
-    
+
+    def perform_create(self, serializer):
+        """Override to send admin notification email when a new institution registers."""
+        institution = serializer.save()
+        try:
+            from emails.utils import send_new_institution_email
+            admin_email = self.request.user.email if self.request.user else ''
+            inst_name = getattr(institution, 'name', str(institution))
+            send_new_institution_email(inst_name, admin_email)
+        except Exception:
+            pass
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def follow(self, request, slug=None):
         """
@@ -328,6 +339,30 @@ class CourseViewSet(viewsets.ModelViewSet):
              raise PermissionDenied("You do not have permission to add a course to this institution.")
              
         serializer.save(institution=institution)
+
+
+class InstitutionMineView(generics.GenericAPIView):
+    """
+    GET /api/institutions/mine/
+    Returns the Institution record where the current user is an admin.
+    Used by the institution admin dashboard to find their linked institution.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        institution = Institution.objects.filter(admins=request.user).first()
+        if not institution:
+            return Response(
+                {
+                    'code': 'NO_INSTITUTION',
+                    'detail': 'You are not linked to any institution page yet.',
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = InstitutionDetailSerializer(
+            institution, context={'request': request}
+        )
+        return Response(serializer.data)
 
 
 class VerifyEmailDomainView(generics.GenericAPIView):

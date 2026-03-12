@@ -528,7 +528,7 @@ class AdminFDPDisableView(APIView):
         fdp.disabled_by = request.user
         fdp.save(update_fields=['is_active', 'status', 'disabled_reason', 'disabled_at', 'disabled_by'])
 
-        # Notify the instructor/institution
+        # Notify the instructor/institution (in-app)
         try:
             from notifications.utils import notify
             notify(
@@ -537,6 +537,13 @@ class AdminFDPDisableView(APIView):
                 verb=f'disabled your program "{fdp.title}". Reason: {reason}',
                 target=fdp,
             )
+        except Exception:
+            pass
+
+        # Send transactional email to institution admin
+        try:
+            from emails.utils import send_fdp_disabled_email
+            send_fdp_disabled_email(fdp, reason)
         except Exception:
             pass
 
@@ -575,7 +582,7 @@ class AdminFDPEnableView(APIView):
         fdp.disabled_by = None
         fdp.save(update_fields=['is_active', 'status', 'disabled_reason', 'disabled_at', 'disabled_by'])
 
-        # Notify the instructor/institution
+        # Notify the instructor/institution (in-app)
         try:
             from notifications.utils import notify
             notify(
@@ -584,6 +591,13 @@ class AdminFDPEnableView(APIView):
                 verb=f're-enabled your program "{fdp.title}" on the marketplace.',
                 target=fdp,
             )
+        except Exception:
+            pass
+
+        # Send transactional email to institution admin
+        try:
+            from emails.utils import send_fdp_enabled_email
+            send_fdp_enabled_email(fdp)
         except Exception:
             pass
 

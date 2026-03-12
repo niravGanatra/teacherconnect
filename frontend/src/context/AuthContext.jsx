@@ -256,6 +256,37 @@ export function AuthProvider({ children }) {
         }
     };
 
+    // Login with pre-existing tokens (used by Google OAuth callback)
+    const loginWithTokens = async (accessToken, refreshToken) => {
+        try {
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+
+            const response = await authAPI.getCurrentUser();
+            const userData = response.data;
+            setUser(userData);
+
+            const profileData = await fetchProfile(userData.user_type);
+            const userRoles = deriveRoles(userData, profileData);
+            setRoles(userRoles);
+            setPermissions(derivePermissions(userRoles));
+
+            if (userRoles.includes(ROLES.INSTITUTION_ADMIN)) {
+                setActiveMode(ROLES.INSTITUTION_ADMIN);
+            } else if (userRoles.includes(ROLES.INSTRUCTOR)) {
+                setActiveMode(ROLES.INSTRUCTOR);
+            } else {
+                setActiveMode(userRoles[0] || ROLES.STUDENT);
+            }
+
+            return { success: true, user: userData };
+        } catch (err) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            return { success: false, error: 'Authentication failed.' };
+        }
+    };
+
     const logout = async () => {
         try {
             await authAPI.logout();
@@ -320,6 +351,7 @@ export function AuthProvider({ children }) {
 
         // Actions
         login,
+        loginWithTokens,
         register,
         logout,
         updateProfile,

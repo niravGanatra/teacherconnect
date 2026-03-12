@@ -33,7 +33,10 @@ class User(AbstractUser):
         default=UserType.EDUCATOR
     )
     is_verified = models.BooleanField(default=False)
-    
+
+    # Social auth
+    google_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
+
     # Soft delete fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -124,3 +127,38 @@ class EmailVerification(models.Model):
     @classmethod
     def generate_token(cls):
         return secrets.token_urlsafe(32)
+
+
+class PasswordResetToken(models.Model):
+    """
+    Short-lived token for password reset flow.
+    Expires 24 hours after creation.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens',
+    )
+    token = models.CharField(max_length=64, unique=True)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'password_reset_tokens'
+        verbose_name = 'Password Reset Token'
+        verbose_name_plural = 'Password Reset Tokens'
+
+    def __str__(self):
+        return f'PasswordResetToken({self.user.email}, used={self.is_used})'
+
+    @classmethod
+    def generate_token(cls):
+        return secrets.token_urlsafe(32)
+
+    def is_valid(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        if self.is_used:
+            return False
+        age = timezone.now() - self.created_at
+        return age < timedelta(hours=24)

@@ -1,0 +1,72 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}New institution registered: {{ institution_name }}{% endblock %}
+
+{% block content %}
+<div style="text-align:center;margin-bottom:28px;">
+  <div style="display:inline-block;background:#fef3c7;border-radius:50%;
+              width:72px;height:72px;line-height:72px;font-size:36px;">
+    🏛️
+  </div>
+</div>
+
+<h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#111827;text-align:center;line-height:1.3;">
+  New Institution Registered
+</h1>
+
+<p style="margin:0 0 28px;font-size:15px;color:#6b7280;text-align:center;line-height:1.6;">
+  A new institution has registered on {{ platform_name }} and is awaiting review.
+</p>
+
+<!-- Institution card -->
+<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;
+            padding:20px 24px;margin-bottom:28px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td style="padding:6px 0;font-size:13px;color:#9ca3af;width:120px;">
+        Institution
+      </td>
+      <td style="padding:6px 0;font-size:14px;font-weight:600;color:#111827;">
+        {{ institution_name }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;font-size:13px;color:#9ca3af;">
+        Admin Email
+      </td>
+      <td style="padding:6px 0;font-size:14px;color:#374151;">
+        <a href="mailto:{{ admin_email }}"
+           style="color:#4f46e5;text-decoration:none;">
+          {{ admin_email }}
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;font-size:13px;color:#9ca3af;">
+        Status
+      </td>
+      <td style="padding:6px 0;">
+        <span style="display:inline-block;background:#fef9c3;color:#854d0e;
+                     font-size:12px;font-weight:600;padding:3px 10px;
+                     border-radius:12px;">
+          Pending Review
+        </span>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p style="margin:0 0 28px;font-size:14px;color:#6b7280;text-align:center;line-height:1.6;">
+  Please review the institution details and verify or reject their registration
+  from the Admin Panel.
+</p>
+
+<!-- CTA -->
+<div style="text-align:center;">
+  <a href="{{ review_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#6c3fc5,#4f46e5);
+            color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;
+            padding:14px 36px;border-radius:8px;letter-spacing:0.2px;">
+    Review in Admin Panel →
+  </a>
+</div>
+{% endblock %}

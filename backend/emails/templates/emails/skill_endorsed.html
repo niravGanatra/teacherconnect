@@ -1,0 +1,49 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}{{ actor_name }} endorsed your skill: {{ skill_name }}{% endblock %}
+
+{% block content %}
+<div style="text-align:center;margin-bottom:28px;">
+  <div style="display:inline-block;background:#faf5ff;border-radius:50%;
+              width:72px;height:72px;line-height:72px;font-size:36px;">
+    ⭐
+  </div>
+</div>
+
+<h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#111827;text-align:center;line-height:1.3;">
+  Your skill was endorsed!
+</h1>
+
+<p style="margin:0 0 28px;font-size:15px;color:#6b7280;text-align:center;line-height:1.6;">
+  Hi <strong>{{ first_name }}</strong>,
+</p>
+
+<!-- Endorsement card -->
+<div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:12px;
+            padding:24px;margin-bottom:28px;text-align:center;">
+  <p style="margin:0 0 8px;font-size:13px;color:#7c3aed;font-weight:600;
+             letter-spacing:0.5px;text-transform:uppercase;">Endorsed Skill</p>
+  <div style="display:inline-block;background:#ede9fe;color:#5b21b6;
+              font-size:16px;font-weight:700;padding:8px 20px;
+              border-radius:20px;margin-bottom:12px;">
+    {{ skill_name }}
+  </div>
+  <p style="margin:0;font-size:14px;color:#6b7280;">
+    endorsed by <strong style="color:#374151;">{{ actor_name }}</strong>
+  </p>
+</div>
+
+<p style="margin:0 0 28px;font-size:14px;color:#6b7280;text-align:center;line-height:1.6;">
+  Skill endorsements strengthen your professional profile and help you stand out
+  in the {{ platform_name }} community.
+</p>
+
+<!-- CTA -->
+<div style="text-align:center;">
+  <a href="{{ profile_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#6c3fc5,#4f46e5);
+            color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;
+            padding:14px 36px;border-radius:8px;letter-spacing:0.2px;">
+    View Your Profile →
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}Your program is live again: {{ fdp_title }}{% endblock %}
+
+{% block content %}
+<div style="text-align:center;margin-bottom:28px;">
+  <div style="display:inline-block;background:#f0fdf4;border-radius:50%;
+              width:72px;height:72px;line-height:72px;font-size:36px;">
+    ✅
+  </div>
+</div>
+
+<h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#111827;text-align:center;line-height:1.3;">
+  Your Program is Live Again!
+</h1>
+
+<p style="margin:0 0 28px;font-size:15px;color:#6b7280;text-align:center;line-height:1.6;">
+  Hi <strong>{{ first_name }}</strong>, great news — your program has been reviewed and
+  re-enabled on {{ platform_name }}.
+</p>
+
+<!-- Program info -->
+<div style="background:#f0fdf4;border-left:4px solid #22c55e;
+            border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
+  <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#374151;">Program</p>
+  <p style="margin:0;font-size:15px;font-weight:700;color:#1f2937;">{{ fdp_title }}</p>
+</div>
+
+<!-- Status badge -->
+<div style="text-align:center;margin-bottom:24px;">
+  <span style="display:inline-block;background:#dcfce7;color:#15803d;
+               font-size:13px;font-weight:600;padding:6px 16px;
+               border-radius:20px;letter-spacing:0.3px;">
+    ● Published &amp; Visible in Marketplace
+  </span>
+</div>
+
+<p style="margin:0 0 28px;font-size:14px;color:#6b7280;text-align:center;line-height:1.6;">
+  Educators can now browse and enroll in your program. Thank you for your continued
+  contribution to {{ platform_name }}.
+</p>
+
+<!-- CTA -->
+<div style="text-align:center;">
+  <a href="{{ fdp_url }}"
+     style="display:inline-block;background:linear-gradient(135deg,#6c3fc5,#4f46e5);
+            color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;
+            padding:14px 36px;border-radius:8px;letter-spacing:0.2px;">
+    View Your Program →
+  </a>
+</div>
+{% endblock %}

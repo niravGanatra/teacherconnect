@@ -3,7 +3,9 @@
  */
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
-import { Card, Button, TextArea, Avatar, Spinner, EmptyState } from '../../components/common';
+import { Card, Button, TextArea, Avatar } from '../../components/common';
+import SectionSkeleton from '../../components/ui/SectionSkeleton';
+import QuoteBanner from '../../components/ui/QuoteBanner';
 import CreatePostModal from '../../components/feed/CreatePostModal';
 import { feedAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -220,15 +222,9 @@ export default function Feed() {
 
             {/* Posts Feed */}
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <Spinner size="lg" />
-                </div>
+                <SectionSkeleton variant="list" />
             ) : posts.length === 0 ? (
-                <EmptyState
-                    icon={ChatBubbleLeftIcon}
-                    title="No posts yet"
-                    description="Be the first to share something with the community!"
-                />
+                <QuoteBanner className="my-4" />
             ) : (
                 <div className="space-y-4">
                     {posts.map((post) => (

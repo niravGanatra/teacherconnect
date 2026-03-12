@@ -128,6 +128,11 @@ export const authAPI = {
     // Email verification
     verifyEmail: (token) => api.get(`/auth/verify-email/${token}/`),
     resendVerification: (email) => api.post('/auth/resend-verification/', { email }),
+    // Password reset
+    requestPasswordReset: (email) => api.post('/auth/password-reset/', { email }),
+    confirmPasswordReset: (data) => api.post('/auth/password-reset/confirm/', data),
+    // Google OAuth
+    getGoogleAuthUrl: () => api.get('/auth/google/url/'),
 };
 
 // Profile API
@@ -432,6 +437,9 @@ export const adminAPI = {
 export const institutionPagesAPI = {
     // Get institution page by slug
     getBySlug: (slug) => api.get(`/institutions/slug/${slug}/`),
+
+    // Get the institution linked to the currently logged-in admin
+    getMine: () => api.get('/institutions/mine/'),
 
     // Get institution page by ID
     getById: (id) => api.get(`/institutions/${id}/`),

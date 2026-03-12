@@ -13,6 +13,10 @@ from .views import (
     CSRFTokenView,
     VerifyEmailView,
     ResendVerificationView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
+    GoogleAuthURLView,
+    GoogleCallbackView,
 )
 
 urlpatterns = [
@@ -26,4 +30,11 @@ urlpatterns = [
     # Email verification
     path('verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
+    # Password reset
+    path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    # Google OAuth 2.0
+    path('google/', GoogleAuthURLView.as_view(), name='google_auth_url'),
+    path('google/url/', GoogleAuthURLView.as_view(), name='google_auth_url_alias'),
+    path('google/callback/', GoogleCallbackView.as_view(), name='google_callback'),
 ]
