@@ -228,14 +228,15 @@ CSRF_COOKIE_SECURE = not DEBUG  # Must be True when SameSite=None
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 PLATFORM_NAME = os.getenv('PLATFORM_NAME', 'AcadWorld')
 
-# Email Configuration
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+# Email Configuration (GoDaddy Workspace Email via smtpout.secureserver.net)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtpout.secureserver.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'info@acadworld.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <noreply@acadworld.com>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <info@acadworld.com>')
 
 # Set to True to send emails even in DEBUG mode
 SEND_EMAILS_IN_DEBUG = os.getenv('SEND_EMAILS_IN_DEBUG', 'False').lower() in ('true', '1', 'yes')

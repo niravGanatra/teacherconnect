@@ -1,6 +1,7 @@
 """
 Email Notification Service for AcadWorld
 """
+import threading
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -9,30 +10,29 @@ from django.conf import settings
 
 class EmailNotificationService:
     """Service class for sending email notifications"""
-    
+
     @staticmethod
     def send_email(to_email, subject, template_name, context):
         """
-        Send an HTML email with plain text fallback
+        Send an HTML email with plain text fallback (async via thread).
         """
-        try:
-            # Render HTML content
-            html_content = render_to_string(f'emails/{template_name}.html', context)
-            text_content = strip_tags(html_content)
-            
-            # Create email
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[to_email]
-            )
-            email.attach_alternative(html_content, "text/html")
-            email.send(fail_silently=False)
-            return True
-        except Exception as e:
-            print(f"Email sending failed: {e}")
-            return False
+        def _send():
+            try:
+                html_content = render_to_string(f'emails/{template_name}.html', context)
+                text_content = strip_tags(html_content)
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[to_email]
+                )
+                email.attach_alternative(html_content, "text/html")
+                email.send(fail_silently=False)
+            except Exception as e:
+                print(f"Email sending failed: {e}")
+
+        threading.Thread(target=_send, daemon=True).start()
+        return True
 
     @classmethod
     def send_welcome_email(cls, user):
