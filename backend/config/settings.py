@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'storages',  # django-storages for S3/R2
     'csp',  # Content Security Policy headers
+    'anymail',  # Resend transactional email
     # Local apps
     'emails',       # must come before 'notifications' so our templates take precedence
     'accounts',
@@ -228,14 +229,21 @@ CSRF_COOKIE_SECURE = not DEBUG  # Must be True when SameSite=None
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 PLATFORM_NAME = os.getenv('PLATFORM_NAME', 'AcadWorld')
 
-# Email Configuration (GoDaddy Workspace Email via smtpout.secureserver.net)
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtpout.secureserver.net')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'info@acadworld.com')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+# Email Configuration — Resend via django-anymail
+# In dev: set EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend in .env
+# In prod: set RESEND_API_KEY in Railway environment variables
+_resend_api_key = os.getenv('RESEND_API_KEY', '')
+
+if _resend_api_key:
+    # Production: send via Resend HTTP API
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+    ANYMAIL = {
+        'RESEND_API_KEY': _resend_api_key,
+    }
+else:
+    # Development / fallback: print to console
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AcadWorld <info@acadworld.com>')
 
 # Set to True to send emails even in DEBUG mode
@@ -282,3 +290,44 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# =============================================================================
+# Logging — route everything to stdout so Railway captures it
+# =============================================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[{levelname}] {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'emails': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'anymail': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
