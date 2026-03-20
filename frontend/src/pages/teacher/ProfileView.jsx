@@ -151,10 +151,10 @@ export default function TeacherProfileView() {
                                         {[profile.city, profile.state].filter(Boolean).join(', ')}
                                     </span>
                                 )}
-                                {profile.current_school && (
+                                {profile.current_institution_name && (
                                     <span className="flex items-center gap-1">
                                         <BuildingOfficeIcon className="w-4 h-4" />
-                                        {profile.current_school}
+                                        {profile.current_institution_name}
                                     </span>
                                 )}
                                 {profile.experience_years > 0 && (
@@ -214,16 +214,114 @@ export default function TeacherProfileView() {
                     />
                 )}
 
-                {/* About Section */}
-                {profile.bio && (
+                {/* Teaching Philosophy Section */}
+                {profile.teaching_philosophy && (
                     <Card className="p-4 md:p-6">
                         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-3">
                             <UserCircleIcon className="w-5 h-5 text-[#1e3a5f]" />
-                            About
+                            Teaching Philosophy
                         </h2>
-                        <p className="text-slate-600 whitespace-pre-line leading-relaxed">{profile.bio}</p>
+                        <p className="text-slate-600 whitespace-pre-line leading-relaxed">{profile.teaching_philosophy}</p>
                     </Card>
                 )}
+
+                {/* Legacy & Outcomes Section */}
+                {(profile.notable_student_outcomes || (profile.awards_and_recognitions && profile.awards_and_recognitions.length > 0)) && (
+                    <Card className="p-4 md:p-6">
+                        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                            <SparklesIcon className="w-5 h-5 text-[#1e3a5f]" />
+                            Awards & Outcomes
+                        </h2>
+                        {profile.awards_and_recognitions?.length > 0 && (
+                            <div className="mb-4">
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Awards & Recognitions</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.awards_and_recognitions.map((award, index) => (
+                                        <Badge key={index} variant="warning" className="px-3 py-1">
+                                            {award}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.notable_student_outcomes && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Notable Student Outcomes</h3>
+                                <p className="text-slate-600 whitespace-pre-line leading-relaxed">{profile.notable_student_outcomes}</p>
+                            </div>
+                        )}
+                    </Card>
+                )}
+
+                {/* Teacher Metadata / Details */}
+                <Card className="p-4 md:p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                        <AcademicCapIcon className="w-5 h-5 text-[#1e3a5f]" />
+                        Professional Details
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {profile.specializations?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Specializations</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.specializations.map((item, index) => (
+                                        <Badge key={index} variant="default">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.languages?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Languages Taught</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.languages.map((item, index) => (
+                                        <Badge key={index} variant="success">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.teaching_modes?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Teaching Mode</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.teaching_modes.map((item, index) => (
+                                        <Badge key={index} variant="primary">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.time_availability?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Time Availability</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.time_availability.map((item, index) => (
+                                        <Badge key={index} variant="default">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.available_for?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Available For</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.available_for.map((item, index) => (
+                                        <Badge key={index} variant="default">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {profile.willing_to_collaborate_with?.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-slate-700 mb-2">Willingness to Collaborate with</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.willing_to_collaborate_with.map((item, index) => (
+                                        <Badge key={index} variant="info">{item}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Card>
 
                 {/* Subjects Section */}
                 {profile.subjects?.length > 0 && (
@@ -250,14 +348,14 @@ export default function TeacherProfileView() {
                         Experience
                     </h2>
                     <div className="space-y-4">
-                        {profile.current_school ? (
+                        {profile.current_institution_name ? (
                             <div className="flex gap-4">
                                 <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <BuildingOfficeIcon className="w-6 h-6 text-slate-400" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-slate-900">Teacher</h3>
-                                    <p className="text-slate-600">{profile.current_school}</p>
+                                    <p className="text-slate-600">{profile.current_institution_name}</p>
                                     <p className="text-sm text-slate-500 mt-1">
                                         {profile.experience_years > 0
                                             ? `${profile.experience_years} years total experience`

@@ -64,7 +64,7 @@ export default function EducatorOnboarding() {
         // Step 2: Professional
         current_role: '',
         experience_years: '',
-        current_school: '',
+        current_institution_name: '',
 
         // Step 3: Expertise
         boards: [],
@@ -144,8 +144,8 @@ export default function EducatorOnboarding() {
                 user_type: 'EDUCATOR',
                 profile_data: {
                     current_role: formData.current_role,
-                    experience_years: parseInt(formData.experience_years) || 0,
-                    current_school: formData.current_school,
+                    experience_years: formData.experience_years ? parseInt(formData.experience_years) : 0,
+                    current_institution_name: formData.current_institution_name,
                     boards: formData.boards,
                     grades_taught: formData.grades_taught,
                     expert_subjects: formData.expert_subjects,
@@ -306,11 +306,11 @@ export default function EducatorOnboarding() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Current School/Institution</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Current Institution</label>
                                 <input
                                     type="text"
-                                    value={formData.current_school}
-                                    onChange={(e) => updateField('current_school', e.target.value)}
+                                    value={formData.current_institution_name}
+                                    onChange={(e) => updateField('current_institution_name', e.target.value)}
                                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="e.g., Delhi Public School"
                                 />

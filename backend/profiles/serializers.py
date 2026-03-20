@@ -3,7 +3,7 @@ Serializers for Teacher and Institution profiles.
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification, Endorsement
+from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, InstitutionCourse, Experience, Education, Skill, Certification, Endorsement
 import os
 
 User = get_user_model()
@@ -18,8 +18,8 @@ AVAILABILITY_LABELS = {
 
 TEACHING_MODE_LABELS = {
     'ONLINE': 'Online',
-    'OFFLINE': 'In-Person',
-    'HYBRID': 'Hybrid',
+    'OFFLINE': 'Offline',
+    'BOTH': 'Both',
 }
 
 BOARD_LABELS = {
@@ -32,12 +32,15 @@ BOARD_LABELS = {
 }
 
 GRADE_LABELS = {
-    'K-5': 'Kindergarten - Grade 5',
-    '6-8': 'Grades 6-8',
-    '9-10': 'Grades 9-10',
-    '11-12': 'Grades 11-12',
+    'Primary': 'Primary',
+    'Secondary': 'Secondary',
+    'Senior Secondary': 'Senior Secondary',
     'UG': 'Undergraduate',
     'PG': 'Postgraduate',
+    'Test Prep': 'Test Prep',
+    'Corporate training': 'Corporate training',
+    'IT or Technical education': 'IT or Technical education',
+    'Ai courses': 'AI Courses',
 }
 
 
@@ -56,8 +59,10 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         model = TeacherProfile
         fields = [
             'id', 'email', 'username',
-            'first_name', 'last_name', 'headline', 'bio', 'profile_photo', 'background_photo',
-            'subjects', 'skills', 'experience_years', 'current_school',
+            'first_name', 'last_name', 'headline', 'teaching_philosophy', 'profile_photo', 'background_photo',
+            'subjects', 'skills', 'experience_years', 'current_institution_name',
+            'languages', 'available_for', 'time_availability', 'specializations', 'willing_to_collaborate_with',
+            'awards_and_recognitions', 'notable_student_outcomes',
             'education', 'certifications',
             # Teacher Attributes
             'availability', 'availability_display',
@@ -108,9 +113,9 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         score = 0
         if obj.profile_photo:
             score += 15
-        if obj.bio and len(obj.bio.strip()) >= 50:
+        if obj.teaching_philosophy and len(obj.teaching_philosophy.strip()) >= 50:
             score += 15
-        if obj.current_school and obj.current_school.strip():
+        if obj.current_institution_name and obj.current_institution_name.strip():
             score += 15
         if obj.skills:
             score += 15
@@ -138,17 +143,17 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
                 'points': 15,
                 'action_url': '/profile/edit#photo',
             })
-        if not (obj.bio and len(obj.bio.strip()) >= 50):
+        if not (obj.teaching_philosophy and len(obj.teaching_philosophy.strip()) >= 50):
             steps.append({
-                'field': 'bio',
-                'label': 'Write a bio (minimum 50 characters)',
+                'field': 'teaching_philosophy',
+                'label': 'Write a teaching philosophy (minimum 50 characters)',
                 'points': 15,
-                'action_url': '/profile/edit#bio',
+                'action_url': '/profile/edit#teaching_philosophy',
             })
-        if not (obj.current_school and obj.current_school.strip()):
+        if not (obj.current_institution_name and obj.current_institution_name.strip()):
             steps.append({
-                'field': 'current_school',
-                'label': 'Add your current school or institution',
+                'field': 'current_institution_name',
+                'label': 'Add your current institution',
                 'points': 15,
                 'action_url': '/profile/edit#school',
             })
@@ -232,8 +237,10 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherProfile
         fields = [
-            'id', 'full_name', 'headline', 'bio', 'profile_photo', 'background_photo',
-            'subjects', 'skills', 'experience_years',
+            'id', 'full_name', 'headline', 'teaching_philosophy', 'profile_photo', 'background_photo',
+            'subjects', 'skills', 'experience_years', 'current_institution_name',
+            'languages', 'available_for', 'time_availability', 'specializations', 'willing_to_collaborate_with',
+            'awards_and_recognitions', 'notable_student_outcomes',
             'city', 'state',
             'email', 'phone',
             # Teacher Attributes
@@ -270,34 +277,42 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
         return bool(obj.demo_video_url or obj.demo_video_file)
 
 
+class InstitutionCampusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstitutionCampus
+        fields = '__all__'
+        read_only_fields = ['id', 'institution', 'created_at', 'updated_at']
+
+
+class InstitutionCourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstitutionCourse
+        fields = '__all__'
+        read_only_fields = ['id', 'institution', 'created_at', 'updated_at']
+
+
 class InstitutionProfileSerializer(serializers.ModelSerializer):
     """Serializer for InstitutionProfile with nested user data."""
     email = serializers.EmailField(source='user.email', read_only=True)
+    campuses = InstitutionCampusSerializer(many=True, read_only=True)
+    detailed_courses = InstitutionCourseSerializer(many=True, read_only=True)
     
     class Meta:
         model = InstitutionProfile
-        fields = [
-            'id', 'email',
-            'institution_name', 'institution_type', 'description', 'logo', 'background_photo',
-            'campus_address', 'city', 'state', 'pincode',
-            'contact_email', 'contact_phone', 'website_url',
-            'accreditation_details', 'established_year', 'student_count',
-            'is_verified',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'is_verified', 'created_at', 'updated_at']
+        fields = '__all__'
+        read_only_fields = ['id', 'user', 'is_verified', 'created_at', 'updated_at']
 
 
 class InstitutionProfilePublicSerializer(serializers.ModelSerializer):
     """Public serializer for InstitutionProfile."""
+    campuses = InstitutionCampusSerializer(many=True, read_only=True)
     
     class Meta:
         model = InstitutionProfile
-        fields = [
-            'id', 'institution_name', 'institution_type', 'description', 'logo', 'background_photo',
-            'city', 'state',
-            'website_url', 'is_verified',
-            'established_year', 'student_count'
+        exclude = [
+            'user', 'pan_cin', 'vendor_requirements', 
+            'lead_potential_score', 'engagement_score',
+            'whatsapp_number', 'poc_name', 'poc_designation', 'contact_phone', 'contact_email'
         ]
 
 

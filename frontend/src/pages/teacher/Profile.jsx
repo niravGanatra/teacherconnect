@@ -20,18 +20,23 @@ export default function TeacherProfile() {
     const { profile, updateProfile } = useAuth();
     const [profileData, setProfileData] = useState(null);
     const BOARD_OPTIONS = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'CAMBRIDGE', 'NIOS', 'OTHER'];
-    const GRADE_OPTIONS = ['Pre-Primary', 'K-5', '6-8', '9-10', '11-12', 'UG', 'PG', 'Competitive Exams'];
+    const GRADE_OPTIONS = ['Primary', 'Secondary', 'Senior Secondary', 'UG', 'PG', 'Test Prep', 'Corporate training', 'IT or Technical education', 'Ai courses'];
+    const TEACHING_MODE_OPTIONS = ['ONLINE', 'OFFLINE', 'BOTH'];
+    const AVAILABLE_FOR_OPTIONS = ['Mentorship', 'Guest lecture', 'consulting', 'content creation', 'Corporate training'];
+    const TIME_AVAILABILITY_OPTIONS = ['Weekdays', 'weekend', 'flexible'];
+    const SPECIALIZATIONS_OPTIONS = ['Exam prep', 'remedial', 'Olympiads', 'Soft Skills', 'leadership', 'Technical education', 'IT', 'Ai & ML'];
+    const COLLABORATION_OPTIONS = ['Startups', 'Schools', 'Universities', 'NGOs', 'Corporates'];
 
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
         headline: '',
-        bio: '',
+        teaching_philosophy: '',
         phone: '',
         city: '',
         state: '',
         experience_years: 0,
-        current_school: '',
+        current_institution_name: '',
         portfolio_url: '',
         is_searchable: true,
         contact_visible: false,
@@ -39,11 +44,21 @@ export default function TeacherProfile() {
         skills: [],
         boards: [],
         grades_taught: [],
+        languages: [],
+        teaching_modes: [],
+        available_for: [],
+        time_availability: [],
+        specializations: [],
+        willing_to_collaborate_with: [],
+        awards_and_recognitions: [],
+        notable_student_outcomes: '',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [newSubject, setNewSubject] = useState('');
     const [newSkill, setNewSkill] = useState('');
+    const [newLanguage, setNewLanguage] = useState('');
+    const [newAward, setNewAward] = useState('');
     const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
@@ -59,12 +74,12 @@ export default function TeacherProfile() {
                 first_name: data.first_name || '',
                 last_name: data.last_name || '',
                 headline: data.headline || '',
-                bio: data.bio || '',
+                teaching_philosophy: data.teaching_philosophy || '',
                 phone: data.phone || '',
                 city: data.city || '',
                 state: data.state || '',
                 experience_years: data.experience_years || 0,
-                current_school: data.current_school || '',
+                current_institution_name: data.current_institution_name || '',
                 portfolio_url: data.portfolio_url || '',
                 is_searchable: data.is_searchable ?? true,
                 contact_visible: data.contact_visible ?? false,
@@ -72,6 +87,14 @@ export default function TeacherProfile() {
                 skills: Array.isArray(data.skills) ? data.skills : [],
                 boards: Array.isArray(data.boards) ? data.boards : [],
                 grades_taught: Array.isArray(data.grades_taught) ? data.grades_taught : [],
+                languages: Array.isArray(data.languages) ? data.languages : [],
+                teaching_modes: Array.isArray(data.teaching_modes) ? data.teaching_modes : [],
+                available_for: Array.isArray(data.available_for) ? data.available_for : [],
+                time_availability: Array.isArray(data.time_availability) ? data.time_availability : [],
+                specializations: Array.isArray(data.specializations) ? data.specializations : [],
+                willing_to_collaborate_with: Array.isArray(data.willing_to_collaborate_with) ? data.willing_to_collaborate_with : [],
+                awards_and_recognitions: Array.isArray(data.awards_and_recognitions) ? data.awards_and_recognitions : [],
+                notable_student_outcomes: data.notable_student_outcomes || '',
             });
         } catch (error) {
             console.error('Failed to fetch profile:', error);
@@ -138,6 +161,35 @@ export default function TeacherProfile() {
                 ? prev.grades_taught.filter(g => g !== grade)
                 : [...prev.grades_taught, grade],
         }));
+    };
+
+    const handleToggleArrayItem = (field, item) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: prev[field].includes(item)
+                ? prev[field].filter(i => i !== item)
+                : [...prev[field], item],
+        }));
+    };
+
+    const handleAddLanguage = () => {
+        if (newLanguage.trim() && !formData.languages.includes(newLanguage.trim())) {
+            setFormData(prev => ({ ...prev, languages: [...prev.languages, newLanguage.trim()] }));
+            setNewLanguage('');
+        }
+    };
+    const handleRemoveLanguage = (lang) => {
+        setFormData(prev => ({ ...prev, languages: prev.languages.filter(l => l !== lang) }));
+    };
+
+    const handleAddAward = () => {
+        if (newAward.trim() && !formData.awards_and_recognitions.includes(newAward.trim())) {
+            setFormData(prev => ({ ...prev, awards_and_recognitions: [...prev.awards_and_recognitions, newAward.trim()] }));
+            setNewAward('');
+        }
+    };
+    const handleRemoveAward = (award) => {
+        setFormData(prev => ({ ...prev, awards_and_recognitions: prev.awards_and_recognitions.filter(a => a !== award) }));
     };
 
     // Scroll to hash anchor when edit page loads from a completion-card link
@@ -304,14 +356,43 @@ export default function TeacherProfile() {
                         </div>
                         <div className="md:col-span-2">
                             <TextArea
-                                label="Bio"
-                                name="bio"
-                                value={formData.bio}
+                                label="Teaching Philosophy"
+                                name="teaching_philosophy"
+                                value={formData.teaching_philosophy}
                                 onChange={handleChange}
-                                placeholder="Tell institutions about yourself..."
+                                placeholder="Tell institutions about your teaching philosophy..."
                                 rows={4}
                             />
                         </div>
+                    </div>
+                </Card>
+
+                <Card id="languages" className="p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Languages</h2>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {formData.languages.map((lang) => (
+                            <Badge key={lang} variant="default" className="flex items-center gap-1 pr-1">
+                                {lang}
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveLanguage(lang)}
+                                    className="ml-1 p-0.5 hover:bg-slate-300 rounded"
+                                >
+                                    <XMarkIcon className="w-3 h-3" />
+                                </button>
+                            </Badge>
+                        ))}
+                    </div>
+                    <div className="flex gap-2">
+                        <Input
+                            value={newLanguage}
+                            onChange={(e) => setNewLanguage(e.target.value)}
+                            placeholder="Add a language you can deliver lectures in..."
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLanguage())}
+                        />
+                        <Button type="button" variant="secondary" onClick={handleAddLanguage}>
+                            <PlusIcon className="w-5 h-5" />
+                        </Button>
                     </div>
                 </Card>
 
@@ -328,9 +409,9 @@ export default function TeacherProfile() {
                             min="0"
                         />
                         <Input
-                            label="Current School"
-                            name="current_school"
-                            value={formData.current_school}
+                            label="Current Institution"
+                            name="current_institution_name"
+                            value={formData.current_institution_name}
                             onChange={handleChange}
                             placeholder="Where do you currently work?"
                         />
@@ -451,6 +532,152 @@ export default function TeacherProfile() {
                                 ))}
                             </div>
                         </div>
+                        {/* Teaching Modes */}
+                        <div>
+                            <p className="text-sm font-medium text-slate-700 mb-2">Teaching Mode</p>
+                            <div className="flex flex-wrap gap-2">
+                                {TEACHING_MODE_OPTIONS.map((mode) => (
+                                    <button
+                                        key={mode}
+                                        type="button"
+                                        onClick={() => handleToggleArrayItem('teaching_modes', mode)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.teaching_modes.includes(mode)
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-indigo-400'
+                                        }`}
+                                    >
+                                        {mode}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Time Availability */}
+                        <div>
+                            <p className="text-sm font-medium text-slate-700 mb-2">Time Availability</p>
+                            <div className="flex flex-wrap gap-2">
+                                {TIME_AVAILABILITY_OPTIONS.map((time) => (
+                                    <button
+                                        key={time}
+                                        type="button"
+                                        onClick={() => handleToggleArrayItem('time_availability', time)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.time_availability.includes(time)
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
+                                        }`}
+                                    >
+                                        {time}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Available For */}
+                        <div>
+                            <p className="text-sm font-medium text-slate-700 mb-2">Available For</p>
+                            <div className="flex flex-wrap gap-2">
+                                {AVAILABLE_FOR_OPTIONS.map((avail) => (
+                                    <button
+                                        key={avail}
+                                        type="button"
+                                        onClick={() => handleToggleArrayItem('available_for', avail)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.available_for.includes(avail)
+                                                ? 'bg-teal-600 text-white border-teal-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
+                                        }`}
+                                    >
+                                        {avail}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Specializations */}
+                        <div>
+                            <p className="text-sm font-medium text-slate-700 mb-2">Specializations</p>
+                            <div className="flex flex-wrap gap-2">
+                                {SPECIALIZATIONS_OPTIONS.map((spec) => (
+                                    <button
+                                        key={spec}
+                                        type="button"
+                                        onClick={() => handleToggleArrayItem('specializations', spec)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.specializations.includes(spec)
+                                                ? 'bg-rose-600 text-white border-rose-600'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-rose-400'
+                                        }`}
+                                    >
+                                        {spec}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Willingness to Collaborate */}
+                        <div className="md:col-span-2">
+                            <p className="text-sm font-medium text-slate-700 mb-2">Willingness to Collaborate with</p>
+                            <div className="flex flex-wrap gap-2">
+                                {COLLABORATION_OPTIONS.map((collab) => (
+                                    <button
+                                        key={collab}
+                                        type="button"
+                                        onClick={() => handleToggleArrayItem('willing_to_collaborate_with', collab)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                            formData.willing_to_collaborate_with.includes(collab)
+                                                ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#1e3a5f] hover:text-[#1e3a5f]'
+                                        }`}
+                                    >
+                                        {collab}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Legacy & Outcomes */}
+                <Card id="outcomes" className="p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Awards & Outcomes</h2>
+                    
+                    <div className="mb-6">
+                        <p className="text-sm font-medium text-slate-700 mb-2">Awards & Recognitions</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {formData.awards_and_recognitions.map((award) => (
+                                <Badge key={award} variant="warning" className="flex items-center gap-1 pr-1">
+                                    {award}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveAward(award)}
+                                        className="ml-1 p-0.5 hover:bg-slate-300 rounded"
+                                    >
+                                        <XMarkIcon className="w-3 h-3" />
+                                    </button>
+                                </Badge>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <Input
+                                value={newAward}
+                                onChange={(e) => setNewAward(e.target.value)}
+                                placeholder="Add an award or recognition..."
+                                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAward())}
+                            />
+                            <Button type="button" variant="secondary" onClick={handleAddAward}>
+                                <PlusIcon className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <TextArea
+                            label="Notable Student Outcomes"
+                            name="notable_student_outcomes"
+                            value={formData.notable_student_outcomes}
+                            onChange={handleChange}
+                            placeholder="Ranks, Results, placements or success stories..."
+                            rows={3}
+                        />
                     </div>
                 </Card>
 

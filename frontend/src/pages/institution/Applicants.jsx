@@ -239,11 +239,11 @@ export default function Applicants() {
                             </div>
                         </div>
 
-                        {/* Bio */}
-                        {selectedApplicant.snapshot.bio && (
+                        {/* Teaching Philosophy */}
+                        {selectedApplicant.snapshot.teaching_philosophy && (
                             <div>
-                                <h4 className="font-semibold text-slate-900 mb-2">About</h4>
-                                <p className="text-slate-600 text-sm">{selectedApplicant.snapshot.bio}</p>
+                                <h4 className="font-semibold text-slate-900 mb-2">Teaching Philosophy</h4>
+                                <p className="text-slate-600 text-sm">{selectedApplicant.snapshot.teaching_philosophy}</p>
                             </div>
                         )}
 

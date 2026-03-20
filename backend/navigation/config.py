@@ -85,17 +85,17 @@ MENU_CONFIG = {
     # ─────────────────────────────────────────────
     'INSTITUTION': [
         {
-            'id': 'dashboard',
-            'label': 'Dashboard',
-            'icon': 'dashboard',
-            'path': '/institution/dashboard',
-            'badge': None,
-        },
-        {
             'id': 'institution',
             'label': 'My Institution',
             'icon': 'institutions',
             'path': '/institution/manage',
+            'badge': None,
+        },
+        {
+            'id': 'dashboard',
+            'label': 'Dashboard',
+            'icon': 'dashboard',
+            'path': '/institution/dashboard',
             'badge': None,
         },
         {
@@ -147,17 +147,17 @@ MENU_CONFIG = {
     # ─────────────────────────────────────────────
     'EDUCATOR': [
         {
-            'id': 'feed',
-            'label': 'Home Feed',
-            'icon': 'home',
-            'path': '/feed',
-            'badge': None,
-        },
-        {
             'id': 'profile',
             'label': 'My Profile',
             'icon': 'profile',
             'path': '/profile',
+            'badge': None,
+        },
+        {
+            'id': 'feed',
+            'label': 'Home Feed',
+            'icon': 'home',
+            'path': '/feed',
             'badge': None,
         },
         {
