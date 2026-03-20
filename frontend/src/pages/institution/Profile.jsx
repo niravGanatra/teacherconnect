@@ -289,37 +289,69 @@ export default function InstitutionProfile() {
                             
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Education Levels</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="block text-sm font-medium mb-3">Education Levels</label>
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
                                         {LEVEL_OPTIONS.map(opt => (
-                                            <Badge key={opt} variant={formData.education_levels.includes(opt) ? 'primary' : 'default'} className="cursor-pointer" onClick={() => handleToggleArrayItem('education_levels', opt)}>{opt}</Badge>
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.education_levels.includes(opt)}
+                                                    onChange={() => handleToggleArrayItem('education_levels', opt)}
+                                                    className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
                                         ))}
                                     </div>
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Streams / Domains</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="block text-sm font-medium mb-3">Streams / Domains</label>
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
                                         {STREAM_OPTIONS.map(opt => (
-                                            <Badge key={opt} variant={formData.streams.includes(opt) ? 'success' : 'default'} className="cursor-pointer" onClick={() => handleToggleArrayItem('streams', opt)}>{opt}</Badge>
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.streams.includes(opt)}
+                                                    onChange={() => handleToggleArrayItem('streams', opt)}
+                                                    className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Boards / Affiliations</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="block text-sm font-medium mb-3">Boards / Affiliations</label>
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
                                         {BOARD_OPTIONS.map(opt => (
-                                            <Badge key={opt} variant={formData.boards.includes(opt) ? 'warning' : 'default'} className="cursor-pointer" onClick={() => handleToggleArrayItem('boards', opt)}>{opt}</Badge>
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.boards.includes(opt)}
+                                                    onChange={() => handleToggleArrayItem('boards', opt)}
+                                                    className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Mode of Delivery</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="block text-sm font-medium mb-3">Mode of Delivery</label>
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
                                         {MODE_OPTIONS.map(opt => (
-                                            <Badge key={opt} variant={formData.mode_of_delivery.includes(opt) ? 'info' : 'default'} className="cursor-pointer" onClick={() => handleToggleArrayItem('mode_of_delivery', opt)}>{opt}</Badge>
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.mode_of_delivery.includes(opt)}
+                                                    onChange={() => handleToggleArrayItem('mode_of_delivery', opt)}
+                                                    className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
                                         ))}
                                     </div>
                                 </div>

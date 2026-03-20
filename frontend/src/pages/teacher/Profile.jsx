@@ -19,12 +19,12 @@ import {
 export default function TeacherProfile() {
     const { profile, updateProfile } = useAuth();
     const [profileData, setProfileData] = useState(null);
-    const BOARD_OPTIONS = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'STATE', 'CAMBRIDGE', 'NIOS', 'OTHER'];
-    const GRADE_OPTIONS = ['Primary', 'Secondary', 'Senior Secondary', 'UG', 'PG', 'Test Prep', 'Corporate training', 'IT or Technical education', 'Ai courses'];
-    const TEACHING_MODE_OPTIONS = ['ONLINE', 'OFFLINE', 'BOTH'];
-    const AVAILABLE_FOR_OPTIONS = ['Mentorship', 'Guest lecture', 'consulting', 'content creation', 'Corporate training'];
-    const TIME_AVAILABILITY_OPTIONS = ['Weekdays', 'weekend', 'flexible'];
-    const SPECIALIZATIONS_OPTIONS = ['Exam prep', 'remedial', 'Olympiads', 'Soft Skills', 'leadership', 'Technical education', 'IT', 'Ai & ML'];
+    const BOARD_OPTIONS = ['CBSE', 'ICSE', 'IB', 'IGCSE', 'State Board', 'Cambridge', 'NIOS', 'Other'];
+    const GRADE_OPTIONS = ['Primary', 'Secondary', 'Senior Secondary', 'UG', 'PG', 'Test Prep', 'Corporate Training', 'IT/Technical Education', 'AI Courses'];
+    const TEACHING_MODE_OPTIONS = ['Online', 'Offline', 'Both'];
+    const AVAILABLE_FOR_OPTIONS = ['Mentorship', 'Guest Lecture', 'Consulting', 'Content Creation', 'Corporate Training'];
+    const TIME_AVAILABILITY_OPTIONS = ['Weekdays', 'Weekends', 'Flexible'];
+    const SPECIALIZATIONS_OPTIONS = ['Exam Prep', 'Remedial', 'Olympiads', 'Soft Skills', 'Leadership', 'Technical Education', 'IT', 'AI & ML'];
     const COLLABORATION_OPTIONS = ['Startups', 'Schools', 'Universities', 'NGOs', 'Corporates'];
 
     const [formData, setFormData] = useState({
@@ -490,146 +490,130 @@ export default function TeacherProfile() {
 
                 {/* Teaching Preferences: Boards & Grades */}
                 <Card id="boards" className="p-6">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Teaching Preferences</h2>
-                    <div className="space-y-5">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Teaching Preferences</h2>
+                    <div className="space-y-6">
                         {/* Boards */}
                         <div id="grades">
-                            <p className="text-sm font-medium text-slate-700 mb-2">Boards</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Boards</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {BOARD_OPTIONS.map((board) => (
-                                    <button
-                                        key={board}
-                                        type="button"
-                                        onClick={() => handleToggleBoard(board)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.boards.includes(board)
-                                                ? 'bg-purple-600 text-white border-purple-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-purple-400'
-                                        }`}
-                                    >
-                                        {board === 'STATE' ? 'State Board' : board}
-                                    </button>
+                                    <label key={board} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.boards.includes(board)}
+                                            onChange={() => handleToggleBoard(board)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{board}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
+                        
                         {/* Grades */}
                         <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">Grade Levels</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Grade Levels</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {GRADE_OPTIONS.map((grade) => (
-                                    <button
-                                        key={grade}
-                                        type="button"
-                                        onClick={() => handleToggleGrade(grade)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.grades_taught.includes(grade)
-                                                ? 'bg-purple-600 text-white border-purple-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-purple-400'
-                                        }`}
-                                    >
-                                        {grade}
-                                    </button>
+                                    <label key={grade} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.grades_taught.includes(grade)}
+                                            onChange={() => handleToggleGrade(grade)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{grade}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
+                        
                         {/* Teaching Modes */}
                         <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">Teaching Mode</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Teaching Mode</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {TEACHING_MODE_OPTIONS.map((mode) => (
-                                    <button
-                                        key={mode}
-                                        type="button"
-                                        onClick={() => handleToggleArrayItem('teaching_modes', mode)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.teaching_modes.includes(mode)
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-indigo-400'
-                                        }`}
-                                    >
-                                        {mode}
-                                    </button>
+                                    <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.teaching_modes.includes(mode)}
+                                            onChange={() => handleToggleArrayItem('teaching_modes', mode)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{mode}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
+                        
                         {/* Time Availability */}
                         <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">Time Availability</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Time Availability</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {TIME_AVAILABILITY_OPTIONS.map((time) => (
-                                    <button
-                                        key={time}
-                                        type="button"
-                                        onClick={() => handleToggleArrayItem('time_availability', time)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.time_availability.includes(time)
-                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
-                                        }`}
-                                    >
-                                        {time}
-                                    </button>
+                                    <label key={time} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.time_availability.includes(time)}
+                                            onChange={() => handleToggleArrayItem('time_availability', time)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{time}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
+                        
                         {/* Available For */}
                         <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">Available For</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Available For</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {AVAILABLE_FOR_OPTIONS.map((avail) => (
-                                    <button
-                                        key={avail}
-                                        type="button"
-                                        onClick={() => handleToggleArrayItem('available_for', avail)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.available_for.includes(avail)
-                                                ? 'bg-teal-600 text-white border-teal-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400'
-                                        }`}
-                                    >
-                                        {avail}
-                                    </button>
+                                    <label key={avail} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.available_for.includes(avail)}
+                                            onChange={() => handleToggleArrayItem('available_for', avail)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{avail}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
+                        
                         {/* Specializations */}
                         <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">Specializations</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Specializations</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {SPECIALIZATIONS_OPTIONS.map((spec) => (
-                                    <button
-                                        key={spec}
-                                        type="button"
-                                        onClick={() => handleToggleArrayItem('specializations', spec)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.specializations.includes(spec)
-                                                ? 'bg-rose-600 text-white border-rose-600'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-rose-400'
-                                        }`}
-                                    >
-                                        {spec}
-                                    </button>
+                                    <label key={spec} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.specializations.includes(spec)}
+                                            onChange={() => handleToggleArrayItem('specializations', spec)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{spec}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
 
                         {/* Willingness to Collaborate */}
                         <div className="md:col-span-2">
-                            <p className="text-sm font-medium text-slate-700 mb-2">Willingness to Collaborate with</p>
-                            <div className="flex flex-wrap gap-2">
+                            <p className="text-sm font-medium text-slate-700 mb-3">Willingness to Collaborate with</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 {COLLABORATION_OPTIONS.map((collab) => (
-                                    <button
-                                        key={collab}
-                                        type="button"
-                                        onClick={() => handleToggleArrayItem('willing_to_collaborate_with', collab)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                                            formData.willing_to_collaborate_with.includes(collab)
-                                                ? 'bg-[#1e3a5f] text-white border-[#1e3a5f]'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-[#1e3a5f] hover:text-[#1e3a5f]'
-                                        }`}
-                                    >
-                                        {collab}
-                                    </button>
+                                    <label key={collab} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.willing_to_collaborate_with.includes(collab)}
+                                            onChange={() => handleToggleArrayItem('willing_to_collaborate_with', collab)}
+                                            className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                        />
+                                        <span className="text-sm text-slate-700">{collab}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
