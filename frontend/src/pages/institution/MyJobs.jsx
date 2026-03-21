@@ -2,7 +2,7 @@
  * Institution's Job Listings Management
  */
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button, Spinner, EmptyState, Modal, Input, TextArea, Select } from '../../components/common';
 import { jobsAPI } from '../../services/api';
@@ -17,6 +17,7 @@ import {
 
 export default function MyJobs() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -41,6 +42,14 @@ export default function MyJobs() {
     useEffect(() => {
         fetchJobs();
     }, []);
+
+    useEffect(() => {
+        if (location.state?.action === 'new') {
+            setShowCreateModal(true);
+            // Clear the state so it doesn't reopen if the user refreshes
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, navigate, location.pathname]);
 
     const fetchJobs = async () => {
         try {

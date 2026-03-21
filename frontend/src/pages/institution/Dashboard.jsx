@@ -96,7 +96,7 @@ export default function InstitutionDashboard() {
                         Manage your job listings and find the perfect candidates.
                     </p>
                 </div>
-                <Link to="/my-jobs/new">
+                <Link to="/my-jobs" state={{ action: 'new' }}>
                     <Button>
                         <PlusIcon className="w-5 h-5" />
                         Post New Job
@@ -157,7 +157,7 @@ export default function InstitutionDashboard() {
                 ) : (
                     <div className="text-center py-8 text-slate-500">
                         <p>No job listings yet. Create your first job posting!</p>
-                        <Link to="/my-jobs/new">
+                        <Link to="/my-jobs" state={{ action: 'new' }}>
                             <Button className="mt-3">
                                 <PlusIcon className="w-5 h-5" />
                                 Post New Job

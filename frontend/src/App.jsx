@@ -62,6 +62,7 @@ import JobsLayout from './components/jobs/JobsLayout';
 import SearchResults from './pages/search/SearchResults';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import HomePage from './pages/social/HomePage';
+import PrivacySettings from './pages/settings/PrivacySettings';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
@@ -522,6 +523,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <NotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Settings */}
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <PrivacySettings />
           </ProtectedRoute>
         }
       />
