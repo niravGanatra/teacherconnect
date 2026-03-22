@@ -305,11 +305,11 @@ export default function Register() {
                                     </div>
                                     <span className="text-sm text-gray-600 leading-snug">
                                         I agree to the{' '}
-                                        <a href="#" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                                        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
                                             Terms of Service
                                         </a>{' '}
                                         and{' '}
-                                        <a href="#" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
                                             Privacy Policy
                                         </a>
                                     </span>

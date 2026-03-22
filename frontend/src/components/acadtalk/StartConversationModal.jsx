@@ -23,7 +23,7 @@ const StartConversationModal = ({ isOpen, onClose, onSelectUser }) => {
       // Need a way to fetch connections. Let's assume acadConnectAPI has getConnections().
       // If it doesn't, we can fetch all and filter client side for now.
       const resp = await acadConnectAPI.getConnections();
-      setConnections(resp.data);
+      setConnections(Array.isArray(resp.data) ? resp.data : (resp.data.results || []));
     } catch (err) {
       console.error(err);
       setError('Failed to load connections.');

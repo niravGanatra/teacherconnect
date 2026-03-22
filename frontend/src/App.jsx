@@ -12,6 +12,8 @@ import Register from './pages/auth/Register';
 import CheckEmail from './pages/auth/CheckEmail';
 import VerifyEmail from './pages/auth/VerifyEmail';
 import AuthCallback from './pages/auth/AuthCallback';
+import TermsOfService from './pages/legal/TermsOfService';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
 
@@ -193,6 +195,8 @@ function AppRoutes() {
       <Route path="/verify-email/:token" element={<VerifyEmail />} />
       {/* Google OAuth callback — always public */}
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
       {/* Protected Routes - All Users */}
       <Route

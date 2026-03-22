@@ -26,7 +26,7 @@ MENU_CONFIG = {
             'id': 'dashboard',
             'label': 'Dashboard',
             'icon': 'dashboard',
-            'path': '/admin/dashboard',
+            'path': '/admin',
             'badge': None,
         },
         {
@@ -161,6 +161,13 @@ MENU_CONFIG = {
     # ─────────────────────────────────────────────
     'EDUCATOR': [
         {
+            'id': 'dashboard',
+            'label': 'Dashboard',
+            'icon': 'dashboard',
+            'path': '/dashboard',
+            'badge': None,
+        },
+        {
             'id': 'profile',
             'label': 'My Profile',
             'icon': 'profile',
@@ -220,7 +227,7 @@ MENU_CONFIG = {
             'id': 'certificates',
             'label': 'My Certificates',
             'icon': 'certificates',
-            'path': '/certificates',
+            'path': '/learning',
             'badge': None,
         },
         {

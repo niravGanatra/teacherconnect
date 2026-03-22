@@ -225,7 +225,7 @@ const AcadTalkPage = () => {
                         )}
                         
                         <div className={`flex items-center justify-end text-[10px] mt-1 gap-1 ${isOwn ? 'text-blue-200' : 'text-gray-400'}`}>
-                          <span>{format(new Date(msg.sent_at), 'h:mm a')}</span>
+                          <span>{new Date(msg.sent_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
                           {isOwn && !msg.is_deleted && (
                             msg.is_read ? <CheckCheck size={12} className="text-white drop-shadow-sm" /> : <Check size={12} />
                           )}

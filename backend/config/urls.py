@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/acadconnect/', include('acadconnect.urls')),
     path('api/acadtalk/', include('acadtalk.urls')),
     path('api/acadopportunities/', include('acadopportunities.urls')),
+    path('api/acadservices/', include('acadservices.urls')),
 
     
     # Navigation menu (role-based sidebar items)

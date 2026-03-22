@@ -18,7 +18,7 @@ export const useAcadTalk = (currentUser) => {
   const fetchConversations = useCallback(async () => {
     try {
       const resp = await acadTalkAPI.getConversations();
-      setConversations(resp.data);
+      setConversations(Array.isArray(resp.data) ? resp.data : (resp.data.results || []));
     } catch (e) {
       console.error("Failed to fetch conversations", e);
     }
