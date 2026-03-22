@@ -5,7 +5,7 @@ import { Card, Badge, Button, Input } from '../../components/common';
 import SectionSkeleton from '../../components/common/ProfileSkeleton'; // Rough fallback
 import { acadOpportunitiesAPI } from '../../services/acadOpportunitiesAPI';
 import { useAuth, ROLES } from '../../context/AuthContext';
-import { Briefcase, MapPin, Clock, Search, Filter, Plus, AcademicCap } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Search, Filter, Plus, GraduationCap } from 'lucide-react';
 
 const TYPE_CONFIG = {
     fulltime: { label: 'Full-time', color: 'blue' },
@@ -40,7 +40,7 @@ export const OpportunityCard = ({ opportunity }) => {
                     {opportunity.institution?.logo ? (
                         <img src={opportunity.institution.logo} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                        <AcademicCap className="w-6 h-6 text-slate-400" />
+                        <GraduationCap className="w-6 h-6 text-slate-400" />
                     )}
                 </div>
                 <div>
@@ -210,7 +210,7 @@ export default function AcadOpportunitiesPage() {
                 ) : opportunities.length === 0 ? (
                     <div className="py-20 text-center flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
                         <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
-                            <AcademicCap className="w-8 h-8" />
+                            <GraduationCap className="w-8 h-8" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-1">No opportunities found</h3>
                         <p className="text-slate-500 mb-4 max-w-sm">

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button } from '../../components/common';
 import { acadOpportunitiesAPI } from '../../services/acadOpportunitiesAPI';
-import { Briefcase, MapPin, Building, Trash2, AcademicCap } from 'lucide-react';
+import { Briefcase, MapPin, Building, Trash2, GraduationCap } from 'lucide-react';
 
 const STATUS_CONFIG = {
     applied: { label: 'Applied', color: 'slate' },
@@ -79,7 +79,7 @@ export default function MyApplicationsPage() {
                                 <Card key={app.id} className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border border-slate-200 hover:shadow-sm transition-shadow">
                                     <div className="flex gap-4 items-center min-w-0 flex-1">
                                         <div className="w-12 h-12 rounded bg-slate-100 shrink-0 border border-slate-200 flex items-center justify-center text-slate-400">
-                                            <AcademicCap className="w-6 h-6" />
+                                            <GraduationCap className="w-6 h-6" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-slate-900 truncate">
