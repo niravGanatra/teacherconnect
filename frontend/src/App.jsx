@@ -62,7 +62,23 @@ import JobsLayout from './components/jobs/JobsLayout';
 import SearchResults from './pages/search/SearchResults';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import HomePage from './pages/social/HomePage';
+
+// AcadOpportunities 
+import AcadOpportunitiesPage from './pages/acadopportunities/AcadOpportunitiesPage';
+import OpportunityDetailPage from './pages/acadopportunities/OpportunityDetailPage';
+import MyApplicationsPage from './pages/acadopportunities/MyApplicationsPage';
+import InstitutionOpportunityManagement from './pages/acadopportunities/InstitutionOpportunityManagement';
+import OpportunityFormPage from './pages/acadopportunities/OpportunityFormPage';
+import ApplicationsManagementPage from './pages/acadopportunities/ApplicationsManagementPage';
+
+// AcadServices
+import AcadServicesPage from './pages/acadservices/AcadServicesPage';
+import ServiceDetailPage from './pages/acadservices/ServiceDetailPage';
+import MyServicesPage from './pages/acadservices/MyServicesPage';
+import ServiceFormPage from './pages/acadservices/ServiceFormPage';
 import PrivacySettings from './pages/settings/PrivacySettings';
+import AcadConnectPage from './pages/acadconnect/AcadConnectPage';
+import AcadTalkPage from './pages/acadtalk/AcadTalkPage';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedTypes = [] }) {
@@ -291,6 +307,90 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/acadconnect"
+        element={
+          <ProtectedRoute>
+            <AcadConnectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadtalk"
+        element={
+          <ProtectedRoute>
+            <AcadTalkPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* AcadOpportunities */}
+      <Route
+        path="/acadopportunities"
+        element={
+          <ProtectedRoute>
+            <AcadOpportunitiesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadopportunities/my-applications"
+        element={
+          <ProtectedRoute>
+            <MyApplicationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadopportunities/:id"
+        element={
+          <ProtectedRoute>
+            <OpportunityDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* AcadServices */}
+      <Route
+        path="/acadservices"
+        element={
+          <ProtectedRoute>
+            <AcadServicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadservices/:id"
+        element={
+          <ProtectedRoute>
+            <ServiceDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadservices/my-services"
+        element={
+          <ProtectedRoute>
+            <MyServicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadservices/new"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN]}>
+            <ServiceFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadservices/edit/:id"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN]}>
+            <ServiceFormPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Jobs Hub - Nested Routes */}
       <Route
         path="/jobs"
@@ -324,6 +424,38 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
             <InstitutionSetup />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/opportunities"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <InstitutionOpportunityManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/opportunities/new"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <OpportunityFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/opportunities/edit/:id"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <OpportunityFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/institution/opportunities/:id/applications"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.INSTITUTION_ADMIN]}>
+            <ApplicationsManagementPage />
           </ProtectedRoute>
         }
       />

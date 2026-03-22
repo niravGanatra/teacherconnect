@@ -8,7 +8,9 @@ import { Card, Badge, Button } from '../../components/common';
 import ProfileSkeleton from '../../components/common/ProfileSkeleton';
 import { useAuth } from '../../context/AuthContext';
 import { profileAPI, socialAPI } from '../../services/api';
+import { acadServicesAPI } from '../../services/acadServicesAPI';
 import FollowButton from '../../components/social/FollowButton';
+import AcadConnectButton from '../../components/acadconnect/AcadConnectButton';
 import FollowersModal from '../../components/social/FollowersModal';
 import ProfileCompletionCard from '../../components/profile/ProfileCompletionCard';
 import SkillsSection from '../../components/profile/SkillsSection';
@@ -27,6 +29,9 @@ import {
     BookOpenIcon,
     SparklesIcon,
     ClockIcon,
+    ChatBubbleLeftEllipsisIcon,
+    StarIcon,
+    LinkIcon,
 } from '@heroicons/react/24/outline';
 
 export default function TeacherProfileView() {
@@ -38,9 +43,13 @@ export default function TeacherProfileView() {
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const [modal, setModal] = useState(null); // 'followers' | 'following' | null
+    const [connectionStatus, setConnectionStatus] = useState('not_connected');
+    const [services, setServices] = useState([]);
+    const [loadingServices, setLoadingServices] = useState(true);
 
     useEffect(() => {
         fetchProfile();
+        fetchServices();
     }, [id]);
 
     useEffect(() => {
@@ -72,6 +81,18 @@ export default function TeacherProfileView() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchServices = async () => {
+        const targetId = id || user?.id;
+        if (!targetId) return;
+        setLoadingServices(true);
+        try {
+            // We reuse the public list API but filter by provider
+            const res = await acadServicesAPI.getServices({ provider: targetId });
+            setServices(res.data.results || res.data);
+        } catch (err) { console.error(err); }
+        setLoadingServices(false);
     };
 
     if (loading) {
@@ -167,6 +188,9 @@ export default function TeacherProfileView() {
 
                             {/* Follow Stats + Button */}
                             <div className="flex flex-wrap items-center gap-4 mt-3">
+                                <Link to="/acadconnect" className="text-sm text-slate-600 hover:text-slate-900 pointer-events-auto">
+                                    <span className="font-semibold text-slate-900">{profile.connection_count || 0}</span> Connections
+                                </Link>
                                 <button
                                     onClick={() => setModal('followers')}
                                     className="text-sm text-slate-600 hover:text-slate-900"
@@ -180,7 +204,15 @@ export default function TeacherProfileView() {
                                     <span className="font-semibold text-slate-900">{followingCount}</span> Following
                                 </button>
                                 {!isOwnProfile && (
-                                    <FollowButton userId={id} onCountChange={setFollowerCount} />
+                                    <>
+                                        <FollowButton userId={id} onCountChange={setFollowerCount} />
+                                        <AcadConnectButton userId={id} onStatusChange={setConnectionStatus} />
+                                        {connectionStatus === 'connected' && (
+                                            <Link to={`/acadtalk?target=${id}`} className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition pointer-events-auto">
+                                                <ChatBubbleLeftEllipsisIcon className="w-4 h-4" /> Message
+                                            </Link>
+                                        )}
+                                    </>
                                 )}
                             </div>
 
@@ -341,6 +373,57 @@ export default function TeacherProfileView() {
                     </Card>
                 )}
 
+                {/* AcadServices Offered Section */}
+                {(services.length > 0 || isOwnProfile) && (
+                    <Card className="p-4 md:p-6 overflow-hidden">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                <SparklesIcon className="w-5 h-5 text-blue-600" />
+                                AcadServices Offered
+                            </h2>
+                            {isOwnProfile && (
+                                <Link to="/acadservices/my-services">
+                                    <Button variant="secondary" size="sm">Manage Services</Button>
+                                </Link>
+                            )}
+                        </div>
+
+                        {loadingServices ? (
+                            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                                {[1, 2].map(n => <div key={n} className="w-64 h-32 bg-slate-50 animate-pulse rounded-2xl shrink-0 border border-slate-100"></div>)}
+                            </div>
+                        ) : services.length === 0 ? (
+                            <div className="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+                                <p className="text-sm text-slate-400 font-medium">No services listed yet.</p>
+                                {isOwnProfile && <Link to="/acadservices/new" className="text-blue-600 text-sm font-bold mt-1 inline-block hover:underline">+ Create Service</Link>}
+                            </div>
+                        ) : (
+                            <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-hide">
+                                {services.map(svc => (
+                                    <Link key={svc.id} to={`/acadservices/${svc.id}`} className="shrink-0 w-72 group">
+                                        <div className="p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-lg hover:shadow-blue-900/5 transition-all h-full flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <Badge className="bg-blue-50 text-blue-700 text-[10px] uppercase font-bold border-blue-100">{svc.category?.name}</Badge>
+                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500">
+                                                        <StarIcon className="w-3 h-3 fill-current" />
+                                                        {Number(svc.rating_avg).toFixed(1)}
+                                                    </div>
+                                                </div>
+                                                <h4 className="font-bold text-slate-900 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">{svc.title}</h4>
+                                            </div>
+                                            <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center">
+                                                <p className="font-black text-slate-900">{svc.price ? `₹${Number(svc.price).toLocaleString()}` : 'Negotiable'}</p>
+                                                <span className="text-[10px] font-black uppercase text-slate-400">View Details</span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </Card>
+                )}
+
                 {/* Experience Section */}
                 <Card className="p-4 md:p-6">
                     <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
@@ -476,6 +559,58 @@ export default function TeacherProfileView() {
                                             className="text-slate-900 font-medium hover:text-[#1e3a5f] break-all"
                                         >
                                             {profile.portfolio_url}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {profile.linkedin_url && (
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <LinkIcon className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500">LinkedIn</p>
+                                        <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-slate-900 font-medium hover:text-blue-600 truncate max-w-[200px] inline-block">
+                                            {profile.linkedin_url.replace(/^https?:\/\/(www\.)?/, '')}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {profile.facebook_url && (
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <LinkIcon className="w-5 h-5 text-blue-700" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500">Facebook</p>
+                                        <a href={profile.facebook_url} target="_blank" rel="noopener noreferrer" className="text-slate-900 font-medium hover:text-blue-700 truncate max-w-[200px] inline-block">
+                                            {profile.facebook_url.replace(/^https?:\/\/(www\.)?/, '')}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {profile.instagram_url && (
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                                        <LinkIcon className="w-5 h-5 text-pink-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500">Instagram</p>
+                                        <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" className="text-slate-900 font-medium hover:text-pink-600 truncate max-w-[200px] inline-block">
+                                            {profile.instagram_url.replace(/^https?:\/\/(www\.)?/, '')}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {profile.youtube_url && (
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                        <LinkIcon className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500">YouTube</p>
+                                        <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="text-slate-900 font-medium hover:text-red-600 truncate max-w-[200px] inline-block">
+                                            {profile.youtube_url.replace(/^https?:\/\/(www\.)?/, '')}
                                         </a>
                                     </div>
                                 </div>

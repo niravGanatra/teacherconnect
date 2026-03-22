@@ -21,7 +21,14 @@ import {
     ShieldCheckIcon,
     TrophyIcon,
     BriefcaseIcon,
-    GlobeAsiaAustraliaIcon
+    GlobeAsiaAustraliaIcon,
+    BuildingLibraryIcon,
+    ClipboardDocumentListIcon,
+    BookOpenIcon,
+    SparklesIcon,
+    ClockIcon,
+    StarIcon,
+    LinkIcon
 } from '@heroicons/react/24/outline';
 
 export default function InstitutionProfileView() {
@@ -256,6 +263,106 @@ export default function InstitutionProfileView() {
                             </div>
                         </Card>
 
+                        {/* Infrastructure */}
+                        {(profile.campus_area || profile.classrooms_count || profile.labs_available || profile.library_available || profile.hostel_type !== 'NONE' || profile.sports_facilities?.length > 0 || profile.transport_facility || profile.smart_classrooms) && (
+                            <Card className="p-6">
+                                <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+                                    <BuildingLibraryIcon className="w-5 h-5 text-[#1e3a5f]" /> Infrastructure
+                                </h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {profile.campus_area && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Campus Area</p>
+                                            <p className="font-medium text-slate-900">{profile.campus_area}</p>
+                                        </div>
+                                    )}
+                                    {profile.classrooms_count && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Classrooms</p>
+                                            <p className="font-medium text-slate-900">{profile.classrooms_count}</p>
+                                        </div>
+                                    )}
+                                    {profile.smart_classrooms && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Smart Classrooms</p>
+                                            <p className="font-medium text-slate-900">Yes</p>
+                                        </div>
+                                    )}
+                                    {profile.labs_available && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Labs</p>
+                                            <p className="font-medium text-slate-900">Available</p>
+                                        </div>
+                                    )}
+                                    {profile.library_available && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Library</p>
+                                            <p className="font-medium text-slate-900">Available</p>
+                                        </div>
+                                    )}
+                                    {profile.transport_facility && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Transport</p>
+                                            <p className="font-medium text-slate-900">Available</p>
+                                        </div>
+                                    )}
+                                    {profile.hostel_type && profile.hostel_type !== 'NONE' && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Hostel</p>
+                                            <p className="font-medium text-slate-900 capitalize">{profile.hostel_type.toLowerCase()}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {profile.sports_facilities?.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <h3 className="text-sm font-medium text-slate-700">Sports Facilities</h3>
+                                        {renderArrayBadges(profile.sports_facilities, "default")}
+                                    </div>
+                                )}
+                            </Card>
+                        )}
+
+                        {/* Academic Operations */}
+                        {(profile.student_capacity || profile.current_student_strength || profile.student_teacher_ratio || profile.shift_details?.length > 0) && (
+                            <Card className="p-6">
+                                <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+                                    <ClipboardDocumentListIcon className="w-5 h-5 text-[#1e3a5f]" /> Academic Operations
+                                </h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {profile.student_capacity && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Capacity</p>
+                                            <p className="font-medium text-slate-900">{profile.student_capacity} Students</p>
+                                        </div>
+                                    )}
+                                    {profile.current_student_strength && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Current Strength</p>
+                                            <p className="font-medium text-slate-900">{profile.current_student_strength} Students</p>
+                                        </div>
+                                    )}
+                                    {profile.faculty_count && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Faculty Count</p>
+                                            <p className="font-medium text-slate-900">{profile.faculty_count}</p>
+                                        </div>
+                                    )}
+                                    {profile.student_teacher_ratio && (
+                                        <div>
+                                            <p className="text-xs text-slate-500 uppercase">Student-Teacher Ratio</p>
+                                            <p className="font-medium text-slate-900">{profile.student_teacher_ratio}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {profile.shift_details?.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <h3 className="text-sm font-medium text-slate-700">Shift Details</h3>
+                                        {renderArrayBadges(profile.shift_details, "secondary")}
+                                    </div>
+                                )}
+                            </Card>
+                        )}
+
                         {/* Analytics & Placements */}
                         <Card className="p-6">
                             <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
@@ -348,9 +455,13 @@ export default function InstitutionProfileView() {
                         {/* Compliance & Accreditations */}
                         <Card className="p-6">
                             <h2 className="text-base font-semibold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                                <ShieldCheckIcon className="w-5 h-5 text-[#1e3a5f]" /> Accreditations
+                                <ShieldCheckIcon className="w-5 h-5 text-[#1e3a5f]" /> Trust & Compliance
                             </h2>
                             <div className="space-y-3 text-sm">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500">Govt Approvals</span>
+                                    <span className="font-semibold text-slate-900">{profile.govt_approvals ? 'Yes' : 'No'}</span>
+                                </div>
                                 {profile.accreditation_grade && (
                                     <div className="flex justify-between items-center">
                                         <span className="text-slate-500">Grade</span>
@@ -369,6 +480,18 @@ export default function InstitutionProfileView() {
                                         <span className="font-medium text-[#1e3a5f]">{profile.rankings_nirf}</span>
                                     </div>
                                 )}
+                                {profile.rankings_state && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-500">State Rank</span>
+                                        <span className="font-medium text-[#1e3a5f]">{profile.rankings_state}</span>
+                                    </div>
+                                )}
+                                {profile.rankings_private && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-500">Private Rank</span>
+                                        <span className="font-medium text-[#1e3a5f]">{profile.rankings_private}</span>
+                                    </div>
+                                )}
                                 {profile.naac_nba_score && (
                                     <div className="flex justify-between items-center">
                                         <span className="text-slate-500">NAAC/NBA Score</span>
@@ -380,6 +503,12 @@ export default function InstitutionProfileView() {
                                 <div className="mt-4 pt-4 border-t border-slate-100">
                                     <h3 className="text-xs text-slate-500 uppercase font-semibold mb-2">Accrediting Bodies</h3>
                                     {renderArrayBadges(profile.accreditation_bodies, "default")}
+                                </div>
+                            )}
+                            {profile.awards_recognitions?.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                    <h3 className="text-xs text-slate-500 uppercase font-semibold mb-2">Awards & Recognitions</h3>
+                                    {renderArrayBadges(profile.awards_recognitions, "secondary")}
                                 </div>
                             )}
                         </Card>
@@ -409,6 +538,87 @@ export default function InstitutionProfileView() {
                                 )}
                             </div>
                         </Card>
+
+                        {/* Placement & Alumni */}
+                        {(profile.alumni_count || profile.placement_partners?.length > 0 || profile.top_recruiters?.length > 0 || profile.notable_alumni?.length > 0) && (
+                            <Card className="p-6">
+                                <h2 className="text-base font-semibold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                    <AcademicCapIcon className="w-5 h-5 text-[#1e3a5f]" /> Placement & Alumni
+                                </h2>
+                                <div className="space-y-4">
+                                    {profile.alumni_count && (
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-slate-500">Total Alumni</span>
+                                            <span className="font-semibold text-[#1e3a5f] bg-blue-50 px-2 py-0.5 rounded">{profile.alumni_count}+</span>
+                                        </div>
+                                    )}
+                                    
+                                    {profile.placement_partners?.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xs text-slate-500 uppercase font-semibold mb-2 flex items-center gap-1">
+                                                <BriefcaseIcon className="w-3 h-3" /> Placement Partners
+                                            </h3>
+                                            {renderArrayBadges(profile.placement_partners, "default")}
+                                        </div>
+                                    )}
+
+                                    {profile.top_recruiters?.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xs text-slate-500 uppercase font-semibold mb-2">Top Recruiters</h3>
+                                            {renderArrayBadges(profile.top_recruiters, "secondary")}
+                                        </div>
+                                    )}
+
+                                    {profile.notable_alumni?.length > 0 && (
+                                        <div>
+                                            <h3 className="text-xs text-slate-500 uppercase font-semibold mb-2">Notable Alumni</h3>
+                                            {renderArrayBadges(profile.notable_alumni, "outline")}
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Digital Presence */}
+                        {(profile.website_url || profile.linkedin_url || profile.facebook_url || profile.instagram_url || profile.youtube_url) && (
+                            <Card className="p-6">
+                                <h2 className="text-base font-semibold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                                    <GlobeAltIcon className="w-5 h-5 text-[#1e3a5f]" /> Digital Presence
+                                </h2>
+                                <div className="space-y-4">
+                                    {profile.website_url && (
+                                        <div className="flex gap-3 text-slate-600 text-sm items-center">
+                                            <GlobeAltIcon className="w-5 h-5 shrink-0 text-slate-400" />
+                                            <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#1e3a5f] truncate">Website</a>
+                                        </div>
+                                    )}
+                                    {profile.linkedin_url && (
+                                        <div className="flex gap-3 text-slate-600 text-sm items-center">
+                                            <LinkIcon className="w-5 h-5 shrink-0 text-blue-600" />
+                                            <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 truncate">LinkedIn</a>
+                                        </div>
+                                    )}
+                                    {profile.facebook_url && (
+                                        <div className="flex gap-3 text-slate-600 text-sm items-center">
+                                            <LinkIcon className="w-5 h-5 shrink-0 text-blue-700" />
+                                            <a href={profile.facebook_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-700 truncate">Facebook</a>
+                                        </div>
+                                    )}
+                                    {profile.instagram_url && (
+                                        <div className="flex gap-3 text-slate-600 text-sm items-center">
+                                            <LinkIcon className="w-5 h-5 shrink-0 text-pink-600" />
+                                            <a href={profile.instagram_url} target="_blank" rel="noopener noreferrer" className="hover:text-pink-600 truncate">Instagram</a>
+                                        </div>
+                                    )}
+                                    {profile.youtube_url && (
+                                        <div className="flex gap-3 text-slate-600 text-sm items-center">
+                                            <LinkIcon className="w-5 h-5 shrink-0 text-red-600" />
+                                            <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="hover:text-red-600 truncate">YouTube</a>
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        )}
 
                     </div>
                 </div>

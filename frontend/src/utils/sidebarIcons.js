@@ -23,6 +23,10 @@ import {
     Users2,
     FileText,
     HelpCircle,
+    Network,
+    MessageSquare,
+    Briefcase,
+    Layers,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -40,6 +44,10 @@ const ICON_MAP = {
     saved:         Bookmark,
     faculty:       Users2,
     documents:     FileText,
+    network:       Network,
+    message:       MessageSquare,
+    briefcase:     Briefcase,
+    layers:        Layers,
 };
 
 /**

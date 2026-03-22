@@ -31,6 +31,7 @@ class EducatorProfile(models.Model):
     headline = models.CharField(max_length=200, blank=True)
     teaching_philosophy = models.TextField(blank=True)
     profile_photo = models.ImageField(upload_to='profiles/educators/', blank=True, null=True)
+    google_avatar_url = models.URLField(blank=True, default='')  # Populated from Google OAuth
     background_photo = models.ImageField(upload_to='profiles/educators/backgrounds/', blank=True, null=True)
     
     # ===========================================
@@ -141,6 +142,9 @@ class EducatorProfile(models.Model):
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     portfolio_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True, help_text='LinkedIn profile URL')
+    facebook_url = models.URLField(blank=True, help_text='Facebook profile URL')
+    instagram_url = models.URLField(blank=True, help_text='Instagram profile URL')
+    youtube_url = models.URLField(blank=True, help_text='YouTube channel URL')
     
     # ===========================================
     # Contact Info
@@ -274,6 +278,28 @@ class InstitutionProfile(models.Model):
     visiting_faculty = models.BooleanField(default=False)
     hiring_status = models.CharField(max_length=50, blank=True)
 
+    # Infrastructure
+    campus_area = models.CharField(max_length=100, blank=True, help_text="e.g. 10 acres")
+    classrooms_count = models.PositiveIntegerField(null=True, blank=True)
+    labs_available = models.BooleanField(default=False)
+    library_available = models.BooleanField(default=False)
+    hostel_type = models.CharField(max_length=50, choices=[
+        ('BOYS', 'Boys'),
+        ('GIRLS', 'Girls'),
+        ('BOTH', 'Both'),
+        ('NONE', 'None'),
+    ], default='NONE')
+    sports_facilities = models.JSONField(default=list, blank=True)
+    transport_facility = models.BooleanField(default=False)
+    smart_classrooms = models.BooleanField(default=False)
+
+    # Academic Operations (Campus-Specific)
+    student_capacity = models.PositiveIntegerField(null=True, blank=True)
+    current_student_strength = models.PositiveIntegerField(null=True, blank=True)
+    faculty_count = models.PositiveIntegerField(null=True, blank=True)
+    student_teacher_ratio = models.CharField(max_length=50, blank=True)
+    shift_details = models.JSONField(default=list, blank=True)
+
     # F. Analytics
     average_annual_admissions = models.PositiveIntegerField(null=True, blank=True)
     pass_percentage = models.CharField(max_length=50, blank=True)
@@ -292,6 +318,7 @@ class InstitutionProfile(models.Model):
     rankings_private = models.CharField(max_length=100, blank=True)
     awards_recognitions = models.JSONField(default=list, blank=True)
     naac_nba_score = models.CharField(max_length=50, blank=True)
+    govt_approvals = models.BooleanField(default=False)
 
     # H. Commercial (Private)
     fee_range = models.CharField(max_length=50, choices=[

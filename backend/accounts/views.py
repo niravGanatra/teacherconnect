@@ -576,8 +576,10 @@ class GoogleCallbackView(APIView):
             flow.redirect_uri = redirect_uri
 
             # Exchange code for tokens
-            import os
-            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP in dev
+            # Allow HTTP only in local development (Railway/production uses HTTPS)
+            if settings.DEBUG:
+                import os as _os
+                _os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
             flow.fetch_token(code=code)
             credentials = flow.credentials
 
@@ -643,7 +645,7 @@ class GoogleCallbackView(APIView):
                         profile.first_name = given_name
                         profile.last_name = family_name
                         if picture:
-                            profile.avatar_url = picture
+                            profile.google_avatar_url = picture
                         profile.save()
                     except Exception as exc:
                         logger.warning('Could not create educator profile for %s: %s', email, exc)

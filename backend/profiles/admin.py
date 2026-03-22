@@ -88,6 +88,14 @@ class InstitutionProfileAdmin(admin.ModelAdmin):
         ('Campus Information', {
             'fields': ('campus_address', 'city', 'state', 'pincode')
         }),
+        ('Infrastructure', {
+            'fields': ('campus_area', 'classrooms_count', 'labs_available', 'library_available', 'hostel_type', 'sports_facilities', 'transport_facility', 'smart_classrooms'),
+            'classes': ('collapse',)
+        }),
+        ('Academic Operations', {
+            'fields': ('student_capacity', 'current_student_strength', 'faculty_count', 'student_teacher_ratio', 'shift_details'),
+            'classes': ('collapse',)
+        }),
         ('Contact Information', {
             'fields': ('contact_email', 'contact_phone', 'website_url')
         }),

@@ -17,6 +17,7 @@ import {
 const TABS = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'academic', label: 'Academic Scope' },
+    { id: 'infra', label: 'Infrastructure & Ops' },
     { id: 'analytics', label: 'Analytics & Compliance' },
     { id: 'digital', label: 'Digital & Commercial' },
     { id: 'campuses', label: 'Campuses' }
@@ -46,6 +47,14 @@ const INST_TYPES = [
     { value: 'OTHER', label: 'Other' },
 ];
 
+const HOSTEL_OPTIONS = [
+    { value: 'NONE', label: 'None' },
+    { value: 'BOYS', label: 'Boys Only' },
+    { value: 'GIRLS', label: 'Girls Only' },
+    { value: 'BOTH', label: 'Both' }
+];
+const SHIFT_OPTIONS = ['Morning', 'Evening', 'Multiple'];
+
 export default function InstitutionProfile() {
     const [profileData, setProfileData] = useState(null);
     const [activeTab, setActiveTab] = useState('basic');
@@ -64,12 +73,18 @@ export default function InstitutionProfile() {
         placement_partners: [], top_recruiters: [], alumni_count: '', notable_alumni: [],
         accreditation_bodies: [], accreditation_grade: '', last_accreditation_year: '',
         rankings_nirf: '', rankings_state: '', rankings_private: '', awards_recognitions: [], naac_nba_score: '',
+        govt_approvals: false,
         // Digital & Commercial
         website_url: '', portal_link: '', app_available: false, linkedin_url: '', facebook_url: '',
         instagram_url: '', youtube_url: '', twitter_url: '', google_maps_link: '',
         fee_range: '', scholarships_offered: false, corporate_training: false, franchise_opportunity: false,
         vendor_requirements: '', advertisement_interest: false,
         keywords: [], institution_usp: '', vision_mission: '', collaboration_interests: [],
+        // Infrastructure
+        campus_area: '', classrooms_count: '', labs_available: false, library_available: false,
+        hostel_type: 'NONE', sports_facilities: [], transport_facility: false, smart_classrooms: false,
+        // Academic Operations
+        student_capacity: '', current_student_strength: '', faculty_count: '', student_teacher_ratio: '', shift_details: [],
         // Sub-entities
         campuses: []
     });
@@ -77,7 +92,8 @@ export default function InstitutionProfile() {
     // Arrays local inputs
     const [tagInputs, setTagInputs] = useState({
         courses_offered: '', placement_partners: '', top_recruiters: '', notable_alumni: '',
-        accreditation_bodies: '', awards_recognitions: [], keywords: '', collaboration_interests: '', medium_of_instruction: ''
+        accreditation_bodies: '', awards_recognitions: [], keywords: '', collaboration_interests: '', medium_of_instruction: '',
+        sports_facilities: ''
     });
 
     const [isVerified, setIsVerified] = useState(false);
@@ -114,6 +130,8 @@ export default function InstitutionProfile() {
                 awards_recognitions: getArr('awards_recognitions'),
                 keywords: getArr('keywords'),
                 collaboration_interests: getArr('collaboration_interests'),
+                sports_facilities: getArr('sports_facilities'),
+                shift_details: getArr('shift_details'),
                 campuses: getArr('campuses'),
             }));
             setIsVerified(!!data.is_verified);
@@ -402,6 +420,75 @@ export default function InstitutionProfile() {
                     </div>
                 )}
 
+                {/* INFRASTRUCTURE & OPS TAB */}
+                {activeTab === 'infra' && (
+                    <div className="space-y-6">
+                        <Card className="p-6">
+                            <h2 className="text-lg font-semibold mb-4">Infrastructure</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input label="Campus Area (sq ft / acres)" name="campus_area" value={formData.campus_area} onChange={handleChange} placeholder="e.g. 10 acres" />
+                                <Input label="Classrooms Count" type="number" name="classrooms_count" value={formData.classrooms_count} onChange={handleChange} />
+                                <Select label="Hostel Facility" name="hostel_type" value={formData.hostel_type} onChange={handleChange} options={HOSTEL_OPTIONS} />
+                                <div className="space-y-2 mt-2">
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="labs_available" checked={formData.labs_available} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm">Labs Available</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="library_available" checked={formData.library_available} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm">Library Available</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="transport_facility" checked={formData.transport_facility} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm">Transport Facility</span>
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="smart_classrooms" checked={formData.smart_classrooms} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm">Smart Classrooms</span>
+                                    </label>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium mb-2">Sports Facilities</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {formData.sports_facilities.map(item => (
+                                            <Badge key={item} variant="primary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('sports_facilities', item)}/></Badge>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 max-w-sm">
+                                        <Input value={tagInputs.sports_facilities} onChange={e => setTagInputs(p=>({...p, sports_facilities: e.target.value}))} placeholder="e.g. Basketball, Swimming Pool" />
+                                        <Button type="button" onClick={() => handleAddTag('sports_facilities')}>Add</Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="p-6">
+                            <h2 className="text-lg font-semibold mb-4">Academic Operations (Campus-Specific)</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input label="Student Capacity" type="number" name="student_capacity" value={formData.student_capacity} onChange={handleChange} />
+                                <Input label="Current Student Strength" type="number" name="current_student_strength" value={formData.current_student_strength} onChange={handleChange} />
+                                <Input label="Faculty Count" type="number" name="faculty_count" value={formData.faculty_count} onChange={handleChange} />
+                                <Input label="Student–Teacher Ratio" name="student_teacher_ratio" value={formData.student_teacher_ratio} onChange={handleChange} placeholder="e.g. 30:1" />
+                                <div className="col-span-2 flex flex-col gap-2">
+                                    <label className="block text-sm font-medium mb-1">Shift Details</label>
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                                        {SHIFT_OPTIONS.map(opt => (
+                                            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.shift_details.includes(opt)}
+                                                    onChange={() => handleToggleArrayItem('shift_details', opt)}
+                                                    className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]"
+                                                />
+                                                <span className="text-sm text-slate-700">{opt}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                )}
+
                 {/* ANALYTICS TAB */}
                 {activeTab === 'analytics' && (
                     <div className="space-y-6">
@@ -411,21 +498,91 @@ export default function InstitutionProfile() {
                                 <Input label="Average Annual Admissions" type="number" name="average_annual_admissions" value={formData.average_annual_admissions} onChange={handleChange} />
                                 <Input label="Pass Percentage" name="pass_percentage" value={formData.pass_percentage} onChange={handleChange} placeholder="e.g. 95%" />
                                 <Input label="Alumni Count" type="number" name="alumni_count" value={formData.alumni_count} onChange={handleChange} />
-                                <div className="flex items-center gap-2 mt-8">
-                                    <label className="flex items-center gap-2">
-                                        <input type="checkbox" name="placement_assistance" checked={formData.placement_assistance} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
-                                        <span className="text-sm font-medium text-slate-700">Provides Placement Assistance</span>
-                                    </label>
+                                <div className="md:col-span-2 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Placement Partners</label>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {formData.placement_partners.map(item => (
+                                                <Badge key={item} variant="primary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('placement_partners', item)}/></Badge>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2 max-w-sm">
+                                            <Input value={tagInputs.placement_partners} onChange={e => setTagInputs(p=>({...p, placement_partners: e.target.value}))} placeholder="e.g. Google, Microsoft" />
+                                            <Button type="button" onClick={() => handleAddTag('placement_partners')}>Add</Button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Top Recruiters</label>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {formData.top_recruiters.map(item => (
+                                                <Badge key={item} variant="secondary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('top_recruiters', item)}/></Badge>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2 max-w-sm">
+                                            <Input value={tagInputs.top_recruiters} onChange={e => setTagInputs(p=>({...p, top_recruiters: e.target.value}))} placeholder="e.g. TCS, Infosys" />
+                                            <Button type="button" onClick={() => handleAddTag('top_recruiters')}>Add</Button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Notable Alumni</label>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                            {formData.notable_alumni.map(item => (
+                                                <Badge key={item} variant="outline" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('notable_alumni', item)}/></Badge>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2 max-w-sm">
+                                            <Input value={tagInputs.notable_alumni} onChange={e => setTagInputs(p=>({...p, notable_alumni: e.target.value}))} placeholder="e.g. John Doe (CEO)" />
+                                            <Button type="button" onClick={() => handleAddTag('notable_alumni')}>Add</Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </Card>
                         <Card className="p-6">
                             <h2 className="text-lg font-semibold mb-4">Compliance & Accreditations</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <div className="space-y-4 md:col-span-2">
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="govt_approvals" checked={formData.govt_approvals} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm font-medium text-slate-700">Govt Approvals (Yes/No)</span>
+                                    </label>
+                                </div>
+
                                 <Input label="Accreditation Grade" name="accreditation_grade" value={formData.accreditation_grade} onChange={handleChange} placeholder="e.g. A++" />
                                 <Input label="Last Accreditation Year" type="number" name="last_accreditation_year" value={formData.last_accreditation_year} onChange={handleChange} />
                                 <Input label="NAAC / NBA Score" name="naac_nba_score" value={formData.naac_nba_score} onChange={handleChange} />
                                 <Input label="NIRF Ranking" name="rankings_nirf" value={formData.rankings_nirf} onChange={handleChange} />
+                                <Input label="State Ranking" name="rankings_state" value={formData.rankings_state} onChange={handleChange} />
+                                <Input label="Private Ranking" name="rankings_private" value={formData.rankings_private} onChange={handleChange} />
+                                
+                                <div className="md:col-span-2 mt-2">
+                                    <label className="block text-sm font-medium mb-2">Accreditation Bodies</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {formData.accreditation_bodies.map(item => (
+                                            <Badge key={item} variant="primary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('accreditation_bodies', item)}/></Badge>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 max-w-sm">
+                                        <Input value={tagInputs.accreditation_bodies} onChange={e => setTagInputs(p=>({...p, accreditation_bodies: e.target.value}))} placeholder="e.g. UGC, AICTE" />
+                                        <Button type="button" onClick={() => handleAddTag('accreditation_bodies')}>Add</Button>
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 mt-2">
+                                    <label className="block text-sm font-medium mb-2">Awards & Recognitions</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {formData.awards_recognitions.map(item => (
+                                            <Badge key={item} variant="secondary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('awards_recognitions', item)}/></Badge>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 max-w-sm">
+                                        <Input value={tagInputs.awards_recognitions} onChange={e => setTagInputs(p=>({...p, awards_recognitions: e.target.value}))} placeholder="e.g. Best Emerging College 2024" />
+                                        <Button type="button" onClick={() => handleAddTag('awards_recognitions')}>Add</Button>
+                                    </div>
+                                </div>
                             </div>
                         </Card>
                     </div>
@@ -440,6 +597,9 @@ export default function InstitutionProfile() {
                                 <Input label="Website URL" type="url" name="website_url" value={formData.website_url} onChange={handleChange} />
                                 <Input label="Portal / LMS Link" type="url" name="portal_link" value={formData.portal_link} onChange={handleChange} />
                                 <Input label="LinkedIn URL" type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} />
+                                <Input label="Facebook URL" type="url" name="facebook_url" value={formData.facebook_url} onChange={handleChange} />
+                                <Input label="Instagram URL" type="url" name="instagram_url" value={formData.instagram_url} onChange={handleChange} />
+                                <Input label="YouTube Channel URL" type="url" name="youtube_url" value={formData.youtube_url} onChange={handleChange} />
                                 <Input label="Google Maps Link" type="url" name="google_maps_link" value={formData.google_maps_link} onChange={handleChange} />
                             </div>
                         </Card>
@@ -462,11 +622,27 @@ export default function InstitutionProfile() {
                                         <input type="checkbox" name="franchise_opportunity" checked={formData.franchise_opportunity} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
                                         <span className="text-sm">Franchise Opportunity</span>
                                     </label>
+                                    <label className="flex items-center gap-2">
+                                        <input type="checkbox" name="advertisement_interest" checked={formData.advertisement_interest} onChange={handleChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                        <span className="text-sm">Advertisement Interest</span>
+                                    </label>
                                 </div>
                                 <div className="md:col-span-2 mt-4">
                                     <TextArea label="Vendor Requirements" name="vendor_requirements" value={formData.vendor_requirements} onChange={handleChange} rows={2} />
                                     <TextArea label="Institution USP" name="institution_usp" value={formData.institution_usp} onChange={handleChange} rows={2} />
                                     <TextArea label="Vision & Mission" name="vision_mission" value={formData.vision_mission} onChange={handleChange} rows={2} />
+                                </div>
+                                <div className="md:col-span-2 mt-2">
+                                    <label className="block text-sm font-medium mb-2">Collaboration & Partnership Interests</label>
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {formData.collaboration_interests.map(item => (
+                                            <Badge key={item} variant="primary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={()=>handleRemoveTag('collaboration_interests', item)}/></Badge>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 max-w-sm">
+                                        <Input value={tagInputs.collaboration_interests} onChange={e => setTagInputs(p=>({...p, collaboration_interests: e.target.value}))} placeholder="e.g. Research, Student Exchange" />
+                                        <Button type="button" onClick={() => handleAddTag('collaboration_interests')}>Add</Button>
+                                    </div>
                                 </div>
                             </div>
                         </Card>

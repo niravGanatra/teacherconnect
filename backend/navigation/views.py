@@ -60,6 +60,12 @@ class NavigationMenuView(APIView):
             return self._user_count()
         if key == 'pending_fdp_count':
             return self._pending_fdp_count()
+        if key == 'pending_connection_requests':
+            return self._pending_connection_requests(user)
+        if key == 'acadtalk_unread_count':
+            return self._acadtalk_unread_count(user)
+        if key == 'open_opportunity_count':
+            return self._open_opportunity_count(user)
         return None
 
     @staticmethod
@@ -79,4 +85,26 @@ class NavigationMenuView(APIView):
     def _pending_fdp_count():
         from courses.models import Course
         count = Course.objects.filter(status='pending').count()
+        return count if count > 0 else None
+
+    @staticmethod
+    def _pending_connection_requests(user):
+        from acadconnect.models import ConnectionRequest
+        count = ConnectionRequest.objects.filter(receiver=user, status='pending').count()
+        return count if count > 0 else None
+
+    @staticmethod
+    def _acadtalk_unread_count(user):
+        from django.db.models import Q
+        from acadtalk.models import Message
+        count = Message.objects.filter(
+            Q(conversation__participant_a=user) | Q(conversation__participant_b=user),
+            read_at__isnull=True
+        ).exclude(sender=user).count()
+        return count if count > 0 else None
+
+    @staticmethod
+    def _open_opportunity_count(user):
+        from acadopportunities.models import Opportunity
+        count = Opportunity.objects.filter(institution__administrator=user, status='open').count()
         return count if count > 0 else None

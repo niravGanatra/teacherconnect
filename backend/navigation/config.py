@@ -85,6 +85,20 @@ MENU_CONFIG = {
     # ─────────────────────────────────────────────
     'INSTITUTION': [
         {
+            'id': 'acadopportunities',
+            'label': 'AcadOpportunities',
+            'icon': 'briefcase',
+            'path': '/institution/opportunities',
+            'badge': 'open_opportunity_count',
+        },
+        {
+            'id': 'acadservices',
+            'label': 'AcadServices',
+            'icon': 'layers',
+            'path': '/acadservices',
+            'badge': None,
+        },
+        {
             'id': 'institution',
             'label': 'My Institution',
             'icon': 'institutions',
@@ -151,6 +165,34 @@ MENU_CONFIG = {
             'label': 'My Profile',
             'icon': 'profile',
             'path': '/profile',
+            'badge': None,
+        },
+        {
+            'id': 'acadconnect',
+            'label': 'AcadConnect',
+            'icon': 'network',
+            'path': '/acadconnect',
+            'badge': 'pending_connection_requests',
+        },
+        {
+            'id': 'acadtalk',
+            'label': 'AcadTalk',
+            'icon': 'message',
+            'path': '/acadtalk',
+            'badge': 'acadtalk_unread_count',
+        },
+        {
+            'id': 'acadopportunities',
+            'label': 'AcadOpportunities',
+            'icon': 'briefcase',
+            'path': '/acadopportunities',
+            'badge': None,
+        },
+        {
+            'id': 'acadservices',
+            'label': 'AcadServices',
+            'icon': 'layers',
+            'path': '/acadservices',
             'badge': None,
         },
         {

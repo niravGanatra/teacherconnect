@@ -38,6 +38,10 @@ export default function TeacherProfile() {
         experience_years: 0,
         current_institution_name: '',
         portfolio_url: '',
+        linkedin_url: '',
+        facebook_url: '',
+        instagram_url: '',
+        youtube_url: '',
         is_searchable: true,
         contact_visible: false,
         subjects: [],
@@ -81,6 +85,10 @@ export default function TeacherProfile() {
                 experience_years: data.experience_years || 0,
                 current_institution_name: data.current_institution_name || '',
                 portfolio_url: data.portfolio_url || '',
+                linkedin_url: data.linkedin_url || '',
+                facebook_url: data.facebook_url || '',
+                instagram_url: data.instagram_url || '',
+                youtube_url: data.youtube_url || '',
                 is_searchable: data.is_searchable ?? true,
                 contact_visible: data.contact_visible ?? false,
                 subjects: Array.isArray(data.subjects) ? data.subjects : [],
@@ -689,6 +697,45 @@ export default function TeacherProfile() {
                             value={formData.state}
                             onChange={handleChange}
                             placeholder="Your state"
+                        />
+                    </div>
+                </Card>
+
+                {/* Social Media Links */}
+                <Card id="social-links" className="p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Social Media Profile Links</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="LinkedIn URL"
+                            name="linkedin_url"
+                            type="url"
+                            value={formData.linkedin_url}
+                            onChange={handleChange}
+                            placeholder="https://linkedin.com/in/..."
+                        />
+                        <Input
+                            label="Facebook URL"
+                            name="facebook_url"
+                            type="url"
+                            value={formData.facebook_url}
+                            onChange={handleChange}
+                            placeholder="https://facebook.com/..."
+                        />
+                        <Input
+                            label="Instagram URL"
+                            name="instagram_url"
+                            type="url"
+                            value={formData.instagram_url}
+                            onChange={handleChange}
+                            placeholder="https://instagram.com/..."
+                        />
+                        <Input
+                            label="YouTube Channel URL"
+                            name="youtube_url"
+                            type="url"
+                            value={formData.youtube_url}
+                            onChange={handleChange}
+                            placeholder="https://youtube.com/..."
                         />
                     </div>
                 </Card>

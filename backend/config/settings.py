@@ -17,6 +17,10 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Trust Railway / any reverse-proxy's X-Forwarded-Proto header so Django
+# correctly identifies HTTPS requests (required for CSRF, OAuth, secure cookies)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -48,6 +52,10 @@ INSTALLED_APPS = [
     'payments',
     'social',
     'navigation',
+    'acadconnect',
+    'acadtalk',
+    'acadopportunities',
+    'acadservices',
 ]
 
 

@@ -7,6 +7,7 @@ import {
     AcademicCapIcon,
     PlayCircleIcon
 } from '@heroicons/react/24/outline';
+import AcadConnectButton from '../acadconnect/AcadConnectButton';
 
 const UniversalSearchResultItem = ({ result, onClick }) => {
     const { type, id, title, subtitle, image } = result;
@@ -50,6 +51,8 @@ const UniversalSearchResultItem = ({ result, onClick }) => {
             break;
     }
 
+    const [connectionStatus, setConnectionStatus] = React.useState('not_connected');
+
     return (
         <Link
             to={linkTarget}
@@ -76,6 +79,27 @@ const UniversalSearchResultItem = ({ result, onClick }) => {
                     </p>
                 )}
             </div>
+
+            {type === 'educator' && (
+                <div 
+                    className="ml-4 flex-shrink-0 flex gap-2 items-center" 
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
+                    <AcadConnectButton userId={id} onStatusChange={setConnectionStatus} />
+                    {connectionStatus === 'connected' && (
+                        <Link 
+                            to={`/acadtalk?target=${id}`}
+                            className="px-3 py-1.5 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            Message
+                        </Link>
+                    )}
+                </div>
+            )}
         </Link>
     );
 };

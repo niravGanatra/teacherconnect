@@ -54,12 +54,13 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
     grades_taught_display = serializers.SerializerMethodField()
     completion_score = serializers.SerializerMethodField(read_only=True)
     incomplete_steps = serializers.SerializerMethodField(read_only=True)
+    connection_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TeacherProfile
         fields = [
             'id', 'email', 'username',
-            'first_name', 'last_name', 'headline', 'teaching_philosophy', 'profile_photo', 'background_photo',
+            'first_name', 'last_name', 'headline', 'teaching_philosophy', 'profile_photo', 'google_avatar_url', 'background_photo',
             'subjects', 'skills', 'experience_years', 'current_institution_name',
             'languages', 'available_for', 'time_availability', 'specializations', 'willing_to_collaborate_with',
             'awards_and_recognitions', 'notable_student_outcomes',
@@ -71,11 +72,11 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             'grades_taught', 'grades_taught_display',
             'demo_video_url', 'demo_video_file',
             # Portfolio
-            'resume', 'portfolio_url',
+            'resume', 'portfolio_url', 'linkedin_url', 'facebook_url', 'instagram_url', 'youtube_url',
             'phone', 'city', 'state',
             'is_searchable', 'contact_visible',
             # Computed completion fields (read-only)
-            'completion_score', 'incomplete_steps',
+            'completion_score', 'incomplete_steps', 'connection_count',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -219,6 +220,10 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Video file must be under 50MB.')
         return value
 
+    def get_connection_count(self, obj):
+        from acadconnect.models import Connection
+        return Connection.connection_count(obj.user)
+
 
 class TeacherProfilePublicSerializer(serializers.ModelSerializer):
     """
@@ -233,11 +238,12 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
     boards_display = serializers.SerializerMethodField()
     grades_taught_display = serializers.SerializerMethodField()
     has_demo_video = serializers.SerializerMethodField()
+    connection_count = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = TeacherProfile
         fields = [
-            'id', 'full_name', 'headline', 'teaching_philosophy', 'profile_photo', 'background_photo',
+            'id', 'full_name', 'headline', 'teaching_philosophy', 'profile_photo', 'google_avatar_url', 'background_photo',
             'subjects', 'skills', 'experience_years', 'current_institution_name',
             'languages', 'available_for', 'time_availability', 'specializations', 'willing_to_collaborate_with',
             'awards_and_recognitions', 'notable_student_outcomes',
@@ -249,6 +255,8 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
             'boards', 'boards_display',
             'grades_taught', 'grades_taught_display',
             'demo_video_url', 'demo_video_file', 'has_demo_video',
+            'linkedin_url', 'facebook_url', 'instagram_url', 'youtube_url',
+            'connection_count',
         ]
     
     def get_email(self, obj):
@@ -275,6 +283,10 @@ class TeacherProfilePublicSerializer(serializers.ModelSerializer):
 
     def get_has_demo_video(self, obj):
         return bool(obj.demo_video_url or obj.demo_video_file)
+
+    def get_connection_count(self, obj):
+        from acadconnect.models import Connection
+        return Connection.connection_count(obj.user)
 
 
 class InstitutionCampusSerializer(serializers.ModelSerializer):
@@ -312,7 +324,9 @@ class InstitutionProfilePublicSerializer(serializers.ModelSerializer):
         exclude = [
             'user', 'pan_cin', 'vendor_requirements', 
             'lead_potential_score', 'engagement_score',
-            'whatsapp_number', 'poc_name', 'poc_designation', 'contact_phone', 'contact_email'
+            'whatsapp_number', 'poc_name', 'poc_designation', 'contact_phone', 'contact_email',
+            'fee_range', 'scholarships_offered', 'corporate_training', 'franchise_opportunity', 'advertisement_interest',
+            'collaboration_interests', 'category_tags', 'data_source'
         ]
 
 
@@ -388,6 +402,9 @@ class EndorserSerializer(serializers.Serializer):
                 if request:
                     return request.build_absolute_uri(p.profile_photo.url)
                 return p.profile_photo.url
+            # Fall back to Google avatar for OAuth users
+            if p.google_avatar_url:
+                return p.google_avatar_url
         except Exception:
             pass
         return None
