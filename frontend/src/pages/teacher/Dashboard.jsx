@@ -154,9 +154,11 @@ export default function TeacherDashboard() {
 
             {/* Section 4: Analytics OR Job Recommendations (Bottom) */}
             {showJobRecommendations ? (
-                <Card className="p-4 md:p-6">
-                    <JobRecommendationsWidget jobs={recommendedJobs} showJobs={true} />
-                </Card>
+                recommendedJobs.length > 0 && (
+                    <Card className="p-4 md:p-6">
+                        <JobRecommendationsWidget jobs={recommendedJobs} showJobs={true} />
+                    </Card>
+                )
             ) : (
                 <AnalyticsSummaryWidget />
             )}

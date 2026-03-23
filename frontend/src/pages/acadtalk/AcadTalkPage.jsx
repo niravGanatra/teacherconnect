@@ -119,7 +119,7 @@ const AcadTalkPage = () => {
   );
 
   return (
-    <div className="h-[calc(100vh-64px)] md:h-[calc(100vh-80px)] w-full flex bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="h-dvh w-full flex bg-white dark:bg-gray-900 overflow-hidden">
       
       {/* LEFT PANEL */}
       <div className={`${isMobileViewList ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900`}>

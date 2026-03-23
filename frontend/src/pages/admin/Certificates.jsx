@@ -50,7 +50,7 @@ export default function AdminCertificates() {
                     {[
                         { label: 'Total Issued', icon: CheckBadgeIcon, color: 'text-green-600 bg-green-50', value: loading ? '—' : '0' },
                         { label: 'Issued This Month', icon: ClockIcon, color: 'text-blue-600 bg-blue-50', value: loading ? '—' : '0' },
-                        { label: 'Unique Recipients', icon: AcademicCapIcon, color: 'text-purple-600 bg-purple-50', value: loading ? '—' : stats?.users?.total ?? '—' },
+                        { label: 'Unique Recipients', icon: AcademicCapIcon, color: 'text-purple-600 bg-purple-50', value: loading ? '—' : '0' },
                     ].map(({ label, icon: Icon, color, value }) => (
                         <div key={label} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
                             <div className={`p-3 rounded-xl ${color}`}>

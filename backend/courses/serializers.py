@@ -49,8 +49,8 @@ class CourseListSerializer(serializers.ModelSerializer):
         ]
 
     def get_instructor_name(self, obj):
-        if hasattr(obj.instructor, 'teacher_profile'):
-            profile = obj.instructor.teacher_profile
+        if hasattr(obj.instructor, 'educator_profile'):
+            profile = obj.instructor.educator_profile
             return f"{profile.first_name} {profile.last_name}".strip() or obj.instructor.email
         return obj.instructor.email
 
@@ -91,14 +91,14 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_instructor_name(self, obj):
-        if hasattr(obj.instructor, 'teacher_profile'):
-            profile = obj.instructor.teacher_profile
+        if hasattr(obj.instructor, 'educator_profile'):
+            profile = obj.instructor.educator_profile
             return f"{profile.first_name} {profile.last_name}".strip() or obj.instructor.email
         return obj.instructor.email
 
     def get_instructor_photo(self, obj):
-        if hasattr(obj.instructor, 'teacher_profile') and obj.instructor.teacher_profile.profile_photo:
-            return obj.instructor.teacher_profile.profile_photo.url
+        if hasattr(obj.instructor, 'educator_profile') and obj.instructor.educator_profile.profile_photo:
+            return obj.instructor.educator_profile.profile_photo.url
         return None
 
     def get_is_enrolled(self, obj):
@@ -165,7 +165,7 @@ class CertificateSerializer(serializers.ModelSerializer):
         if obj.course.accreditation_body:
             return obj.course.accreditation_body
         try:
-            p = obj.course.instructor.teacher_profile
+            p = obj.course.instructor.educator_profile
             return f"{p.first_name} {p.last_name}".strip() or obj.course.instructor.email
         except Exception:
             return obj.course.instructor.email

@@ -124,6 +124,20 @@ export default function InstitutionPage() {
                     <BuildingLibraryIcon className="w-16 h-16 mx-auto text-slate-300" />
                     <h2 className="mt-4 text-xl font-semibold text-slate-900">{error}</h2>
                     <p className="mt-2 text-slate-500">The institution page you're looking for doesn't exist.</p>
+                    <div className="mt-6 flex items-center justify-center gap-3">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                            ← Go back
+                        </button>
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                        >
+                            Go to Dashboard
+                        </button>
+                    </div>
                 </div>
             </DashboardLayout>
         );

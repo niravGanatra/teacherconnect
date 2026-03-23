@@ -324,7 +324,7 @@ export default function ServiceFormPage() {
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all shadow-sm ${isActive ? 'bg-blue-600 text-white border-blue-600' : isComplete ? 'bg-green-100 text-green-600 border-green-200' : 'bg-white text-slate-300 border-slate-100'}`}>
                                         {isComplete ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-5 h-5" />}
                                     </div>
-                                    <span className={`text-[10px] font-black uppercase tracking-[0.15em] text-center ${isActive ? 'text-blue-600' : isComplete ? 'text-green-600' : 'text-slate-300'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.1em] text-center whitespace-normal max-w-[90px] leading-tight ${isActive ? 'text-blue-600' : isComplete ? 'text-green-600' : 'text-slate-300'}`}>
                                         {step.title}
                                     </span>
                                 </div>

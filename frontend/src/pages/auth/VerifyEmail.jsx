@@ -56,8 +56,8 @@ export default function VerifyEmail() {
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] rounded-2xl mb-4">
-                        <span className="text-2xl font-bold text-white">TC</span>
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-purple-800 rounded-2xl mb-4">
+                        <span className="text-2xl font-bold text-white">AW</span>
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900">AcadWorld</h1>
                 </div>

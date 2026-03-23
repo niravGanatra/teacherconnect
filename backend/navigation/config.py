@@ -45,7 +45,7 @@ MENU_CONFIG = {
         },
         {
             'id': 'fdps',
-            'label': 'Faculty Development Programs',
+            'label': 'FDP Management',
             'icon': 'fdps',
             'path': '/admin/fdps',
             'badge': 'pending_fdp_count',

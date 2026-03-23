@@ -112,10 +112,12 @@ export default function MyLearning() {
                                 </h3>
 
                                 <div className="flex items-center gap-4 text-sm text-slate-500 mb-3">
-                                    <span className="flex items-center gap-1">
-                                        <ClockIcon className="w-4 h-4" />
-                                        {enrollment.course?.total_duration || 0}m
-                                    </span>
+                                    {enrollment.course?.total_duration > 0 && (
+                                        <span className="flex items-center gap-1">
+                                            <ClockIcon className="w-4 h-4" />
+                                            {enrollment.course.total_duration}m
+                                        </span>
+                                    )}
                                     <span className="flex items-center gap-1">
                                         {enrollment.is_completed ? (
                                             <CheckCircleIcon className="w-4 h-4 text-green-500" />

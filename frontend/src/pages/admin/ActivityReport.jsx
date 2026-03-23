@@ -77,6 +77,8 @@ export default function AdminActivityReport() {
         fetchActivityData();
     }, [dateRange, selectedRole]);
 
+    const [isUsingMockData, setIsUsingMockData] = useState(false);
+
     const fetchActivityData = async () => {
         setLoading(true);
         try {
@@ -87,13 +89,17 @@ export default function AdminActivityReport() {
                 role: selectedRole,
             });
 
-            setActivityData(response.data.activity || getMockActivityData());
-            setTopPerformers(response.data.top_performers || getMockTopPerformers());
+            const hasRealActivity = response.data.activity?.length > 0;
+            const hasRealPerformers = response.data.top_performers?.length > 0;
+            setActivityData(hasRealActivity ? response.data.activity : getMockActivityData());
+            setTopPerformers(hasRealPerformers ? response.data.top_performers : getMockTopPerformers());
+            setIsUsingMockData(!hasRealActivity && !hasRealPerformers);
         } catch (error) {
             console.error('Failed to fetch activity data:', error);
-            // Use mock data for demo
+            // Fall back to sample data
             setActivityData(getMockActivityData());
             setTopPerformers(getMockTopPerformers());
+            setIsUsingMockData(true);
         } finally {
             setLoading(false);
         }
@@ -151,6 +157,14 @@ export default function AdminActivityReport() {
                 </h1>
                 <p className="text-slate-500">User activity analytics and performance metrics</p>
             </div>
+
+            {/* Sample data notice */}
+            {isUsingMockData && (
+                <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd"/></svg>
+                    <span><strong>Sample data shown.</strong> The reports API endpoint is not yet connected. Charts and leaderboard reflect demo values only.</span>
+                </div>
+            )}
 
             {/* Filters */}
             <Card className="p-4 mb-6">
