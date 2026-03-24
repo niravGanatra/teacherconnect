@@ -47,7 +47,7 @@ def certificate_earned(sender, instance, created, **kwargs):
 @receiver(post_save, sender='profiles.EducatorProfile')
 def profile_updated(sender, instance, created, **kwargs):
     """Create FeedActivity when a teacher completes their profile for the first time (bio set)."""
-    if not created and instance.bio:
+    if not created and getattr(instance, 'bio', None):
         from social.models import FeedActivity
         from django.contrib.contenttypes.models import ContentType
         ct = ContentType.objects.get_for_model(instance)

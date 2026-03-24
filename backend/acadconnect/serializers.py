@@ -6,35 +6,37 @@ from .models import Connection, ConnectionRequest
 User = get_user_model()
 
 class NestedUserSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    avatar_url = serializers.SerializerMethodField()
-    role = serializers.SerializerMethodField()
-    institution = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+    profile_photo_url = serializers.SerializerMethodField()
+    headline = serializers.SerializerMethodField()
+    current_institution_name = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'avatar_url', 'role', 'institution']
+        fields = ['id', 'full_name', 'profile_photo_url', 'headline', 'current_institution_name', 'city', 'state']
 
-    def get_name(self, obj):
+    def get_full_name(self, obj):
         if hasattr(obj, 'educator_profile'):
             return obj.educator_profile.full_name
         if hasattr(obj, 'institution_profile'):
             return obj.institution_profile.institution_name
         return obj.email
 
-    def get_avatar_url(self, obj):
+    def get_profile_photo_url(self, obj):
         request = self.context.get('request')
         url = None
         if hasattr(obj, 'educator_profile') and obj.educator_profile.profile_photo:
             url = obj.educator_profile.profile_photo.url
         elif hasattr(obj, 'institution_profile') and obj.institution_profile.logo:
             url = obj.institution_profile.logo.url
-            
+
         if url and request:
             return request.build_absolute_uri(url)
         return url
 
-    def get_role(self, obj):
+    def get_headline(self, obj):
         if hasattr(obj, 'educator_profile'):
             role_display = obj.educator_profile.get_current_role_display()
             if role_display == 'Other' and obj.educator_profile.current_role_custom:
@@ -44,11 +46,25 @@ class NestedUserSerializer(serializers.ModelSerializer):
             return obj.institution_profile.get_institution_type_display()
         return obj.get_user_type_display()
 
-    def get_institution(self, obj):
+    def get_current_institution_name(self, obj):
         if hasattr(obj, 'educator_profile'):
             return obj.educator_profile.current_institution_name
         if hasattr(obj, 'institution_profile'):
-             return obj.institution_profile.sub_type or 'Institution'
+            return obj.institution_profile.sub_type or 'Institution'
+        return None
+
+    def get_city(self, obj):
+        if hasattr(obj, 'educator_profile'):
+            return obj.educator_profile.city
+        if hasattr(obj, 'institution_profile'):
+            return obj.institution_profile.city
+        return None
+
+    def get_state(self, obj):
+        if hasattr(obj, 'educator_profile'):
+            return obj.educator_profile.state
+        if hasattr(obj, 'institution_profile'):
+            return obj.institution_profile.state
         return None
 
 
