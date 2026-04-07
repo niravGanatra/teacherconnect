@@ -282,9 +282,9 @@ class SuggestionsView(APIView):
             exclude_ids.append(req.sender_id)
             exclude_ids.append(req.receiver_id)
             
-        # Get users
+        # Get users — only educators (exclude institutions and admins)
         suggested = User.objects.exclude(id__in=exclude_ids).filter(
-            is_active=True, is_verified=True
+            is_active=True, is_verified=True, user_type='EDUCATOR'
         )
         
         # Prioritization algorithm:

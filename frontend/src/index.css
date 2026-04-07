@@ -407,9 +407,11 @@ body {
   color: white;
   z-index: 50;
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.open {
@@ -423,27 +425,57 @@ body {
   }
 }
 
+/* Logo hover glow */
+.sidebar-logo {
+  transition: text-shadow 0.25s ease;
+}
+.sidebar-logo:hover {
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.55);
+}
+
+/* Feathered section divider */
+.sidebar-divider {
+  height: 1px;
+  margin: 0.5rem 1rem;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.12) 25%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.12) 75%,
+    transparent
+  );
+}
+
 .sidebar-link {
   display: flex;
   align-items: center;
-  padding: 0.875rem 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  padding: 0.75rem 0.875rem;
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 10px;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   gap: 0.75rem;
-  min-height: 48px;
-  /* Touch friendly */
+  min-height: 44px;
+  position: relative;
 }
 
-.sidebar-link:hover,
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(2px);
+}
+
 .sidebar-link:active {
   background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
 .sidebar-link.active {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
   color: white;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.75);
+  transform: none; /* active items don't slide on hover */
 }
 
 /* Mobile Header */
@@ -505,6 +537,21 @@ body {
   .main-content {
     margin-left: 256px;
     padding: calc(56px + 1.5rem) 1.5rem 1.5rem;
+  }
+}
+
+/* Flush content area — no padding, fills remaining viewport after headers.
+   Used for full-height panels like AcadTalk (Slack/WhatsApp-style layout). */
+.main-content-flush {
+  padding-top: 56px; /* mobile header */
+  height: 100dvh;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .main-content-flush {
+    margin-left: 256px;
+    padding-top: 56px; /* desktop top bar */
   }
 }
 

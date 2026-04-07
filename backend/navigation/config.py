@@ -224,20 +224,6 @@ MENU_CONFIG = {
             'badge': None,
         },
         {
-            'id': 'certificates',
-            'label': 'My Certificates',
-            'icon': 'certificates',
-            'path': '/learning',
-            'badge': None,
-        },
-        {
-            'id': 'saved',
-            'label': 'Saved Programs',
-            'icon': 'saved',
-            'path': '/saved',
-            'badge': None,
-        },
-        {
             'id': 'notifications',
             'label': 'Notifications',
             'icon': 'notifications',

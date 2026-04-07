@@ -30,6 +30,36 @@ import {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  Section group configuration — maps item IDs → group label (null = no label)
+// ─────────────────────────────────────────────────────────────────────────────
+const ITEM_GROUPS = {
+    dashboard:         null,
+    profile:           null,
+    acadconnect:       'Connect',
+    acadtalk:          'Connect',
+    acadopportunities: 'Discover',
+    acadservices:      'Discover',
+    feed:              'Discover',
+    fdps:              'Learning',
+    enrollments:       'Learning',
+    notifications:     'Account',
+    settings:          'Account',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Group label chip — shown above the first item of each named group
+// ─────────────────────────────────────────────────────────────────────────────
+function GroupLabel({ label }) {
+    return (
+        <div className="px-3 pt-4 pb-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 select-none">
+                {label}
+            </span>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Badge chip — small coloured circle with a number
 // ─────────────────────────────────────────────────────────────────────────────
 function BadgeChip({ count }) {
@@ -52,12 +82,15 @@ function BadgeChip({ count }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function MenuSkeleton() {
     return (
-        <div className="flex-1 p-3 space-y-1 animate-pulse" aria-hidden="true">
-            {[...Array(6)].map((_, i) => (
+        <div className="flex-1 p-3 space-y-1" aria-hidden="true">
+            {[...Array(8)].map((_, i) => (
                 <div
                     key={i}
-                    className="h-11 rounded-lg bg-white/10"
-                    style={{ opacity: 1 - i * 0.12 }}
+                    className="h-10 rounded-xl bg-white/10 animate-pulse"
+                    style={{
+                        opacity: Math.max(0.15, 0.75 - i * 0.08),
+                        animationDelay: `${i * 60}ms`,
+                    }}
                 />
             ))}
         </div>
@@ -142,7 +175,7 @@ export function Sidebar({ isOpen, onClose }) {
 
                 {/* ── Header ─────────────────────────── */}
                 <div className="p-4 lg:p-6 border-b border-white/10 flex items-center justify-between">
-                    <h1 className="text-lg lg:text-xl font-bold flex items-center gap-2">
+                    <h1 className="sidebar-logo text-lg lg:text-xl font-bold flex items-center gap-2">
                         <span className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm">
                             AW
                         </span>
@@ -164,19 +197,24 @@ export function Sidebar({ isOpen, onClose }) {
                     <MenuSkeleton />
                 ) : (
                     <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
-                        {menuItems.map(item => (
-                            <SidebarItem
-                                key={item.id}
-                                item={item}
-                                onNavigate={onClose}
-                            />
-                        ))}
+                        {menuItems.map((item, idx) => {
+                            const group = ITEM_GROUPS[item.id] ?? null;
+                            const prevGroup = idx > 0 ? (ITEM_GROUPS[menuItems[idx - 1].id] ?? null) : '__start__';
+                            const showLabel = group !== null && group !== prevGroup;
+                            return (
+                                <div key={item.id}>
+                                    {showLabel && <GroupLabel label={group} />}
+                                    <SidebarItem item={item} onNavigate={onClose} />
+                                </div>
+                            );
+                        })}
                     </nav>
                 )}
 
                 {/* ── Role switcher (multi-role users) ─ */}
                 {hasMultipleRoles && switchableRoles.length > 1 && (
-                    <div className="px-3 lg:px-4 py-2 border-t border-white/10">
+                    <div className="px-3 lg:px-4 py-2">
+                    <div className="sidebar-divider mb-2" />
                         <div className="relative">
                             <button
                                 onClick={() => setShowRoleSwitcher(v => !v)}
@@ -227,7 +265,8 @@ export function Sidebar({ isOpen, onClose }) {
                 )}
 
                 {/* ── User card + Sign-out ────────────── */}
-                <div className="p-3 lg:p-4 border-t border-white/10 safe-area-bottom">
+                <div className="p-3 lg:p-4 safe-area-bottom">
+                    <div className="sidebar-divider mb-3" />
                     <div className="mb-3 p-3 bg-gradient-to-r from-white/10 to-white/5 rounded-xl backdrop-blur-sm">
                         <div className="flex items-center gap-3">
                             {/* Avatar */}
@@ -310,7 +349,7 @@ export function MobileHeader({ onMenuClick, onSearchClick }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  DashboardLayout — full responsive wrapper
 // ─────────────────────────────────────────────────────────────────────────────
-export function DashboardLayout({ children }) {
+export function DashboardLayout({ children, flush = false }) {
     const [sidebarOpen, setSidebarOpen]         = useState(false);
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -366,7 +405,7 @@ export function DashboardLayout({ children }) {
                 </div>
             </div>
 
-            <main className="main-content">
+            <main className={flush ? 'main-content-flush' : 'main-content'}>
                 {children}
             </main>
         </div>

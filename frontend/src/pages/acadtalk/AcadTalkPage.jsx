@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAcadTalk } from '../../hooks/useAcadTalk';
 import { acadTalkAPI } from '../../services/acadTalkAPI';
 import StartConversationModal from '../../components/acadtalk/StartConversationModal';
+import { DashboardLayout } from '../../components/common/Sidebar';
 const isToday = (date) => {
   const today = new Date();
   return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
@@ -119,7 +120,8 @@ const AcadTalkPage = () => {
   );
 
   return (
-    <div className="h-dvh w-full flex bg-white dark:bg-gray-900 overflow-hidden">
+    <DashboardLayout flush>
+    <div className="h-full w-full flex bg-white dark:bg-gray-900 overflow-hidden">
       
       {/* LEFT PANEL */}
       <div className={`${isMobileViewList ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900`}>
@@ -324,6 +326,7 @@ const AcadTalkPage = () => {
         }}
       />
     </div>
+    </DashboardLayout>
   );
 };
 
