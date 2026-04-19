@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, serializers, status, filters
+from accounts.permissions import IsEducatorOrInstitution
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Avg, Q
@@ -70,7 +71,7 @@ class ServiceDetailView(generics.RetrieveAPIView):
 
 class MyServicesView(generics.ListCreateAPIView):
     serializer_class = ServiceDetailSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsEducatorOrInstitution]
 
     def get_queryset(self):
         return Service.objects.filter(provider=self.request.user)
@@ -95,7 +96,7 @@ class ServiceUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ServiceToggleView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsEducatorOrInstitution]
 
     def patch(self, request, pk):
         service = get_object_or_404(Service, pk=pk, provider=request.user)

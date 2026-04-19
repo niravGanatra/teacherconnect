@@ -3,7 +3,7 @@ Serializers for Teacher and Institution profiles.
 """
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, InstitutionCourse, Experience, Education, Skill, Certification, Endorsement
+from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, InstitutionCourse, Experience, Education, Skill, Certification, Endorsement, LearnerProfile
 import os
 
 User = get_user_model()
@@ -378,6 +378,21 @@ class EducationSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class LearnerProfileSerializer(serializers.ModelSerializer):
+    """Serializer for LearnerProfile — onboarding data for students and parents."""
+    email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = LearnerProfile
+        fields = [
+            'id', 'email',
+            'first_name', 'last_name',
+            'interested_grades', 'interested_subjects',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'email', 'created_at', 'updated_at']
 
 
 class EndorserSerializer(serializers.Serializer):

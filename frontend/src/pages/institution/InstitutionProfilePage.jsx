@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Card, Button, Spinner, Badge, Modal } from '../../components/common';
 import { institutionPagesAPI, campusAPI } from '../../services/api';
 import InstitutionHeader from '../../components/institution/InstitutionHeader';
@@ -49,6 +50,7 @@ const FACILITY_ICONS = {
 
 export default function InstitutionProfilePage() {
     const { slug } = useParams();
+    const { isLearner } = useAuth();
     const [institution, setInstitution] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
@@ -259,11 +261,18 @@ export default function InstitutionProfilePage() {
             )}
 
             {/* CTA */}
-            <div className="sticky top-4">
-                <Button variant="primary" className="w-full">
-                    Enquire for Admission
-                </Button>
-            </div>
+            {!isLearner ? (
+                <div className="sticky top-4">
+                    <Button variant="primary" className="w-full">
+                        Enquire for Admission
+                    </Button>
+                </div>
+            ) : (
+                <div className="sticky top-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-center">
+                    <p className="text-sm font-semibold text-slate-700">View-Only Mode</p>
+                    <p className="text-xs text-slate-500">Learner accounts cannot send inquiries.</p>
+                </div>
+            )}
         </div>
     );
 
@@ -407,7 +416,7 @@ export default function InstitutionProfilePage() {
         <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-800">Reviews</h3>
-                <Button variant="outline" size="sm">Write a Review</Button>
+                {!isLearner && <Button variant="outline" size="sm">Write a Review</Button>}
             </div>
 
             {institution.reviews?.length > 0 ? (

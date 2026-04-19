@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from accounts.permissions import IsTeacher, IsInstitution
-from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, Experience, Education, Skill, Certification, Endorsement
+from accounts.permissions import IsTeacher, IsInstitution, IsLearner
+from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, Experience, Education, Skill, Certification, Endorsement, LearnerProfile
 from .serializers import (
     TeacherProfileSerializer,
     TeacherProfilePublicSerializer,
@@ -19,6 +19,7 @@ from .serializers import (
     EducationSerializer,
     SkillSerializer,
     CertificationSerializer,
+    LearnerProfileSerializer,
 )
 
 
@@ -447,3 +448,19 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
         return PrivacySettingsSerializer
 
 
+# ============================================
+# Learner Profile View
+# ============================================
+
+class LearnerProfileView(generics.RetrieveUpdateAPIView):
+    """
+    GET  /api/profiles/learner/me/  — retrieve the current learner's profile
+    PATCH /api/profiles/learner/me/ — update interests (grades, subjects)
+    Only accessible by users with user_type == LEARNER.
+    """
+    serializer_class = LearnerProfileSerializer
+    permission_classes = [IsAuthenticated, IsLearner]
+
+    def get_object(self):
+        profile, _ = LearnerProfile.objects.get_or_create(user=self.request.user)
+        return profile

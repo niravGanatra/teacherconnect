@@ -19,9 +19,10 @@ export const ROLES = {
     INSTRUCTOR: 'instructor',       // Educator who creates courses
     INSTITUTION_ADMIN: 'institution_admin',
     SUPER_ADMIN: 'super_admin',
+    LEARNER: 'learner',
     // Backward compatibility aliases
     TEACHER: 'educator',
-    STUDENT: 'educator',
+    STUDENT: 'educator', // Leaving original alias as is to avoid breaking existing STUDENT checks
     ADMIN: 'super_admin',
 };
 
@@ -101,6 +102,8 @@ export function AuthProvider({ children }) {
             }
         } else if (userData.user_type === 'INSTITUTION') {
             derivedRoles.push(ROLES.INSTITUTION_ADMIN);
+        } else if (userData.user_type === 'LEARNER') {
+            derivedRoles.push(ROLES.LEARNER);
         } else if (userData.user_type === 'ADMIN' || userData.user_type === 'SUPER_ADMIN') {
             derivedRoles.push(ROLES.ADMIN);
         }
@@ -366,6 +369,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user,
         isTeacher: user?.user_type === 'EDUCATOR' || user?.user_type === 'TEACHER',
         isInstitution: user?.user_type === 'INSTITUTION',
+        isLearner: user?.user_type === 'LEARNER',
         isAdmin: user?.user_type === 'ADMIN' || user?.user_type === 'SUPER_ADMIN',
         isInstitutionAdmin: roles.includes(ROLES.INSTITUTION_ADMIN),
         isInstructor: roles.includes(ROLES.INSTRUCTOR),

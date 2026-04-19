@@ -66,6 +66,21 @@ class IsSuperAdmin(BasePermission):
 IsAdminUser = IsSuperAdmin
 
 
+class IsLearner(BasePermission):
+    """
+    Permission class that only allows Learner users (Students / Parents).
+    Learners have read-only access to institutions and services.
+    """
+    message = "Only students or parents can perform this action."
+
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            request.user.user_type == 'LEARNER'
+        )
+
+
 class IsEducatorOrInstitution(BasePermission):
     """
     Permission class that allows both Educators and Institutions.

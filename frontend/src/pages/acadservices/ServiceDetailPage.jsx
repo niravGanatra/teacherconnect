@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button } from '../../components/common';
 import { acadServicesAPI } from '../../services/acadServicesAPI';
@@ -99,6 +100,7 @@ const InquiryModal = ({ service, isOpen, onClose, onSuccess }) => {
 
 export default function ServiceDetailPage() {
     const { id } = useParams();
+    const { isLearner } = useAuth();
     const [service, setService] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -334,7 +336,12 @@ export default function ServiceDetailPage() {
                                     </div>
                                 </div>
 
-                                {inquirySuccess ? (
+                                {isLearner ? (
+                                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+                                        <p className="text-sm font-bold text-slate-700">View-Only Access</p>
+                                        <p className="text-xs text-slate-500">Learner accounts cannot send inquiries or messages.</p>
+                                    </div>
+                                ) : inquirySuccess ? (
                                     <div className="bg-green-50 border border-green-200 p-4 rounded-2xl space-y-2 text-center">
                                         <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto">
                                             <CheckCircle2 className="w-6 h-6" />

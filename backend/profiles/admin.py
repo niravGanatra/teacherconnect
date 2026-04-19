@@ -1,6 +1,20 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, InstitutionProfile
+from .models import TeacherProfile, InstitutionProfile, LearnerProfile
+
+
+@admin.register(LearnerProfile)
+class LearnerProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'full_name', 'created_at']
+    search_fields = ['user__email', 'first_name', 'last_name']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    list_per_page = 25
+
+    fieldsets = (
+        ('User', {'fields': ('user', 'first_name', 'last_name')}),
+        ('Interests', {'fields': ('interested_grades', 'interested_subjects')}),
+        ('Metadata', {'fields': ('id', 'created_at', 'updated_at'), 'classes': ('collapse',)}),
+    )
 
 
 @admin.register(TeacherProfile)

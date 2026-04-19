@@ -119,6 +119,16 @@ class RegisterView(generics.CreateAPIView):
                 if profile_data.get('website_url'):
                     profile.website_url = profile_data['website_url']
                 profile.save()
+            elif user.user_type == 'LEARNER':
+                from profiles.models import LearnerProfile
+                profile, _ = LearnerProfile.objects.get_or_create(user=user)
+                profile.first_name = profile_data.get('first_name') or request.data.get('first_name', '')
+                profile.last_name = profile_data.get('last_name') or request.data.get('last_name', '')
+                if 'interested_grades' in profile_data:
+                    profile.interested_grades = profile_data['interested_grades']
+                if 'interested_subjects' in profile_data:
+                    profile.interested_subjects = profile_data['interested_subjects']
+                profile.save()
 
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)

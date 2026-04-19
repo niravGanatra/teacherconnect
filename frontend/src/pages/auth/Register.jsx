@@ -262,7 +262,7 @@ export default function Register() {
                             {/* Role selector */}
                             <div>
                                 <p className="text-sm font-medium text-gray-700 mb-2.5">I am a…</p>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <RoleCard
                                         value="EDUCATOR"
                                         emoji="🎓"
@@ -274,9 +274,17 @@ export default function Register() {
                                     <RoleCard
                                         value="INSTITUTION"
                                         emoji="🏫"
-                                        label="Institution Admin"
-                                        desc="School, college, EdTech org"
+                                        label="Institution"
+                                        desc="School, college, EdTech"
                                         selected={role === 'INSTITUTION'}
+                                        onSelect={setRole}
+                                    />
+                                    <RoleCard
+                                        value="LEARNER"
+                                        emoji="👨‍🎓"
+                                        label="Student / Parent"
+                                        desc="View services and browse"
+                                        selected={role === 'LEARNER'}
                                         onSelect={setRole}
                                     />
                                 </div>

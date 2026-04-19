@@ -16,6 +16,7 @@ class UserType(models.TextChoices):
     """
     EDUCATOR = 'EDUCATOR', 'Educator'          # Teachers, professors, trainers
     INSTITUTION = 'INSTITUTION', 'Institution'  # Schools, colleges, EdTech
+    LEARNER = 'LEARNER', 'Student / Parent'     # Students, Parents, view-only users
     SUPER_ADMIN = 'SUPER_ADMIN', 'Super Admin'  # Platform administrators
 
 
@@ -70,6 +71,11 @@ class User(AbstractUser):
     def is_institution(self):
         """Check if user is an institution admin."""
         return self.user_type == UserType.INSTITUTION
+
+    @property
+    def is_learner(self):
+        """Check if user is a student or parent."""
+        return self.user_type == UserType.LEARNER
 
     @property
     def is_super_admin(self):

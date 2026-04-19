@@ -238,4 +238,31 @@ MENU_CONFIG = {
             'badge': None,
         },
     ],
+
+    # ─────────────────────────────────────────────
+    #  LEARNER (Student / Parent)
+    # ─────────────────────────────────────────────
+    'LEARNER': [
+        {
+            'id': 'acadservices',
+            'label': 'AcadServices',
+            'icon': 'layers',
+            'path': '/acadservices',
+            'badge': None,
+        },
+        {
+            'id': 'institutions',
+            'label': 'Institutions',
+            'icon': 'institutions',
+            'path': '/institutions',
+            'badge': None,
+        },
+        {
+            'id': 'settings',
+            'label': 'Settings',
+            'icon': 'settings',
+            'path': '/settings',
+            'badge': None,
+        },
+    ],
 }

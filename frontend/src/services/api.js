@@ -664,6 +664,12 @@ export const navigationAPI = {
     getMenu: () => api.get('/navigation/menu/'),
 };
 
+// Learner Profile API (student/parent onboarding interests)
+export const learnerAPI = {
+    getProfile: () => api.get('/profiles/learner/me/'),
+    updateProfile: (data) => api.patch('/profiles/learner/me/', data),
+};
+
 // Admin FDP management API (Super Admin only)
 export const adminFDPAPI = {
     list: (params = {}) => api.get('/admin/fdps/', { params }),

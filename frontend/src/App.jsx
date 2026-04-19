@@ -16,6 +16,7 @@ import TermsOfService from './pages/legal/TermsOfService';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
+import LearnerOnboarding from './pages/onboarding/LearnerOnboarding';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/Dashboard';
@@ -123,6 +124,10 @@ function DashboardRouter() {
     return <InstitutionDashboard />;
   }
 
+  if (user?.user_type === 'LEARNER') {
+    return <Navigate to="/acadservices" replace />;
+  }
+
   return <Navigate to="/login" replace />;
 }
 
@@ -190,6 +195,14 @@ function AppRoutes() {
       <Route
         path="/register/institution"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <InstitutionOnboarding />}
+      />
+      <Route
+        path="/onboarding/learner"
+        element={
+          <ProtectedRoute allowedTypes={['learner']}>
+            <LearnerOnboarding />
+          </ProtectedRoute>
+        }
       />
       {/* Email verification routes — always public */}
       <Route path="/check-email" element={<CheckEmail />} />

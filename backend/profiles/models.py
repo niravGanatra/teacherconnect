@@ -754,3 +754,38 @@ class UserPrivacySettings(models.Model):
         settings, created = cls.objects.get_or_create(user=user)
         return settings
 
+
+class LearnerProfile(models.Model):
+    """
+    Profile for Learner users (students, parents).
+    Contains basic demographic and interest data.
+    Uses UUID as primary key to prevent ID enumeration attacks.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='learner_profile'
+    )
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    
+    # Interests
+    interested_grades = models.JSONField(default=list, blank=True)
+    interested_subjects = models.JSONField(default=list, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'learner_profiles'
+        verbose_name = 'Learner Profile'
+        verbose_name_plural = 'Learner Profiles'
+
+    def __str__(self):
+        return f"{self.user.email} - Learner Profile"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.user.username
+

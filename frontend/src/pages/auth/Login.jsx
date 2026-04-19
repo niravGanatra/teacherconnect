@@ -44,7 +44,13 @@ export default function Login() {
 
         if (result.success) {
             setSuccess(true);
-            setTimeout(() => navigate('/dashboard'), 700);
+            setTimeout(() => {
+                if (result.user?.user_type === 'LEARNER') {
+                    navigate('/onboarding/learner');
+                } else {
+                    navigate('/dashboard');
+                }
+            }, 700);
         } else if (result.code === 'email_not_verified') {
             setErrorType('unverified');
             setUnverifiedEmail(result.email || email);

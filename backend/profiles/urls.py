@@ -19,6 +19,7 @@ from .views import (
     EndorseSkillView,
     UserSkillsView,
     UserSkillDeleteView,
+    LearnerProfileView,
 )
 from courses.views import UserCertificatesListView
 
@@ -33,6 +34,8 @@ router.register(r'campuses', InstitutionCampusViewSet, basename='institution-cam
 urlpatterns = [
     # Teacher profiles
     path('teacher/me/', TeacherProfileView.as_view(), name='teacher_profile'),
+    # Learner profiles
+    path('learner/me/', LearnerProfileView.as_view(), name='learner_profile'),
     # Frontend uses plural 'teachers' and sends user UUID
     path('teachers/<uuid:user_id>/', TeacherProfileDetailView.as_view(), name='teacher_profile_detail'),
     path('teachers/search/', TeacherSearchView.as_view(), name='teacher_search'),
