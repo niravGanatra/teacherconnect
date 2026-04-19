@@ -1,5 +1,5 @@
 /**
- * LinkedIn-Style Teacher Profile View — 10-box structure
+ * LinkedIn-Style Teacher Profile View
  */
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -39,7 +39,7 @@ import {
 
 export default function TeacherProfileView() {
     const { id } = useParams();
-    const { user, profile: currentUserProfile } = useAuth();
+    const { user } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -59,10 +59,7 @@ export default function TeacherProfileView() {
         const targetId = id || user?.id;
         if (!targetId) return;
         socialAPI.isFollowing(targetId)
-            .then((res) => {
-                setFollowerCount(res.data.follower_count);
-                setFollowingCount(res.data.following_count);
-            })
+            .then((res) => { setFollowerCount(res.data.follower_count); setFollowingCount(res.data.following_count); })
             .catch(() => {});
     }, [id, user?.id]);
 
@@ -95,13 +92,7 @@ export default function TeacherProfileView() {
         setLoadingServices(false);
     };
 
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <ProfileSkeleton />
-            </DashboardLayout>
-        );
-    }
+    if (loading) return <DashboardLayout><ProfileSkeleton /></DashboardLayout>;
 
     if (!profile) {
         return (
@@ -117,7 +108,7 @@ export default function TeacherProfileView() {
 
     const fullName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Teacher';
 
-    const BadgeList = ({ items, variant = 'default' }) => (
+    const Badges = ({ items, variant = 'default' }) => (
         <div className="flex flex-wrap gap-2">
             {items.map((item, i) => <Badge key={i} variant={variant}>{item}</Badge>)}
         </div>
@@ -130,14 +121,17 @@ export default function TeacherProfileView() {
                 {/* ── Box 1: Basic Information ─────────────────────────────── */}
                 <Card className="overflow-hidden">
                     <div className="h-32 md:h-48 bg-gradient-to-r from-[#1e3a5f] via-[#2d4a6f] to-[#1e3a5f] relative">
-                        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50"></div>
+                        <div className="absolute inset-0 opacity-50 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')]" />
+                        {profile.background_photo && (
+                            <img src={profile.background_photo} alt="Cover" className="w-full h-full object-cover absolute inset-0" />
+                        )}
                     </div>
 
                     <div className="relative px-4 md:px-6 pb-6">
                         <div className="absolute -top-12 md:-top-16 left-4 md:left-6">
-                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] flex items-center justify-center shadow-lg">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white bg-gradient-to-br from-[#1e3a5f] to-[#3b5998] flex items-center justify-center shadow-lg overflow-hidden">
                                 {profile.profile_photo ? (
-                                    <img src={profile.profile_photo} alt={fullName} className="w-full h-full rounded-full object-cover" />
+                                    <img src={profile.profile_photo} alt={fullName} className="w-full h-full object-cover" />
                                 ) : (
                                     <span className="text-3xl md:text-4xl font-bold text-white">
                                         {profile.first_name?.charAt(0) || 'T'}{profile.last_name?.charAt(0) || ''}
@@ -186,7 +180,7 @@ export default function TeacherProfileView() {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-4 mt-3">
-                                <Link to="/acadconnect" className="text-sm text-slate-600 hover:text-slate-900 pointer-events-auto">
+                                <Link to="/acadconnect" className="text-sm text-slate-600 hover:text-slate-900">
                                     <span className="font-semibold text-slate-900">{profile.connection_count || 0}</span> Connections
                                 </Link>
                                 <button onClick={() => setModal('followers')} className="text-sm text-slate-600 hover:text-slate-900">
@@ -200,7 +194,7 @@ export default function TeacherProfileView() {
                                         <FollowButton userId={id} onCountChange={setFollowerCount} />
                                         <AcadConnectButton userId={id} onStatusChange={setConnectionStatus} />
                                         {connectionStatus === 'connected' && (
-                                            <Link to={`/acadtalk?target=${id}`} className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition pointer-events-auto">
+                                            <Link to={`/acadtalk?target=${id}`} className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-md hover:bg-slate-200 transition">
                                                 <ChatBubbleLeftEllipsisIcon className="w-4 h-4" /> Message
                                             </Link>
                                         )}
@@ -244,7 +238,7 @@ export default function TeacherProfileView() {
                         <div className="space-y-5">
                             {profile.subjects?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Subjects Taught</h3>
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Subjects You Teach</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {profile.subjects.map((s, i) => (
                                             <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg border border-blue-100">
@@ -257,49 +251,49 @@ export default function TeacherProfileView() {
                             )}
                             {profile.languages?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Lectures Delivered In</h3>
-                                    <BadgeList items={profile.languages} variant="success" />
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Lectures Can Be Delivered In</h3>
+                                    <Badges items={profile.languages} variant="success" />
                                 </div>
                             )}
                             {profile.boards?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Boards / Curriculum</h3>
-                                    <BadgeList items={profile.boards} variant="default" />
+                                    <Badges items={profile.boards} variant="default" />
                                 </div>
                             )}
                             {profile.grades_taught?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Education Level Taught</h3>
-                                    <BadgeList items={profile.grades_taught} variant="primary" />
+                                    <Badges items={profile.grades_taught} variant="primary" />
                                 </div>
                             )}
                             {profile.teaching_modes?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Teaching Mode</h3>
-                                    <BadgeList items={profile.teaching_modes} variant="info" />
+                                    <Badges items={profile.teaching_modes} variant="info" />
                                 </div>
                             )}
                             {profile.specializations?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Specializations</h3>
-                                    <BadgeList items={profile.specializations} variant="default" />
+                                    <Badges items={profile.specializations} variant="default" />
                                 </div>
                             )}
                         </div>
                     </Card>
                 )}
 
-                {/* ── Box 3: Education / Degree + Certifications + Awards ─── */}
+                {/* ── Box 3: Educational / Degree + Certifications + Awards ── */}
                 {(profile.education?.length > 0 || profile.certifications?.length > 0 || profile.awards_and_recognitions?.length > 0) && (
                     <Card className="p-4 md:p-6">
                         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-6">
                             <AcademicCapIcon className="w-5 h-5 text-[#1e3a5f]" />
-                            Education, Certifications &amp; Awards
+                            Educational / Degree, Certifications &amp; Awards
                         </h2>
                         <div className="space-y-6">
                             {profile.education?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Educational / Degree</h3>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Educational / Degree Holding</h3>
                                     <div className="space-y-4">
                                         {profile.education.map((edu, i) => (
                                             <div key={i} className="flex gap-4">
@@ -319,7 +313,7 @@ export default function TeacherProfileView() {
 
                             {profile.certifications?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Licenses &amp; Certifications</h3>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Licenses &amp; Certifications</h3>
                                     <div className="space-y-2">
                                         {profile.certifications.map((cert, i) => (
                                             <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
@@ -333,7 +327,7 @@ export default function TeacherProfileView() {
 
                             {profile.awards_and_recognitions?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">Awards &amp; Outcomes</h3>
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Awards &amp; Outcomes</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {profile.awards_and_recognitions.map((award, i) => (
                                             <Badge key={i} variant="warning" className="px-3 py-1">{award}</Badge>
@@ -346,30 +340,26 @@ export default function TeacherProfileView() {
                 )}
 
                 {/* ── Box 4: Experience ─────────────────────────────────────── */}
-                <Card className="p-4 md:p-6">
-                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
-                        <BriefcaseIcon className="w-5 h-5 text-[#1e3a5f]" />
-                        Experience
-                    </h2>
-                    <div className="space-y-4">
-                        {profile.current_institution_name ? (
-                            <div className="flex gap-4">
-                                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <BuildingOfficeIcon className="w-6 h-6 text-slate-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-900">Teacher</h3>
-                                    <p className="text-slate-600">{profile.current_institution_name}</p>
-                                    <p className="text-sm text-slate-500 mt-1">
-                                        {profile.experience_years > 0 ? `${profile.experience_years} years total experience` : 'Current position'}
-                                    </p>
-                                </div>
+                {profile.current_institution_name && (
+                    <Card className="p-4 md:p-6">
+                        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                            <BriefcaseIcon className="w-5 h-5 text-[#1e3a5f]" />
+                            Experience
+                        </h2>
+                        <div className="flex gap-4">
+                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <BuildingOfficeIcon className="w-6 h-6 text-slate-400" />
                             </div>
-                        ) : (
-                            <p className="text-slate-500 text-center py-4">No experience added yet</p>
-                        )}
-                    </div>
-                </Card>
+                            <div>
+                                <h3 className="font-semibold text-slate-900">Teacher</h3>
+                                <p className="text-slate-600">{profile.current_institution_name}</p>
+                                <p className="text-sm text-slate-500 mt-1">
+                                    {profile.experience_years > 0 ? `${profile.experience_years} years total experience` : 'Current position'}
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                )}
 
                 {/* ── Box 5: Notable Student Outcomes ─────────────────────── */}
                 {profile.notable_student_outcomes && (
@@ -404,23 +394,23 @@ export default function TeacherProfileView() {
                             <UserGroupIcon className="w-5 h-5 text-[#1e3a5f]" />
                             Willingness to Collaborate
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-4">
                             {profile.willing_to_collaborate_with?.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Collaborate With</h3>
-                                    <BadgeList items={profile.willing_to_collaborate_with} variant="info" />
+                                    <h3 className="text-sm font-semibold text-slate-700 mb-2">Willingness to Collaborate With</h3>
+                                    <Badges items={profile.willing_to_collaborate_with} variant="info" />
                                 </div>
                             )}
                             {profile.available_for?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Available For</h3>
-                                    <BadgeList items={profile.available_for} variant="default" />
+                                    <Badges items={profile.available_for} variant="default" />
                                 </div>
                             )}
                             {profile.time_availability?.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 mb-2">Time Availability</h3>
-                                    <BadgeList items={profile.time_availability} variant="default" />
+                                    <Badges items={profile.time_availability} variant="default" />
                                 </div>
                             )}
                         </div>
@@ -443,7 +433,7 @@ export default function TeacherProfileView() {
                         </div>
                         {loadingServices ? (
                             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                                {[1, 2].map(n => <div key={n} className="w-64 h-32 bg-slate-50 animate-pulse rounded-2xl shrink-0 border border-slate-100"></div>)}
+                                {[1, 2].map(n => <div key={n} className="w-64 h-32 bg-slate-50 animate-pulse rounded-2xl shrink-0 border border-slate-100" />)}
                             </div>
                         ) : services.length === 0 ? (
                             <div className="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
@@ -477,17 +467,17 @@ export default function TeacherProfileView() {
                     </Card>
                 )}
 
-                {/* ── Box 8: Contact Information ───────────────────────────── */}
+                {/* ── Box 8: Contact Info ──────────────────────────────────── */}
                 {(isOwnProfile || profile.contact_visible) && (
                     <Card className="p-4 md:p-6">
                         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
                             <EnvelopeIcon className="w-5 h-5 text-[#1e3a5f]" />
-                            Contact Information
+                            Contact Info
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {profile.email && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <EnvelopeIcon className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <div>
@@ -498,7 +488,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.phone && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <PhoneIcon className="w-5 h-5 text-green-600" />
                                     </div>
                                     <div>
@@ -509,7 +499,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.portfolio_url && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg md:col-span-2">
-                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <GlobeAltIcon className="w-5 h-5 text-purple-600" />
                                     </div>
                                     <div>
@@ -520,7 +510,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.linkedin_url && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <LinkIcon className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <div>
@@ -533,7 +523,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.facebook_url && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <LinkIcon className="w-5 h-5 text-blue-700" />
                                     </div>
                                     <div>
@@ -546,7 +536,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.instagram_url && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <LinkIcon className="w-5 h-5 text-pink-600" />
                                     </div>
                                     <div>
@@ -559,7 +549,7 @@ export default function TeacherProfileView() {
                             )}
                             {profile.youtube_url && (
                                 <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <LinkIcon className="w-5 h-5 text-red-600" />
                                     </div>
                                     <div>
@@ -585,9 +575,7 @@ export default function TeacherProfileView() {
 
             </div>
 
-            {modal && (
-                <FollowersModal userId={id || user?.id} mode={modal} onClose={() => setModal(null)} />
-            )}
+            {modal && <FollowersModal userId={id || user?.id} mode={modal} onClose={() => setModal(null)} />}
         </DashboardLayout>
     );
 }

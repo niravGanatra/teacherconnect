@@ -225,7 +225,7 @@ function ExperienceModal({ isOpen, onClose, experience, onSave }) {
  * Experience Section Component
  * Displays list of experiences with add/edit/delete functionality
  */
-export default function ExperienceSection({ className = '' }) {
+export default function ExperienceSection({ className = '', noCard = false }) {
     const [experiences, setExperiences] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -310,117 +310,75 @@ export default function ExperienceSection({ className = '' }) {
         }
     };
 
-    if (loading) {
-        return (
-            <Card className={`p-6 ${className}`}>
-                <div className="flex items-center justify-center h-32">
-                    <Spinner />
-                </div>
-            </Card>
-        );
-    }
-
-    return (
+    const content = loading ? (
+        <div className="flex items-center justify-center h-32"><Spinner /></div>
+    ) : (
         <>
-            <Card className={`p-6 ${className}`}>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                            <BriefcaseIcon className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <h2 className="text-lg font-semibold text-slate-900">Experience</h2>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                        <BriefcaseIcon className="w-6 h-6 text-purple-600" />
                     </div>
-                    <Button variant="ghost" onClick={handleAdd} className="!p-2">
-                        <PlusIcon className="w-5 h-5" />
-                    </Button>
+                    <h2 className="text-lg font-semibold text-slate-900">Experience</h2>
                 </div>
+                <Button variant="ghost" onClick={handleAdd} className="!p-2">
+                    <PlusIcon className="w-5 h-5" />
+                </Button>
+            </div>
 
-                {/* Experience List */}
-                {experiences.length === 0 ? (
-                    <EmptySectionState
-                        icon={BriefcaseIcon}
-                        {...EMPTY_STATE_PRESETS.experience}
-                        onAction={handleAdd}
-                    />
-                ) : (
-                    <div className="space-y-6">
-                        {experiences.map((experience, index) => (
-                            <div key={experience.id} className="relative group">
-                                {/* Timeline connector */}
-                                {index < experiences.length - 1 && (
-                                    <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-slate-200" />
-                                )}
-
-                                <div className="flex gap-4">
-                                    {/* Company Logo Placeholder */}
-                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                        {experience.company_name?.charAt(0)?.toUpperCase() || 'C'}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <h3 className="font-semibold text-slate-900">
-                                                    {experience.title}
-                                                </h3>
-                                                <p className="text-slate-700">
-                                                    {experience.company_name}
-                                                    <span className="text-slate-400 mx-1">·</span>
-                                                    <span className="text-slate-500 text-sm">
-                                                        {EMPLOYMENT_TYPES.find(t => t.value === experience.employment_type)?.label}
-                                                    </span>
-                                                </p>
-                                                <p className="text-sm text-slate-500">
-                                                    {formatDateRange(
-                                                        experience.start_date,
-                                                        experience.end_date,
-                                                        experience.is_current
-                                                    )}
-                                                </p>
-                                                {experience.location && (
-                                                    <p className="text-sm text-slate-500">{experience.location}</p>
-                                                )}
-                                            </div>
-
-                                            {/* Action Buttons */}
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleEdit(experience)}
-                                                    className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                >
-                                                    <PencilIcon className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(experience.id)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                >
-                                                    <TrashIcon className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {experience.description && (
-                                            <p className="mt-2 text-sm text-slate-600 whitespace-pre-line">
-                                                {experience.description}
+            {experiences.length === 0 ? (
+                <EmptySectionState icon={BriefcaseIcon} {...EMPTY_STATE_PRESETS.experience} onAction={handleAdd} />
+            ) : (
+                <div className="space-y-6">
+                    {experiences.map((experience, index) => (
+                        <div key={experience.id} className="relative group">
+                            {index < experiences.length - 1 && (
+                                <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-slate-200" />
+                            )}
+                            <div className="flex gap-4">
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                    {experience.company_name?.charAt(0)?.toUpperCase() || 'C'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <h3 className="font-semibold text-slate-900">{experience.title}</h3>
+                                            <p className="text-slate-700">
+                                                {experience.company_name}
+                                                <span className="text-slate-400 mx-1">·</span>
+                                                <span className="text-slate-500 text-sm">
+                                                    {EMPLOYMENT_TYPES.find(t => t.value === experience.employment_type)?.label}
+                                                </span>
                                             </p>
-                                        )}
+                                            <p className="text-sm text-slate-500">
+                                                {formatDateRange(experience.start_date, experience.end_date, experience.is_current)}
+                                            </p>
+                                            {experience.location && <p className="text-sm text-slate-500">{experience.location}</p>}
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleEdit(experience)} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+                                                <PencilIcon className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDelete(experience.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
+                                    {experience.description && (
+                                        <p className="mt-2 text-sm text-slate-600 whitespace-pre-line">{experience.description}</p>
+                                    )}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-            {/* Modal */}
-            <ExperienceModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                experience={editingExperience}
-                onSave={handleSave}
-            />
+            <ExperienceModal isOpen={modalOpen} onClose={() => setModalOpen(false)} experience={editingExperience} onSave={handleSave} />
         </>
     );
+
+    if (noCard) return <div className={className}>{content}</div>;
+
+    return <Card className={`p-6 ${className}`}>{content}</Card>;
 }

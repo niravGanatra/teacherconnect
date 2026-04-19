@@ -174,7 +174,7 @@ function EducationModal({ isOpen, onClose, education, onSave }) {
 /**
  * Education Section Component
  */
-export default function EducationSection({ className = '' }) {
+export default function EducationSection({ className = '', noCard = false }) {
     const [education, setEducation] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -224,80 +224,63 @@ export default function EducationSection({ className = '' }) {
         setEducation(prev => prev.filter(e => e.id !== id));
     };
 
-    if (loading) {
-        return (
-            <Card className={`p-6 ${className}`}>
-                <div className="flex items-center justify-center h-32"><Spinner /></div>
-            </Card>
-        );
-    }
-
-    return (
+    const content = loading ? (
+        <div className="flex items-center justify-center h-32"><Spinner /></div>
+    ) : (
         <>
-            <Card className={`p-6 ${className}`}>
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-teal-100 rounded-lg">
-                            <AcademicCapIcon className="w-6 h-6 text-teal-600" />
-                        </div>
-                        <h2 className="text-lg font-semibold text-slate-900">Education</h2>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-teal-100 rounded-lg">
+                        <AcademicCapIcon className="w-6 h-6 text-teal-600" />
                     </div>
-                    <Button variant="ghost" onClick={handleAdd} className="!p-2">
-                        <PlusIcon className="w-5 h-5" />
-                    </Button>
+                    <h2 className="text-lg font-semibold text-slate-900">Educational / Degree</h2>
                 </div>
+                <Button variant="ghost" onClick={handleAdd} className="!p-2">
+                    <PlusIcon className="w-5 h-5" />
+                </Button>
+            </div>
 
-                {education.length === 0 ? (
-                    <EmptySectionState
-                        icon={AcademicCapIcon}
-                        {...EMPTY_STATE_PRESETS.education}
-                        onAction={handleAdd}
-                    />
-                ) : (
-                    <div className="space-y-6">
-                        {education.map((edu) => (
-                            <div key={edu.id} className="flex gap-4 group">
-                                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                    {edu.school?.charAt(0)?.toUpperCase() || 'S'}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div>
-                                            <h3 className="font-semibold text-slate-900">{edu.school}</h3>
-                                            <p className="text-slate-700">
-                                                {edu.degree}{edu.field_of_study && `, ${edu.field_of_study}`}
+            {education.length === 0 ? (
+                <EmptySectionState icon={AcademicCapIcon} {...EMPTY_STATE_PRESETS.education} onAction={handleAdd} />
+            ) : (
+                <div className="space-y-6">
+                    {education.map((edu) => (
+                        <div key={edu.id} className="flex gap-4 group">
+                            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                {edu.school?.charAt(0)?.toUpperCase() || 'S'}
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900">{edu.school}</h3>
+                                        <p className="text-slate-700">{edu.degree}{edu.field_of_study && `, ${edu.field_of_study}`}</p>
+                                        {(edu.start_date || edu.end_date) && (
+                                            <p className="text-sm text-slate-500">
+                                                {formatMonthYear(edu.start_date)} - {formatMonthYear(edu.end_date) || 'Present'}
                                             </p>
-                                            {(edu.start_date || edu.end_date) && (
-                                                <p className="text-sm text-slate-500">
-                                                    {formatMonthYear(edu.start_date)} - {formatMonthYear(edu.end_date) || 'Present'}
-                                                </p>
-                                            )}
-                                            {edu.grade && (
-                                                <p className="text-sm text-slate-500">Grade: {edu.grade}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(edu)} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg">
-                                                <PencilIcon className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => handleDelete(edu.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                                                <TrashIcon className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        )}
+                                        {edu.grade && <p className="text-sm text-slate-500">Grade: {edu.grade}</p>}
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleEdit(edu)} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg">
+                                            <PencilIcon className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => handleDelete(edu.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                                            <TrashIcon className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-            <EducationModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                education={editingEducation}
-                onSave={handleSave}
-            />
+            <EducationModal isOpen={modalOpen} onClose={() => setModalOpen(false)} education={editingEducation} onSave={handleSave} />
         </>
     );
+
+    if (noCard) return <div className={className}>{content}</div>;
+
+    return <Card className={`p-6 ${className}`}>{content}</Card>;
 }

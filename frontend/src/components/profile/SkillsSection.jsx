@@ -137,7 +137,7 @@ function SkillsSkeleton() {
 
 // ─── Main component ──────────────────────────────────────────────────────────────
 
-export default function SkillsSection({ userId, isOwnProfile }) {
+export default function SkillsSection({ userId, isOwnProfile, noCard = false }) {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newSkillName, setNewSkillName] = useState('');
@@ -236,71 +236,51 @@ export default function SkillsSection({ userId, isOwnProfile }) {
         }
     };
 
-    // Don't render the card for other users if they have no skills
+    // Don't render for other users if they have no skills
     if (!loading && skills.length === 0 && !isOwnProfile) return null;
 
-    return (
-        <Card className="p-4 md:p-6">
+    const inner = (
+        <>
             <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
                 <SparklesIcon className="w-5 h-5 text-[#1e3a5f]" />
                 Skills &amp; Endorsements
             </h2>
 
-            {/* Skill list */}
             {loading ? (
                 <SkillsSkeleton />
             ) : skills.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-3">
-                    No skills added yet.
-                </p>
+                <p className="text-slate-400 text-sm text-center py-3">No skills added yet.</p>
             ) : (
                 <div className="space-y-2.5">
                     {skills.map((skill) => (
-                        <SkillCard
-                            key={skill.id}
-                            skill={skill}
-                            isOwnProfile={isOwnProfile}
-                            onEndorse={handleEndorse}
-                            onDelete={handleDeleteSkill}
-                            endorsingMap={endorsingMap}
-                        />
+                        <SkillCard key={skill.id} skill={skill} isOwnProfile={isOwnProfile} onEndorse={handleEndorse} onDelete={handleDeleteSkill} endorsingMap={endorsingMap} />
                     ))}
                 </div>
             )}
 
-            {/* Add skill form — own profile only */}
             {isOwnProfile && (
                 <form onSubmit={handleAddSkill} className="mt-4 flex gap-2">
                     <input
                         ref={inputRef}
                         type="text"
                         value={newSkillName}
-                        onChange={(e) => {
-                            setNewSkillName(e.target.value);
-                            if (addError) setAddError('');
-                        }}
+                        onChange={(e) => { setNewSkillName(e.target.value); if (addError) setAddError(''); }}
                         placeholder="Add a skill (e.g. Lesson Planning)"
                         maxLength={100}
-                        className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg
-                            focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f]
-                            placeholder:text-slate-400"
+                        className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]/20 focus:border-[#1e3a5f] placeholder:text-slate-400"
                     />
-                    <button
-                        type="submit"
-                        disabled={adding || !newSkillName.trim()}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a5f] text-white
-                            rounded-lg text-sm font-semibold hover:bg-[#2d4a6f]
-                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
+                    <button type="submit" disabled={adding || !newSkillName.trim()} className="flex items-center gap-1.5 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg text-sm font-semibold hover:bg-[#2d4a6f] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                         <PlusIcon className="w-4 h-4" />
                         {adding ? 'Adding…' : 'Add'}
                     </button>
                 </form>
             )}
 
-            {addError && (
-                <p className="mt-2 text-sm text-red-600">{addError}</p>
-            )}
-        </Card>
+            {addError && <p className="mt-2 text-sm text-red-600">{addError}</p>}
+        </>
     );
+
+    if (noCard) return <div>{inner}</div>;
+
+    return <Card className="p-4 md:p-6">{inner}</Card>;
 }
