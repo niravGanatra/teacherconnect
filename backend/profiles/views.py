@@ -181,10 +181,11 @@ class InstitutionListView(generics.ListAPIView):
 
     def get_queryset(self):
         from django.db.models import Q
-        queryset = InstitutionProfile.objects.filter(is_verified=True)
+        # For autocomplete (?q=), search all institutions; for browse listing, show verified only
+        q = self.request.query_params.get('q')
+        queryset = InstitutionProfile.objects.all() if q else InstitutionProfile.objects.filter(is_verified=True)
 
         # Name search (for autocomplete)
-        q = self.request.query_params.get('q')
         if q:
             queryset = queryset.filter(
                 Q(institution_name__icontains=q) | Q(brand_name__icontains=q)

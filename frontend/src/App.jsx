@@ -30,6 +30,7 @@ import TeacherProfileView from './pages/teacher/ProfileView';
 import InstitutionDashboard from './pages/institution/Dashboard';
 import InstitutionProfileEdit from './pages/institution/Profile';
 import InstitutionProfileView from './pages/institution/ProfileView';
+import InstitutionsBrowsePage from './pages/institution/InstitutionsBrowsePage';
 import InstitutionFaculty from './pages/institution/Faculty';
 import InstitutionCertificates from './pages/institution/Certificates';
 import InstitutionEnrollments from './pages/institution/Enrollments';
@@ -312,6 +313,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TeacherProfileView />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/institutions"
+        element={
+          <ProtectedRoute>
+            <InstitutionsBrowsePage />
           </ProtectedRoute>
         }
       />

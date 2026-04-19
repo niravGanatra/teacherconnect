@@ -167,6 +167,9 @@ export const profileAPI = {
     // Search institutions by name (for autocomplete)
     searchInstitutions: (q) => api.get('/profiles/institutions/', { params: { q } }),
 
+    // List/browse institutions with optional filters
+    listInstitutions: (params = {}) => api.get('/profiles/institutions/', { params }),
+
     // LinkedIn-style profile sections for teachers
     // Experience
     getExperiences: () => api.get('/profiles/experiences/'),
