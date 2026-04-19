@@ -5,7 +5,7 @@ from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from accounts.permissions import IsTeacher, IsInstitution, IsLearner
 from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, Experience, Education, Skill, Certification, Endorsement, LearnerProfile
@@ -29,7 +29,7 @@ class TeacherProfileView(generics.RetrieveUpdateAPIView):
     """
     serializer_class = TeacherProfileSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self):
         profile, _ = TeacherProfile.objects.get_or_create(user=self.request.user)
@@ -131,7 +131,7 @@ class InstitutionProfileView(generics.RetrieveUpdateAPIView):
     """
     serializer_class = InstitutionProfileSerializer
     permission_classes = [IsAuthenticated, IsInstitution]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self):
         profile, _ = InstitutionProfile.objects.get_or_create(
@@ -220,7 +220,7 @@ class ExperienceViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ExperienceSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         """Return experiences for the current user's profile only."""
@@ -240,7 +240,7 @@ class EducationViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EducationSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         """Return education entries for the current user's profile only."""
@@ -404,7 +404,7 @@ class CertificationViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CertificationSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         """Return certifications for the current user's profile only."""
