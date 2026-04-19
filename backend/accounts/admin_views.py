@@ -672,3 +672,49 @@ class AdminPlatformSettingsView(APIView):
             'fdp_enabled': settings_obj.fdp_enabled,
             'updated_at': settings_obj.updated_at.isoformat() if settings_obj.updated_at else None,
         })
+
+
+class AdminSeedView(APIView):
+    """
+    POST /api/admin/seed/<seed_type>/
+    Runs a seed command server-side. Only SUPER_ADMIN can call this.
+    seed_type: learners | service-categories | acadconnect | all
+    Accepts optional ?clear=true to wipe existing seed data first.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    ALLOWED = ['learners', 'service-categories', 'acadconnect', 'all']
+
+    def post(self, request, seed_type):
+        if seed_type not in self.ALLOWED:
+            return Response(
+                {'error': f"Unknown seed type '{seed_type}'. Allowed: {', '.join(self.ALLOWED)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        clear = request.query_params.get('clear', '').lower() in ('1', 'true', 'yes')
+        results = {}
+
+        try:
+            from django.core.management import call_command
+            from io import StringIO
+
+            def run(cmd, **kwargs):
+                buf = StringIO()
+                call_command(cmd, stdout=buf, stderr=buf, **kwargs)
+                return buf.getvalue()
+
+            if seed_type in ('learners', 'all'):
+                results['learners'] = run('seed_learners', clear=clear)
+
+            if seed_type in ('service-categories', 'all'):
+                # seed_service_categories uses get_or_create — no clear flag needed
+                results['service_categories'] = run('seed_service_categories')
+
+            if seed_type in ('acadconnect', 'all'):
+                results['acadconnect'] = run('seed_acadconnect', clear=clear)
+
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'seeded': seed_type, 'clear': clear, 'output': results})

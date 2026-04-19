@@ -3,6 +3,7 @@ Admin API URL Configuration
 """
 from django.urls import path
 from .admin_views import (
+    AdminSeedView,
     AdminStatsView,
     AdminUsersListView,
     AdminUserDetailView,
@@ -59,5 +60,8 @@ urlpatterns = [
 
     # Platform-wide settings
     path('settings/', AdminPlatformSettingsView.as_view(), name='admin-platform-settings'),
+
+    # Seed management (SUPER_ADMIN only)
+    path('seed/<str:seed_type>/', AdminSeedView.as_view(), name='admin-seed'),
 ]
 
