@@ -42,7 +42,7 @@ urlpatterns = [
 
     # Institution profiles
     path('institution/me/', InstitutionProfileView.as_view(), name='institution_profile'),
-    path('institution/<int:pk>/', InstitutionProfileDetailView.as_view(), name='institution_profile_detail'),
+    path('institution/<uuid:pk>/', InstitutionProfileDetailView.as_view(), name='institution_profile_detail'),
     path('institutions/', InstitutionListView.as_view(), name='institution_list'),
 
     # Privacy settings
