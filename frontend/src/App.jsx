@@ -380,6 +380,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/acadservices/my"
+        element={
+          <ProtectedRoute>
+            <MyServicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/acadservices/new"
         element={
           <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN]}>
