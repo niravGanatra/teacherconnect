@@ -128,6 +128,7 @@ class EducatorProfile(models.Model):
     willing_to_collaborate_with = models.JSONField(default=list, blank=True)
     awards_and_recognitions = models.JSONField(default=list, blank=True)
     notable_student_outcomes = models.TextField(blank=True)
+    professional_associations = models.JSONField(default=list, blank=True)
     
     # ===========================================
     # Portfolio & Demo

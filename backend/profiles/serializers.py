@@ -63,7 +63,7 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             'first_name', 'last_name', 'headline', 'teaching_philosophy', 'profile_photo', 'google_avatar_url', 'background_photo',
             'subjects', 'skills', 'experience_years', 'current_institution_name',
             'languages', 'available_for', 'time_availability', 'specializations', 'willing_to_collaborate_with',
-            'awards_and_recognitions', 'notable_student_outcomes',
+            'awards_and_recognitions', 'notable_student_outcomes', 'professional_associations',
             'education', 'certifications',
             # Teacher Attributes
             'availability', 'availability_display',
