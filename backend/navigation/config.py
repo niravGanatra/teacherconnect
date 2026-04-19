@@ -203,6 +203,13 @@ MENU_CONFIG = {
             'badge': None,
         },
         {
+            'id': 'my-services',
+            'label': 'My Services',
+            'icon': 'my-services',
+            'path': '/acadservices/my',
+            'badge': None,
+        },
+        {
             'id': 'feed',
             'label': 'Home Feed',
             'icon': 'home',
@@ -214,13 +221,6 @@ MENU_CONFIG = {
             'label': 'Browse Programs',
             'icon': 'fdps',
             'path': '/fdp',
-            'badge': None,
-        },
-        {
-            'id': 'enrollments',
-            'label': 'My Enrollments',
-            'icon': 'enrollments',
-            'path': '/learning',
             'badge': None,
         },
         {

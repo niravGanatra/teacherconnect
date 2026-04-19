@@ -131,6 +131,183 @@ function LanguageTagInput({ selected, onAdd, onRemove, value, setValue, placehol
     );
 }
 
+const SUBJECTS_LIST = [
+    'Accountancy','Agriculture','Anatomy','Anthropology','Applied Mathematics',
+    'Arabic','Architecture','Artificial Intelligence','Astronomy','Biology',
+    'Biotechnology','Botany','Business Studies','Chemistry','Civics',
+    'Commerce','Computer Applications','Computer Science','Constitutional Law',
+    'Corporate Law','Criminal Law','Data Science','Drawing','Economics',
+    'Education','Electronics','Engineering Drawing','English','English Literature',
+    'Environmental Science','Fine Arts','French','Geography','German',
+    'Gujarati','Health Education','Hindi','History','Home Science',
+    'Information Technology','Insurance','International Business','Japanese',
+    'Journalism','Kannada','Malayalam','Management','Marathi','Mathematics',
+    'Media Studies','Music','Physical Education','Physics','Political Science',
+    'Psychology','Punjabi','Sanskrit','Science','Social Science','Sociology',
+    'Spanish','Statistics','Tamil','Telugu','Urdu','Vedic Mathematics',
+    'Zoology',
+];
+
+function SubjectTagInput({ selected, onAdd, onRemove, value, setValue, placeholder }) {
+    const [suggestions, setSuggestions] = useState([]);
+    const [showDrop, setShowDrop] = useState(false);
+    const wrapRef = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleChange = (e) => {
+        const v = e.target.value;
+        setValue(v);
+        if (v.trim().length >= 3) {
+            const q = v.trim().toLowerCase();
+            const filtered = SUBJECTS_LIST.filter(
+                (s) => s.toLowerCase().includes(q) && !selected.includes(s)
+            ).slice(0, 8);
+            setSuggestions(filtered);
+            setShowDrop(filtered.length > 0);
+        } else {
+            setSuggestions([]);
+            setShowDrop(false);
+        }
+    };
+
+    const pick = (subject) => {
+        onAdd(subject);
+        setValue('');
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    const addCustom = () => {
+        const v = value.trim();
+        if (v && !selected.includes(v)) onAdd(v);
+        setValue('');
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    return (
+        <div>
+            <div className="flex flex-wrap gap-2 mb-3">
+                {selected.map((s) => (
+                    <Badge key={s} variant="default" className="flex items-center gap-1 pr-1">
+                        {s}
+                        <button type="button" onClick={() => onRemove(s)} className="ml-1 p-0.5 hover:bg-white/20 rounded">
+                            <XMarkIcon className="w-3 h-3" />
+                        </button>
+                    </Badge>
+                ))}
+            </div>
+            <div ref={wrapRef} className="relative flex gap-2">
+                <div className="relative flex-1">
+                    <Input
+                        value={value}
+                        onChange={handleChange}
+                        onFocus={() => suggestions.length > 0 && setShowDrop(true)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); suggestions.length > 0 ? pick(suggestions[0]) : addCustom(); }
+                            if (e.key === 'Escape') setShowDrop(false);
+                        }}
+                        placeholder={placeholder}
+                        autoComplete="off"
+                    />
+                    {showDrop && (
+                        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+                            {suggestions.map((s) => (
+                                <li key={s}>
+                                    <button type="button" onMouseDown={(e) => { e.preventDefault(); pick(s); }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-[#1e3a5f] hover:text-white transition-colors font-medium">
+                                        {s}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <Button type="button" variant="secondary" onClick={() => suggestions.length > 0 ? pick(suggestions[0]) : addCustom()}>
+                    <PlusIcon className="w-5 h-5" />
+                </Button>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-400">Type 3+ letters to see suggestions, or type any subject and press Enter.</p>
+        </div>
+    );
+}
+
+function SchoolAutocomplete({ value, onChange, label, placeholder, required }) {
+    const [suggestions, setSuggestions] = useState([]);
+    const [showDrop, setShowDrop] = useState(false);
+    const [fetching, setFetching] = useState(false);
+    const wrapRef = useRef(null);
+    const timerRef = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleChange = (e) => {
+        const v = e.target.value;
+        onChange(e);
+        clearTimeout(timerRef.current);
+        if (v.trim().length >= 2) {
+            timerRef.current = setTimeout(async () => {
+                setFetching(true);
+                try {
+                    const res = await profileAPI.searchInstitutions(v.trim());
+                    const results = res.data.results || res.data;
+                    setSuggestions(results.map(i => i.brand_name || i.institution_name).filter(Boolean));
+                    setShowDrop(results.length > 0);
+                } catch { setSuggestions([]); }
+                finally { setFetching(false); }
+            }, 300);
+        } else {
+            setSuggestions([]);
+            setShowDrop(false);
+        }
+    };
+
+    const pick = (name) => {
+        onChange({ target: { name: 'current_institution_name', value: name } });
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    return (
+        <div ref={wrapRef} className="relative">
+            <Input
+                label={label}
+                name="current_institution_name"
+                value={value}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required={required}
+                autoComplete="off"
+            />
+            {showDrop && suggestions.length > 0 && (
+                <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {suggestions.map((name) => (
+                        <li key={name}>
+                            <button type="button" onMouseDown={(e) => { e.preventDefault(); pick(name); }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-[#1e3a5f] hover:text-white transition-colors font-medium">
+                                {name}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 export default function TeacherProfile() {
     const { profile, updateProfile } = useAuth();
     const [profileData, setProfileData] = useState(null);
@@ -347,7 +524,7 @@ export default function TeacherProfile() {
                             <TextArea label="Teaching Philosophy" name="teaching_philosophy" value={formData.teaching_philosophy} onChange={handleChange} placeholder="Tell institutions about your teaching philosophy..." rows={4} />
                         </div>
                         <Input label="Experience (Years)" name="experience_years" type="number" value={formData.experience_years} onChange={handleChange} min="0" />
-                        <Input label="Current Institution" name="current_institution_name" value={formData.current_institution_name} onChange={handleChange} placeholder="Where do you currently work?" />
+                        <SchoolAutocomplete label="Current Institution" value={formData.current_institution_name} onChange={handleChange} placeholder="Where do you currently work?" />
                     </div>
                 </Card>
 
@@ -357,7 +534,14 @@ export default function TeacherProfile() {
                     <div className="space-y-6">
                         <div>
                             <p className="text-sm font-medium text-slate-700 mb-2">Subjects You Teach</p>
-                            <TagInput field="subjects" value={newSubject} setValue={setNewSubject} placeholder="Add a subject..." />
+                            <SubjectTagInput
+                                selected={formData.subjects}
+                                onAdd={(s) => setFormData(prev => ({ ...prev, subjects: [...prev.subjects, s] }))}
+                                onRemove={(s) => setFormData(prev => ({ ...prev, subjects: prev.subjects.filter(x => x !== s) }))}
+                                value={newSubject}
+                                setValue={setNewSubject}
+                                placeholder="Type a subject (e.g. Mat, Phy, Bio...)"
+                            />
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-700 mb-2">Lectures Can Be Delivered In (Languages)</p>

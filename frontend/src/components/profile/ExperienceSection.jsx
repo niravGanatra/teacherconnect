@@ -2,11 +2,11 @@
  * Experience Section Component with Modal Editing
  * LinkedIn-style experience list with add/edit functionality
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, Button, Input, TextArea, Select, Spinner } from '../common';
 import SlideOverDrawer, { DrawerFooter } from '../common/SlideOverDrawer';
 import EmptySectionState, { EMPTY_STATE_PRESETS } from '../common/EmptySectionState';
-import { experienceAPI } from '../../services/api';
+import { experienceAPI, profileAPI } from '../../services/api';
 import { formatDateRange, formatDateForInput } from '../../utils/dateUtils';
 import {
     PlusIcon,
@@ -15,6 +15,73 @@ import {
     BriefcaseIcon,
     BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
+
+function SchoolAutocomplete({ value, onChange, label, placeholder, required }) {
+    const [suggestions, setSuggestions] = useState([]);
+    const [showDrop, setShowDrop] = useState(false);
+    const wrapRef = useRef(null);
+    const timerRef = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleChange = (e) => {
+        onChange(e);
+        const v = e.target.value;
+        clearTimeout(timerRef.current);
+        if (v.trim().length >= 2) {
+            timerRef.current = setTimeout(async () => {
+                try {
+                    const res = await profileAPI.searchInstitutions(v.trim());
+                    const results = res.data.results || res.data;
+                    const names = results.map(i => i.brand_name || i.institution_name).filter(Boolean);
+                    setSuggestions(names);
+                    setShowDrop(names.length > 0);
+                } catch { setSuggestions([]); setShowDrop(false); }
+            }, 300);
+        } else {
+            setSuggestions([]);
+            setShowDrop(false);
+        }
+    };
+
+    const pick = (name) => {
+        onChange({ target: { name: 'company_name', value: name } });
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    return (
+        <div ref={wrapRef} className="relative">
+            <Input
+                label={label}
+                name="company_name"
+                value={value}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required={required}
+                autoComplete="off"
+            />
+            {showDrop && suggestions.length > 0 && (
+                <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {suggestions.map((name) => (
+                        <li key={name}>
+                            <button type="button" onMouseDown={(e) => { e.preventDefault(); pick(name); }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-[#1e3a5f] hover:text-white transition-colors font-medium">
+                                {name}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
 
 // Employment type options
 const EMPLOYMENT_TYPES = [
@@ -153,9 +220,8 @@ function ExperienceModal({ isOpen, onClose, experience, onSave }) {
                     options={EMPLOYMENT_TYPES}
                 />
 
-                <Input
+                <SchoolAutocomplete
                     label="Company/School Name *"
-                    name="company_name"
                     value={formData.company_name}
                     onChange={handleChange}
                     placeholder="e.g., Delhi Public School"

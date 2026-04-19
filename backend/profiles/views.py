@@ -173,18 +173,28 @@ class InstitutionProfileDetailView(generics.RetrieveAPIView):
 class InstitutionListView(generics.ListAPIView):
     """
     API endpoint for listing all verified institutions.
+    Supports ?q= for name autocomplete search.
     """
     serializer_class = InstitutionProfilePublicSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        from django.db.models import Q
         queryset = InstitutionProfile.objects.filter(is_verified=True)
-        
-        # Search filters
+
+        # Name search (for autocomplete)
+        q = self.request.query_params.get('q')
+        if q:
+            queryset = queryset.filter(
+                Q(institution_name__icontains=q) | Q(brand_name__icontains=q)
+            )[:15]
+            return queryset
+
+        # Other filters
         city = self.request.query_params.get('city')
         state = self.request.query_params.get('state')
         institution_type = self.request.query_params.get('type')
-        
+
         if city:
             queryset = queryset.filter(city__icontains=city)
         

@@ -27,6 +27,7 @@ import {
     MessageSquare,
     Briefcase,
     Layers,
+    PlusSquare,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -48,6 +49,7 @@ const ICON_MAP = {
     message:       MessageSquare,
     briefcase:     Briefcase,
     layers:        Layers,
+    'my-services': PlusSquare,
 };
 
 /**
