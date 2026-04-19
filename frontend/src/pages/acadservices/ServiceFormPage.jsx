@@ -45,6 +45,8 @@ export default function ServiceFormPage() {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
+    const [stepErrors, setStepErrors] = useState({});
+    const [saveError, setSaveError] = useState('');
 
     useEffect(() => {
         const init = async () => {
@@ -74,11 +76,25 @@ export default function ServiceFormPage() {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
+    const validateStep = (step) => {
+        const errors = {};
+        if (step === 0 && !form.category) errors.category = 'Please select a category.';
+        if (step === 1 && !form.title.trim()) errors.title = 'Service title is required.';
+        return errors;
+    };
+
     const handleSave = async () => {
+        setSaveError('');
+        const errors = validateStep(1);
+        if (!form.title.trim()) {
+            setSaveError('Service title is required. Please go back to Step 2 and fill it in.');
+            return;
+        }
         setLoading(true);
         try {
             const payload = {
                 ...form,
+                category_id: form.category,
                 subjects: form.subjects.split(',').map(s => s.trim()).filter(s => s),
                 grades_served: form.grades_served.split(',').map(g => g.trim()).filter(g => g),
                 price: form.price || null,
@@ -90,17 +106,33 @@ export default function ServiceFormPage() {
             } else {
                 await acadServicesAPI.createService(payload);
             }
-            navigate('/acadservices/my-services');
+            navigate('/acadservices/my');
         } catch (err) {
             console.error(err);
-            alert("Failed to save service. Please check your inputs.");
+            const data = err.response?.data;
+            if (data && typeof data === 'object') {
+                const messages = Object.entries(data)
+                    .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                    .join(' | ');
+                setSaveError(messages);
+            } else {
+                setSaveError('Failed to save service. Please check your inputs.');
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
-    const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
+    const nextStep = () => {
+        const errors = validateStep(currentStep);
+        if (Object.keys(errors).length > 0) {
+            setStepErrors(errors);
+            return;
+        }
+        setStepErrors({});
+        setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+    };
+    const prevStep = () => { setStepErrors({}); setSaveError(''); setCurrentStep(prev => Math.max(prev - 1, 0)); };
 
     // Render Logic per Step
     const renderStep = () => {
@@ -340,33 +372,44 @@ export default function ServiceFormPage() {
                         {renderStep()}
                     </div>
 
-                    <div className="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between">
-                        <Button 
-                            variant="secondary" 
-                            onClick={prevStep} 
-                            disabled={currentStep === 0}
-                            className="rounded-2xl h-14 px-8 border-2 border-slate-100 font-black tracking-widest text-slate-500"
-                        >
-                            Back
-                        </Button>
-                        
-                        {currentStep < STEPS.length - 1 ? (
-                            <Button 
-                                onClick={nextStep} 
-                                disabled={currentStep === 0 && !form.category}
-                                className="bg-slate-900 hover:bg-black text-white rounded-2xl h-14 px-10 font-black tracking-widest flex items-center gap-2"
-                            >
-                                Continue <ArrowRight className="w-5 h-5" />
-                            </Button>
-                        ) : (
-                            <Button 
-                                onClick={handleSave} 
-                                disabled={loading}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-10 font-black tracking-widest flex items-center gap-2"
-                            >
-                                {loading ? 'Publishing...' : isEdit ? 'Update Service' : 'Publish Service'} <Save className="w-5 h-5" />
-                            </Button>
+                    <div className="mt-12 pt-8 border-t border-slate-100 space-y-4">
+                        {Object.keys(stepErrors).length > 0 && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">
+                                {Object.values(stepErrors).join(' ')}
+                            </div>
                         )}
+                        {saveError && (
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">
+                                {saveError}
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between">
+                            <Button
+                                variant="secondary"
+                                onClick={prevStep}
+                                disabled={currentStep === 0}
+                                className="rounded-2xl h-14 px-8 border-2 border-slate-100 font-black tracking-widest text-slate-500"
+                            >
+                                Back
+                            </Button>
+
+                            {currentStep < STEPS.length - 1 ? (
+                                <Button
+                                    onClick={nextStep}
+                                    className="bg-slate-900 hover:bg-black text-white rounded-2xl h-14 px-10 font-black tracking-widest flex items-center gap-2"
+                                >
+                                    Continue <ArrowRight className="w-5 h-5" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={loading}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-14 px-10 font-black tracking-widest flex items-center gap-2"
+                                >
+                                    {loading ? 'Publishing...' : isEdit ? 'Update Service' : 'Publish Service'} <Save className="w-5 h-5" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </Card>
             </div>

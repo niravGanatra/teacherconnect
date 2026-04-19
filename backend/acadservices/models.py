@@ -25,8 +25,8 @@ class Service(models.Model):
     provider = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='services')
     category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, related_name='services')
     title = models.CharField(max_length=150)
-    tagline = models.CharField(max_length=200)
-    description = models.TextField()
+    tagline = models.CharField(max_length=200, blank=True, default='')
+    description = models.TextField(blank=True, default='')
     
     delivery_format = models.CharField(max_length=20, choices=DELIVERY_CHOICES)
     pricing_type = models.CharField(max_length=20, choices=PRICING_CHOICES)

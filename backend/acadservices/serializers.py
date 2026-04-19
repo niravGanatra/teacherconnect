@@ -42,13 +42,19 @@ class ProviderSerializer(serializers.ModelSerializer):
 class ServiceListSerializer(serializers.ModelSerializer):
     provider = ProviderSerializer(read_only=True)
     category = ServiceCategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=ServiceCategory.objects.all(),
+        source='category',
+        write_only=True,
+        required=True
+    )
     rating_avg = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
         fields = [
-            'id', 'provider', 'category', 'title', 'tagline', 
+            'id', 'provider', 'category', 'category_id', 'title', 'tagline',
             'delivery_format', 'pricing_type', 'price', 'price_currency',
             'rating_avg', 'review_count', 'views_count', 'is_featured', 'created_at'
         ]
