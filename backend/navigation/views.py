@@ -43,9 +43,12 @@ class NavigationMenuView(APIView):
         for item in items:
             key = item.get('badge')
             if key and key not in badge_cache:
-                badge_cache[key] = self._resolve_badge(key, user)
+                try:
+                    badge_cache[key] = self._resolve_badge(key, user)
+                except Exception:
+                    badge_cache[key] = None
             if key:
-                item['badge'] = badge_cache[key]
+                item['badge'] = badge_cache.get(key)
 
         return Response(items)
 
@@ -105,6 +108,9 @@ class NavigationMenuView(APIView):
 
     @staticmethod
     def _open_opportunity_count(user):
-        from acadopportunities.models import Opportunity
-        count = Opportunity.objects.filter(institution__administrator=user, status='open').count()
-        return count if count > 0 else None
+        try:
+            from acadopportunities.models import Opportunity
+            count = Opportunity.objects.filter(institution__admins=user, status='open').count()
+            return count if count > 0 else None
+        except Exception:
+            return None
