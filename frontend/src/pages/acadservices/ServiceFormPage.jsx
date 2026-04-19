@@ -26,8 +26,8 @@ const INITIAL_FORM = {
     price: '',
     price_currency: 'INR',
     turnaround_days: '',
-    subjects: '', // will be comma separated in UI, sent as array
-    grades_served: '', // will be comma separated in UI, sent as array
+    subjects: [],
+    grades_served: [],
 };
 
 const CATEGORY_ICONS = {
@@ -61,8 +61,8 @@ export default function ServiceFormPage() {
                     setForm({
                         ...d,
                         category: d.category?.id || '',
-                        subjects: d.subjects?.join(', ') || '',
-                        grades_served: d.grades_served?.join(', ') || ''
+                        subjects: Array.isArray(d.subjects) ? d.subjects : [],
+                        grades_served: Array.isArray(d.grades_served) ? d.grades_served : []
                     });
                     setFetching(false);
                 }
@@ -95,8 +95,8 @@ export default function ServiceFormPage() {
             const payload = {
                 ...form,
                 category_id: form.category,
-                subjects: form.subjects.split(',').map(s => s.trim()).filter(s => s),
-                grades_served: form.grades_served.split(',').map(g => g.trim()).filter(g => g),
+                subjects: form.subjects,
+                grades_served: form.grades_served,
                 price: form.price || null,
                 turnaround_days: form.turnaround_days || null
             };
@@ -133,6 +133,29 @@ export default function ServiceFormPage() {
         setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
     };
     const prevStep = () => { setStepErrors({}); setSaveError(''); setCurrentStep(prev => Math.max(prev - 1, 0)); };
+
+    const handleToggle = (field, item) => {
+        setForm(prev => ({
+            ...prev,
+            [field]: prev[field].includes(item) ? prev[field].filter(i => i !== item) : [...prev[field], item],
+        }));
+    };
+
+    const CheckboxGroup = ({ field, options }) => (
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {options.map((opt) => (
+                <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form[field].includes(opt)}
+                        onChange={() => handleToggle(field, opt)}
+                        className="w-4 h-4 text-[#1e3a5f] rounded border-slate-300 focus:ring-[#1e3a5f]" />
+                    <span className="text-sm text-slate-700">{opt}</span>
+                </label>
+            ))}
+        </div>
+    );
+
+    const GRADE_OPTIONS = ['Primary', 'Secondary', 'Senior Secondary', 'UG', 'PG', 'Test Prep', 'Corporate Training', 'IT/Technical Education', 'AI Courses'];
+    const SUBJECT_OPTIONS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Social Studies', 'History', 'Geography', 'Economics', 'Commerce', 'Computer Science', 'Physical Education', 'Art', 'Music', 'Sanskrit', 'French', 'German', 'Spanish', 'Psychology', 'Political Science'];
 
     // Render Logic per Step
     const renderStep = () => {
@@ -257,26 +280,14 @@ export default function ServiceFormPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-black uppercase tracking-widest text-slate-400">Relevant Subjects</label>
-                                <input 
-                                    name="subjects"
-                                    value={form.subjects}
-                                    onChange={handleChange}
-                                    placeholder="Mathematics, Physics, IBDP, etc."
-                                    className="w-full h-14 px-4 rounded-2xl border-slate-200 focus:ring-4 focus:ring-blue-500"
-                                />
+                                <CheckboxGroup field="subjects" options={SUBJECT_OPTIONS} />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-black uppercase tracking-widest text-slate-400">Grades Served</label>
-                                <input 
-                                    name="grades_served"
-                                    value={form.grades_served}
-                                    onChange={handleChange}
-                                    placeholder="Grade 10, K-12, Undergraduate, etc."
-                                    className="w-full h-14 px-4 rounded-2xl border-slate-200 focus:ring-4 focus:ring-blue-500"
-                                />
+                                <CheckboxGroup field="grades_served" options={GRADE_OPTIONS} />
                             </div>
                         </div>
                     </div>
