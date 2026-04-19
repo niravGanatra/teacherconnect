@@ -13,7 +13,6 @@ import FollowButton from '../../components/social/FollowButton';
 import AcadConnectButton from '../../components/acadconnect/AcadConnectButton';
 import FollowersModal from '../../components/social/FollowersModal';
 import ProfileCompletionCard from '../../components/profile/ProfileCompletionCard';
-import SkillsSection from '../../components/profile/SkillsSection';
 import EarnedCertificatesSection from '../../components/profile/EarnedCertificatesSection';
 import {
     UserCircleIcon,
@@ -566,9 +565,6 @@ export default function TeacherProfileView() {
                         )}
                     </Card>
                 )}
-
-                {/* ── Box 9: Skills & Endorsements ────────────────────────── */}
-                <SkillsSection userId={id || user?.id} isOwnProfile={isOwnProfile} />
 
                 {/* Earned Certificates */}
                 <EarnedCertificatesSection userId={id || user?.id} isOwnProfile={isOwnProfile} />

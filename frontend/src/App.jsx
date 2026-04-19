@@ -78,6 +78,7 @@ import AcadServicesPage from './pages/acadservices/AcadServicesPage';
 import ServiceDetailPage from './pages/acadservices/ServiceDetailPage';
 import MyServicesPage from './pages/acadservices/MyServicesPage';
 import ServiceFormPage from './pages/acadservices/ServiceFormPage';
+import InquiryInboxPage from './pages/acadservices/InquiryInboxPage';
 import PrivacySettings from './pages/settings/PrivacySettings';
 import AcadConnectPage from './pages/acadconnect/AcadConnectPage';
 import AcadTalkPage from './pages/acadtalk/AcadTalkPage';
@@ -391,6 +392,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN]}>
             <ServiceFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/acadservices/inquiries"
+        element={
+          <ProtectedRoute allowedTypes={[ROLES.EDUCATOR, ROLES.INSTITUTION_ADMIN]}>
+            <InquiryInboxPage />
           </ProtectedRoute>
         }
       />

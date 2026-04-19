@@ -7,12 +7,16 @@ export const acadServicesAPI = {
     getService: (id) => api.get(`/acadservices/${id}/`),
     getServiceReviews: (id) => api.get(`/acadservices/${id}/reviews/`),
 
-    // Educator Actions
+    // Educator — service management
     getMyServices: () => api.get('/acadservices/my-services/'),
     createService: (data) => api.post('/acadservices/my-services/', data),
     updateService: (id, data) => api.put(`/acadservices/edit/${id}/`, data),
     deleteService: (id) => api.delete(`/acadservices/edit/${id}/`),
     toggleService: (id) => api.patch(`/acadservices/${id}/toggle/`),
+
+    // Educator — inquiry inbox
+    getMyInquiries: (params) => api.get('/acadservices/my-inquiries/', { params }),
+    updateInquiryStatus: (id, newStatus) => api.patch(`/acadservices/inquiries/${id}/status/`, { status: newStatus }),
 
     // Client Actions
     inquireService: (id, message) => api.post(`/acadservices/${id}/inquire/`, { message }),

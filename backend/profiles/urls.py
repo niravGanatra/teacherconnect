@@ -10,6 +10,7 @@ from .views import (
     InstitutionProfileView,
     InstitutionProfileDetailView,
     InstitutionListView,
+    InstitutionCampusViewSet,
     ExperienceViewSet,
     EducationViewSet,
     SkillViewSet,
@@ -27,6 +28,7 @@ router.register(r'experiences', ExperienceViewSet, basename='experience')
 router.register(r'education', EducationViewSet, basename='education')
 router.register(r'skills', SkillViewSet, basename='skill')
 router.register(r'certifications', CertificationViewSet, basename='certification')
+router.register(r'campuses', InstitutionCampusViewSet, basename='institution-campus')
 
 urlpatterns = [
     # Teacher profiles

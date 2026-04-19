@@ -190,6 +190,14 @@ export const profileAPI = {
     deleteCertification: (id) => api.delete(`/profiles/certifications/${id}/`),
 };
 
+// Institution Campus API (profiles app — scoped to current institution user)
+export const profileCampusAPI = {
+    list: () => api.get('/profiles/campuses/'),
+    create: (data) => api.post('/profiles/campuses/', data),
+    update: (id, data) => api.patch(`/profiles/campuses/${id}/`, data),
+    delete: (id) => api.delete(`/profiles/campuses/${id}/`),
+};
+
 // Experience API (separate export for profile sections)
 export const experienceAPI = {
     list: () => api.get('/profiles/experiences/'),

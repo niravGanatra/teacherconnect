@@ -67,11 +67,18 @@ export default function MyServicesPage() {
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">My Services</h1>
                         <p className="text-slate-500 font-medium">Manage your professional offerings and track performance.</p>
                     </div>
-                    <Link to="/acadservices/new">
-                        <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl h-12 px-6">
-                            <Plus className="w-5 h-5" /> Add New Service
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link to="/acadservices/inquiries">
+                            <Button variant="secondary" className="flex items-center gap-2 rounded-2xl h-12 px-5 border-slate-200">
+                                <MessageSquare className="w-5 h-5" /> Inquiry Inbox
+                            </Button>
+                        </Link>
+                        <Link to="/acadservices/new">
+                            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl h-12 px-6">
+                                <Plus className="w-5 h-5" /> Add New Service
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Stats Row */}

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, Input, TextArea, Badge, Select, Spinner } from '../../components/common';
 import ImageUpload from '../../components/common/ImageUpload';
-import { profileAPI } from '../../services/api';
+import { profileAPI, profileCampusAPI } from '../../services/api';
 import {
     BuildingOfficeIcon,
     CheckIcon,
@@ -100,6 +100,89 @@ export default function InstitutionProfile() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    // Campus modal state
+    const CAMPUS_FORM_DEFAULT = {
+        campus_name: '', campus_code: '', campus_type: 'BRANCH', year_of_start: '', campus_status: 'ACTIVE',
+        full_address: '', city: '', district: '', state: '', country: 'India', pincode: '', urban_status: '',
+        campus_area: '', classrooms_count: '', labs_available: false, library_available: false,
+        hostel_type: 'NONE', sports_facilities: [], transport_facility: false, smart_classrooms: false,
+        courses_offered: [], student_capacity: '', current_student_strength: '', faculty_count: '',
+        student_teacher_ratio: '', medium_of_instruction: [], shift_details: [],
+        campus_email: '', campus_phone: '', campus_head_name: '', campus_head_designation: '', campus_whatsapp: '',
+    };
+    const [campusModal, setCampusModal] = useState({ open: false, editingId: null });
+    const [campusForm, setCampusForm] = useState(CAMPUS_FORM_DEFAULT);
+    const [campusSaving, setCampusSaving] = useState(false);
+    const [campusTagInputs, setCampusTagInputs] = useState({ sports_facilities: '', courses_offered: '', medium_of_instruction: '', shift_details: '' });
+
+    const openAddCampus = () => {
+        setCampusForm(CAMPUS_FORM_DEFAULT);
+        setCampusTagInputs({ sports_facilities: '', courses_offered: '', medium_of_instruction: '', shift_details: '' });
+        setCampusModal({ open: true, editingId: null });
+    };
+
+    const openEditCampus = (campus) => {
+        const getArr = (v) => Array.isArray(v) ? v : [];
+        setCampusForm({
+            ...CAMPUS_FORM_DEFAULT,
+            ...campus,
+            sports_facilities: getArr(campus.sports_facilities),
+            courses_offered: getArr(campus.courses_offered),
+            medium_of_instruction: getArr(campus.medium_of_instruction),
+            shift_details: getArr(campus.shift_details),
+        });
+        setCampusTagInputs({ sports_facilities: '', courses_offered: '', medium_of_instruction: '', shift_details: '' });
+        setCampusModal({ open: true, editingId: campus.id });
+    };
+
+    const closeCampusModal = () => setCampusModal({ open: false, editingId: null });
+
+    const handleCampusChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setCampusForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    };
+
+    const addCampusTag = (field) => {
+        const val = campusTagInputs[field].trim();
+        if (val && !campusForm[field].includes(val)) {
+            setCampusForm(prev => ({ ...prev, [field]: [...prev[field], val] }));
+        }
+        setCampusTagInputs(prev => ({ ...prev, [field]: '' }));
+    };
+
+    const removeCampusTag = (field, item) => {
+        setCampusForm(prev => ({ ...prev, [field]: prev[field].filter(i => i !== item) }));
+    };
+
+    const saveCampus = async () => {
+        if (!campusForm.campus_name.trim()) { alert('Campus name is required.'); return; }
+        setCampusSaving(true);
+        try {
+            if (campusModal.editingId) {
+                const res = await profileCampusAPI.update(campusModal.editingId, campusForm);
+                setFormData(prev => ({ ...prev, campuses: prev.campuses.map(c => c.id === campusModal.editingId ? res.data : c) }));
+            } else {
+                const res = await profileCampusAPI.create(campusForm);
+                setFormData(prev => ({ ...prev, campuses: [...prev.campuses, res.data] }));
+            }
+            closeCampusModal();
+        } catch (err) {
+            alert(err.response?.data?.campus_name?.[0] || err.response?.data?.detail || 'Failed to save campus.');
+        } finally {
+            setCampusSaving(false);
+        }
+    };
+
+    const deleteCampus = async (id) => {
+        if (!window.confirm('Delete this campus? This cannot be undone.')) return;
+        try {
+            await profileCampusAPI.delete(id);
+            setFormData(prev => ({ ...prev, campuses: prev.campuses.filter(c => c.id !== id) }));
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Failed to delete campus.');
+        }
+    };
 
     useEffect(() => {
         fetchProfile();
@@ -649,24 +732,181 @@ export default function InstitutionProfile() {
                     </div>
                 )}
 
-                {/* CAMPUSES TAB (Placeholder view) */}
+                {/* CAMPUSES TAB */}
                 {activeTab === 'campuses' && (
-                    <Card className="p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-lg font-semibold">Campuses & Branches</h2>
-                            <Button disabled><PlusIcon className="w-4 h-4 mr-2" /> Add Campus</Button>
-                        </div>
-                        <p className="text-slate-500 mb-4">Multi-campus management functionality is activated upon admin verification.</p>
-                        {formData.campuses?.map((campus, idx) => (
-                            <div key={idx} className="p-4 border border-slate-200 rounded-lg mb-4 flex justify-between items-center">
+                    <div className="space-y-4">
+                        <Card className="p-6">
+                            <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h3 className="font-semibold text-slate-800">{campus.campus_name}</h3>
-                                    <p className="text-sm text-slate-500">{campus.city}, {campus.state}</p>
+                                    <h2 className="text-lg font-semibold">Campuses & Branches</h2>
+                                    <p className="text-sm text-slate-500 mt-1">Manage all physical campuses linked to your institution.</p>
                                 </div>
-                                <Badge variant="primary">{campus.campus_type}</Badge>
+                                <Button type="button" onClick={openAddCampus} className="flex items-center gap-2">
+                                    <PlusIcon className="w-4 h-4" /> Add Campus
+                                </Button>
                             </div>
-                        ))}
-                    </Card>
+
+                            {formData.campuses?.length === 0 ? (
+                                <div className="text-center py-16 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                                    <BuildingOfficeIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                    <p className="font-semibold text-slate-700">No campuses added yet</p>
+                                    <p className="text-sm text-slate-500 mt-1">Click "Add Campus" to register your first branch or sub-campus.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {formData.campuses.map((campus) => (
+                                        <div key={campus.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-[#1e3a5f]/30 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-[#1e3a5f]/10 rounded-lg flex items-center justify-center">
+                                                    <BuildingOfficeIcon className="w-5 h-5 text-[#1e3a5f]" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-slate-800">{campus.campus_name}</p>
+                                                    <p className="text-sm text-slate-500">
+                                                        {[campus.city, campus.state].filter(Boolean).join(', ')}
+                                                        {campus.campus_status && <span className={`ml-2 text-xs font-bold ${campus.campus_status === 'ACTIVE' ? 'text-emerald-600' : campus.campus_status === 'UPCOMING' ? 'text-amber-600' : 'text-slate-400'}`}>{campus.campus_status}</span>}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Badge variant="primary">{campus.campus_type}</Badge>
+                                                <button type="button" onClick={() => openEditCampus(campus)} className="text-sm text-[#1e3a5f] font-medium hover:underline">Edit</button>
+                                                <button type="button" onClick={() => deleteCampus(campus.id)} className="text-sm text-red-500 font-medium hover:underline">Delete</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Campus Modal */}
+                        {campusModal.open && (
+                            <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm overflow-y-auto py-8 px-4">
+                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-auto">
+                                    <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                                        <h3 className="text-lg font-bold text-slate-900">{campusModal.editingId ? 'Edit Campus' : 'Add New Campus'}</h3>
+                                        <button type="button" onClick={closeCampusModal} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500">
+                                            <XMarkIcon className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                    <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+
+                                        {/* Section A: Identity */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">A. Campus Identity</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <Input label="Campus Name *" name="campus_name" value={campusForm.campus_name} onChange={handleCampusChange} placeholder="e.g. North Campus" />
+                                                </div>
+                                                <Input label="Campus Code" name="campus_code" value={campusForm.campus_code} onChange={handleCampusChange} placeholder="e.g. NC-01" />
+                                                <Select label="Campus Type" name="campus_type" value={campusForm.campus_type} onChange={handleCampusChange} options={[
+                                                    { value: 'MAIN', label: 'Main' }, { value: 'BRANCH', label: 'Branch' },
+                                                    { value: 'FRANCHISE', label: 'Franchise' }, { value: 'STUDY_CENTER', label: 'Study Center' }
+                                                ]} />
+                                                <Input label="Year of Start" type="number" name="year_of_start" value={campusForm.year_of_start} onChange={handleCampusChange} placeholder="e.g. 2010" />
+                                                <Select label="Status" name="campus_status" value={campusForm.campus_status} onChange={handleCampusChange} options={[
+                                                    { value: 'ACTIVE', label: 'Active' }, { value: 'UPCOMING', label: 'Upcoming' }, { value: 'CLOSED', label: 'Closed' }
+                                                ]} />
+                                            </div>
+                                        </div>
+
+                                        {/* Section B: Location */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">B. Location Details</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <TextArea label="Full Address" name="full_address" value={campusForm.full_address} onChange={handleCampusChange} rows={2} />
+                                                </div>
+                                                <Input label="City" name="city" value={campusForm.city} onChange={handleCampusChange} />
+                                                <Input label="District" name="district" value={campusForm.district} onChange={handleCampusChange} />
+                                                <Input label="State" name="state" value={campusForm.state} onChange={handleCampusChange} />
+                                                <Input label="Country" name="country" value={campusForm.country} onChange={handleCampusChange} />
+                                                <Input label="Pincode" name="pincode" value={campusForm.pincode} onChange={handleCampusChange} />
+                                                <Select label="Urban Status" name="urban_status" value={campusForm.urban_status} onChange={handleCampusChange} options={[
+                                                    { value: '', label: 'Select' }, { value: 'URBAN', label: 'Urban' },
+                                                    { value: 'SEMI_URBAN', label: 'Semi-Urban' }, { value: 'RURAL', label: 'Rural' }
+                                                ]} />
+                                            </div>
+                                        </div>
+
+                                        {/* Section C: Infrastructure */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">C. Infrastructure</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Input label="Campus Area" name="campus_area" value={campusForm.campus_area} onChange={handleCampusChange} placeholder="e.g. 5 acres" />
+                                                <Input label="Number of Classrooms" type="number" name="classrooms_count" value={campusForm.classrooms_count} onChange={handleCampusChange} />
+                                                <Select label="Hostel" name="hostel_type" value={campusForm.hostel_type} onChange={handleCampusChange} options={HOSTEL_OPTIONS} />
+                                                <div className="space-y-2 pt-2">
+                                                    {[['labs_available','Labs Available'], ['library_available','Library Available'], ['transport_facility','Transport Facility'], ['smart_classrooms','Smart Classrooms']].map(([n, l]) => (
+                                                        <label key={n} className="flex items-center gap-2">
+                                                            <input type="checkbox" name={n} checked={campusForm[n]} onChange={handleCampusChange} className="w-4 h-4 text-[#1e3a5f]" />
+                                                            <span className="text-sm">{l}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium mb-2">Sports Facilities</label>
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {campusForm.sports_facilities.map(item => (
+                                                            <Badge key={item} variant="secondary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={() => removeCampusTag('sports_facilities', item)} /></Badge>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex gap-2 max-w-sm">
+                                                        <Input value={campusTagInputs.sports_facilities} onChange={e => setCampusTagInputs(p => ({ ...p, sports_facilities: e.target.value }))} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCampusTag('sports_facilities'))} placeholder="e.g. Cricket Ground" />
+                                                        <Button type="button" onClick={() => addCampusTag('sports_facilities')}>Add</Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Section D: Academic Operations */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">D. Academic Operations</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Input label="Student Capacity" type="number" name="student_capacity" value={campusForm.student_capacity} onChange={handleCampusChange} />
+                                                <Input label="Current Student Strength" type="number" name="current_student_strength" value={campusForm.current_student_strength} onChange={handleCampusChange} />
+                                                <Input label="Faculty Count" type="number" name="faculty_count" value={campusForm.faculty_count} onChange={handleCampusChange} />
+                                                <Input label="Student-Teacher Ratio" name="student_teacher_ratio" value={campusForm.student_teacher_ratio} onChange={handleCampusChange} placeholder="e.g. 30:1" />
+                                                {[['courses_offered','Courses Offered','e.g. B.Tech, MBA'], ['medium_of_instruction','Medium of Instruction','e.g. English, Hindi'], ['shift_details','Shift Details','e.g. Morning, Evening']].map(([field, label, placeholder]) => (
+                                                    <div key={field} className="md:col-span-2">
+                                                        <label className="block text-sm font-medium mb-2">{label}</label>
+                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                            {campusForm[field].map(item => (
+                                                                <Badge key={item} variant="secondary" className="flex items-center gap-1">{item} <XMarkIcon className="w-3 h-3 cursor-pointer" onClick={() => removeCampusTag(field, item)} /></Badge>
+                                                            ))}
+                                                        </div>
+                                                        <div className="flex gap-2 max-w-sm">
+                                                            <Input value={campusTagInputs[field]} onChange={e => setCampusTagInputs(p => ({ ...p, [field]: e.target.value }))} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCampusTag(field))} placeholder={placeholder} />
+                                                            <Button type="button" onClick={() => addCampusTag(field)}>Add</Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Section E: Contact */}
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">E. Campus Contact</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Input label="Campus Email" type="email" name="campus_email" value={campusForm.campus_email} onChange={handleCampusChange} />
+                                                <Input label="Campus Phone" name="campus_phone" value={campusForm.campus_phone} onChange={handleCampusChange} />
+                                                <Input label="Campus Head Name" name="campus_head_name" value={campusForm.campus_head_name} onChange={handleCampusChange} />
+                                                <Input label="Head Designation" name="campus_head_designation" value={campusForm.campus_head_designation} onChange={handleCampusChange} />
+                                                <Input label="WhatsApp Number" name="campus_whatsapp" value={campusForm.campus_whatsapp} onChange={handleCampusChange} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 p-6 border-t border-slate-100">
+                                        <Button type="button" variant="secondary" onClick={closeCampusModal}>Cancel</Button>
+                                        <Button type="button" onClick={saveCampus} disabled={campusSaving}>
+                                            {campusSaving ? 'Saving...' : campusModal.editingId ? 'Save Changes' : 'Add Campus'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
             </form>

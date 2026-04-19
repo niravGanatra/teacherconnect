@@ -3,10 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Badge, Button } from '../../components/common';
 import { acadServicesAPI } from '../../services/acadServicesAPI';
-import { 
-    Star, MapPin, Globe, Clock, MessageSquare, 
-    ArrowLeft, CheckCircle2, ShieldCheck, Share2, 
-    MoreVertical, Info, ExternalLink, Calendar
+import {
+    Star, MapPin, Globe, Clock, MessageSquare,
+    ArrowLeft, CheckCircle2, ShieldCheck, Share2,
+    MoreVertical, Info, ExternalLink, Calendar,
+    ChevronRight, BookOpen, GraduationCap
 } from 'lucide-react';
 
 const InquiryModal = ({ service, isOpen, onClose, onSuccess }) => {

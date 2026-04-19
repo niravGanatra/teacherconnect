@@ -1,11 +1,11 @@
-from rest_framework import generics, permissions, status, filters
+from rest_framework import generics, permissions, serializers, status, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Avg, Q
 from django.shortcuts import get_object_or_404
 from .models import ServiceCategory, Service, ServiceReview, ServiceInquiry
 from .serializers import (
-    ServiceCategorySerializer, ServiceListSerializer, 
+    ServiceCategorySerializer, ServiceListSerializer,
     ServiceDetailSerializer, ServiceReviewSerializer, ServiceInquirySerializer
 )
 
@@ -151,3 +151,33 @@ class ServiceReviewListView(generics.ListAPIView):
 
     def get_queryset(self):
         return ServiceReview.objects.filter(service_id=self.kwargs.get('pk')).order_by('-created_at')
+
+
+class MyInquiriesView(generics.ListAPIView):
+    """Inquiries received by the authenticated educator (as provider)."""
+    serializer_class = ServiceInquirySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = ServiceInquiry.objects.filter(
+            service__provider=self.request.user
+        ).select_related('service', 'client').order_by('-created_at')
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        return qs
+
+
+class InquiryStatusView(APIView):
+    """Update inquiry status (provider only): open → responded → closed."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        inquiry = get_object_or_404(ServiceInquiry, pk=pk, service__provider=request.user)
+        new_status = request.data.get('status')
+        valid = [c[0] for c in ServiceInquiry.STATUS_CHOICES]
+        if new_status not in valid:
+            return Response({'error': f'Status must be one of: {", ".join(valid)}'}, status=status.HTTP_400_BAD_REQUEST)
+        inquiry.status = new_status
+        inquiry.save()
+        return Response(ServiceInquirySerializer(inquiry, context={'request': request}).data)

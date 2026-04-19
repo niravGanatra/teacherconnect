@@ -1,15 +1,135 @@
 /**
  * Teacher Profile Editor
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '../../components/common/Sidebar';
 import { Card, Button, Input, TextArea, Badge } from '../../components/common';
 import ImageUpload from '../../components/common/ImageUpload';
 import ProfileSkeleton from '../../components/common/ProfileSkeleton';
-import { ExperienceSection, EducationSection, SkillsSection, CertificationsSection } from '../../components/profile';
+import { ExperienceSection, EducationSection, CertificationsSection } from '../../components/profile';
 import { useAuth } from '../../context/AuthContext';
 import { profileAPI } from '../../services/api';
 import { PlusIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+
+const WORLD_LANGUAGES = [
+    'Afrikaans','Albanian','Amharic','Arabic','Armenian','Azerbaijani',
+    'Basque','Belarusian','Bengali','Bosnian','Bulgarian','Burmese',
+    'Catalan','Cebuano','Chichewa','Chinese (Simplified)','Chinese (Traditional)',
+    'Corsican','Croatian','Czech','Danish','Dutch','English',
+    'Esperanto','Estonian','Filipino','Finnish','French','Frisian',
+    'Galician','Georgian','German','Greek','Gujarati','Haitian Creole',
+    'Hausa','Hawaiian','Hebrew','Hindi','Hmong','Hungarian',
+    'Icelandic','Igbo','Indonesian','Irish','Italian','Japanese',
+    'Javanese','Kannada','Kazakh','Khmer','Kinyarwanda','Korean',
+    'Kurdish','Kyrgyz','Lao','Latin','Latvian','Lithuanian',
+    'Luxembourgish','Macedonian','Malagasy','Malay','Malayalam',
+    'Maltese','Maori','Marathi','Mongolian','Nepali','Norwegian',
+    'Odia','Pashto','Persian','Polish','Portuguese','Punjabi',
+    'Romanian','Russian','Samoan','Sanskrit','Serbian','Shona',
+    'Sindhi','Sinhala','Slovak','Slovenian','Somali','Spanish',
+    'Sundanese','Swahili','Swedish','Tajik','Tamil','Tatar',
+    'Telugu','Thai','Turkish','Turkmen','Ukrainian','Urdu',
+    'Uyghur','Uzbek','Vietnamese','Welsh','Xhosa','Yiddish',
+    'Yoruba','Zulu',
+];
+
+function LanguageTagInput({ selected, onAdd, onRemove, value, setValue, placeholder }) {
+    const [suggestions, setSuggestions] = useState([]);
+    const [showDrop, setShowDrop] = useState(false);
+    const wrapRef = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDrop(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleChange = (e) => {
+        const v = e.target.value;
+        setValue(v);
+        if (v.trim().length >= 3) {
+            const q = v.trim().toLowerCase();
+            const filtered = WORLD_LANGUAGES.filter(
+                (l) => l.toLowerCase().includes(q) && !selected.includes(l)
+            ).slice(0, 8);
+            setSuggestions(filtered);
+            setShowDrop(filtered.length > 0);
+        } else {
+            setSuggestions([]);
+            setShowDrop(false);
+        }
+    };
+
+    const pick = (lang) => {
+        onAdd(lang);
+        setValue('');
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    const addCustom = () => {
+        const v = value.trim();
+        if (v && !selected.includes(v)) onAdd(v);
+        setValue('');
+        setSuggestions([]);
+        setShowDrop(false);
+    };
+
+    return (
+        <div>
+            <div className="flex flex-wrap gap-2 mb-3">
+                {selected.map((lang) => (
+                    <Badge key={lang} variant="default" className="flex items-center gap-1 pr-1">
+                        {lang}
+                        <button type="button" onClick={() => onRemove(lang)} className="ml-1 p-0.5 hover:bg-white/20 rounded">
+                            <XMarkIcon className="w-3 h-3" />
+                        </button>
+                    </Badge>
+                ))}
+            </div>
+            <div ref={wrapRef} className="relative flex gap-2">
+                <div className="relative flex-1">
+                    <Input
+                        value={value}
+                        onChange={handleChange}
+                        onFocus={() => suggestions.length > 0 && setShowDrop(true)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (suggestions.length > 0) pick(suggestions[0]);
+                                else addCustom();
+                            }
+                            if (e.key === 'Escape') setShowDrop(false);
+                        }}
+                        placeholder={placeholder}
+                        autoComplete="off"
+                    />
+                    {showDrop && (
+                        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+                            {suggestions.map((lang) => (
+                                <li key={lang}>
+                                    <button
+                                        type="button"
+                                        onMouseDown={(e) => { e.preventDefault(); pick(lang); }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-[#1e3a5f] hover:text-white transition-colors font-medium"
+                                    >
+                                        {lang}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <Button type="button" variant="secondary" onClick={() => suggestions.length > 0 ? pick(suggestions[0]) : addCustom()}>
+                    <PlusIcon className="w-5 h-5" />
+                </Button>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-400">Type 3+ letters to see suggestions, or type any language name and press Enter.</p>
+        </div>
+    );
+}
 
 export default function TeacherProfile() {
     const { profile, updateProfile } = useAuth();
@@ -241,7 +361,14 @@ export default function TeacherProfile() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-700 mb-2">Lectures Can Be Delivered In (Languages)</p>
-                            <TagInput field="languages" value={newLanguage} setValue={setNewLanguage} placeholder="Add a language..." variant="default" />
+                            <LanguageTagInput
+                                selected={formData.languages}
+                                onAdd={(lang) => setFormData(prev => ({ ...prev, languages: [...prev.languages, lang] }))}
+                                onRemove={(lang) => removeTag('languages', lang)}
+                                value={newLanguage}
+                                setValue={setNewLanguage}
+                                placeholder="Type a language (e.g. Hin, Eng, Mar...)"
+                            />
                         </div>
                         <div>
                             <p className="text-sm font-medium text-slate-700 mb-3">Boards / Curriculum</p>
@@ -331,12 +458,7 @@ export default function TeacherProfile() {
                     </div>
                 </Card>
 
-                {/* ── Box 9: Skills & Endorsements ─────────────────────────── */}
-                <Card id="skills-block" className="p-4 md:p-6">
-                    <SkillsSection noCard />
-                </Card>
-
-                {/* ── Box 10: Privacy Settings ─────────────────────────────── */}
+                {/* ── Box 9: Privacy Settings ─────────────────────────────── */}
                 <Card id="privacy" className="p-6">
                     <h2 className="text-lg font-semibold text-slate-900 mb-4">Privacy Settings</h2>
                     <div className="space-y-4">

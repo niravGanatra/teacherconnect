@@ -8,12 +8,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from accounts.permissions import IsTeacher, IsInstitution
-from .models import TeacherProfile, InstitutionProfile, Experience, Education, Skill, Certification, Endorsement
+from .models import TeacherProfile, InstitutionProfile, InstitutionCampus, Experience, Education, Skill, Certification, Endorsement
 from .serializers import (
     TeacherProfileSerializer,
     TeacherProfilePublicSerializer,
     InstitutionProfileSerializer,
     InstitutionProfilePublicSerializer,
+    InstitutionCampusSerializer,
     ExperienceSerializer,
     EducationSerializer,
     SkillSerializer,
@@ -137,6 +138,25 @@ class InstitutionProfileView(generics.RetrieveUpdateAPIView):
             defaults={'institution_name': self.request.user.username}
         )
         return profile
+
+
+class InstitutionCampusViewSet(viewsets.ModelViewSet):
+    """CRUD ViewSet for InstitutionCampus, scoped to the current institution user."""
+    serializer_class = InstitutionCampusSerializer
+    permission_classes = [IsAuthenticated, IsInstitution]
+
+    def _get_institution_profile(self):
+        profile, _ = InstitutionProfile.objects.get_or_create(
+            user=self.request.user,
+            defaults={'institution_name': self.request.user.username}
+        )
+        return profile
+
+    def get_queryset(self):
+        return InstitutionCampus.objects.filter(institution=self._get_institution_profile())
+
+    def perform_create(self, serializer):
+        serializer.save(institution=self._get_institution_profile())
 
 
 class InstitutionProfileDetailView(generics.RetrieveAPIView):
