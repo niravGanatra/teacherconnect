@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Card, Button, Spinner, Badge, Modal } from '../../components/common';
-import { institutionPagesAPI, campusAPI } from '../../services/api';
+import { institutionPagesAPI, profileAPI, profileCampusAPI } from '../../services/api';
 import InstitutionHeader from '../../components/institution/InstitutionHeader';
 import CampusForm from '../../components/institution/CampusForm';
 import {
@@ -26,7 +26,16 @@ import {
     WifiIcon,
     TruckIcon,
     HomeModernIcon,
+    ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
+
+function mapsUrl(obj) {
+    if (obj?.google_maps_link) return obj.google_maps_link;
+    if (obj?.latitude && obj?.longitude) return `https://www.google.com/maps?q=${obj.latitude},${obj.longitude}`;
+    const parts = [obj?.full_address || obj?.campus_address, obj?.city, obj?.state, obj?.country].filter(Boolean);
+    if (parts.length) return `https://www.google.com/maps/search/${encodeURIComponent(parts.join(', '))}`;
+    return null;
+}
 import { CheckBadgeIcon as CheckBadgeSolid, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 
 const TABS = [
@@ -49,7 +58,7 @@ const FACILITY_ICONS = {
 };
 
 export default function InstitutionProfilePage() {
-    const { slug } = useParams();
+    const { id } = useParams();
     const { isLearner } = useAuth();
     const [institution, setInstitution] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -58,11 +67,11 @@ export default function InstitutionProfilePage() {
 
     useEffect(() => {
         fetchInstitution();
-    }, [slug]);
+    }, [id]);
 
     const fetchInstitution = async () => {
         try {
-            const response = await institutionsAPI.getBySlug(slug);
+            const response = await profileAPI.getInstitutionById(id);
             setInstitution(response.data);
         } catch (error) {
             console.error('Failed to fetch institution:', error);
@@ -110,8 +119,24 @@ export default function InstitutionProfilePage() {
         campuses
     } = institution;
 
-    // Modal state
-    const [showAddCampus, setShowAddCampus] = useState(false);
+    // Campus drawer state
+    const [campusDrawer, setCampusDrawer] = useState({ open: false, editing: null });
+
+    const saveCampus = async (data, campusId) => {
+        if (campusId) {
+            const res = await profileCampusAPI.update(campusId, data);
+            setInstitution(prev => ({
+                ...prev,
+                campuses: prev.campuses.map(c => c.id === campusId ? res.data : c),
+            }));
+        } else {
+            const res = await profileCampusAPI.create(data);
+            setInstitution(prev => ({
+                ...prev,
+                campuses: [...(prev.campuses || []), res.data],
+            }));
+        }
+    };
 
     // Campuses Tab
     const CampusesTab = () => (
@@ -119,7 +144,7 @@ export default function InstitutionProfilePage() {
             <div className="flex justify-between items-center">
                 <h3 className="text-xl font-bold text-slate-800">Campuses ({campuses?.length || 0})</h3>
                 {institution.is_admin && (
-                    <Button size="sm" onClick={() => setShowAddCampus(true)}>Add Campus</Button>
+                    <Button size="sm" onClick={() => setCampusDrawer({ open: true, editing: null })}>Add Campus</Button>
                 )}
             </div>
 
@@ -166,6 +191,16 @@ export default function InstitutionProfilePage() {
 
                             <div className="mt-4 pt-4 border-t flex gap-2">
                                 <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                                {mapsUrl(campus) && (
+                                    <a href={mapsUrl(campus)} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors whitespace-nowrap">
+                                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                                        Maps
+                                    </a>
+                                )}
+                                {institution.is_admin && (
+                                    <Button variant="outline" size="sm" onClick={() => setCampusDrawer({ open: true, editing: campus })}>Edit</Button>
+                                )}
                             </div>
                         </Card>
                     ))}
@@ -203,6 +238,12 @@ export default function InstitutionProfilePage() {
                         <a href={institution.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-blue-600">
                             <GlobeAltIcon className="w-4 h-4" />
                             Website
+                        </a>
+                    )}
+                    {mapsUrl(institution) && (
+                        <a href={mapsUrl(institution)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-green-600">
+                            <MapPinIcon className="w-4 h-4" />
+                            Open in Google Maps
                         </a>
                     )}
                     {contact_details?.address_line1 && (
@@ -539,6 +580,13 @@ export default function InstitutionProfilePage() {
                     </div>
                 </div>
             </div>
+
+            <CampusForm
+                isOpen={campusDrawer.open}
+                onClose={() => setCampusDrawer({ open: false, editing: null })}
+                campus={campusDrawer.editing}
+                onSave={saveCampus}
+            />
         </div>
     );
 }

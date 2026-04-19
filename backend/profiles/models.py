@@ -415,6 +415,7 @@ class InstitutionCampus(models.Model):
         ('SEMI_URBAN', 'Semi-Urban'),
         ('RURAL', 'Rural'),
     ], blank=True)
+    google_maps_link = models.URLField(blank=True)
 
     # C. Infrastructure
     campus_area = models.CharField(max_length=100, blank=True, help_text="e.g. 10 acres")
