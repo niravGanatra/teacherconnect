@@ -724,7 +724,7 @@ function AppRoutes() {
       />
 
       {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
