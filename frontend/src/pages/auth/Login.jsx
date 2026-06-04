@@ -272,6 +272,13 @@ export default function Login() {
                                 Register
                             </Link>
                         </p>
+
+                        <p className="text-center text-xs text-gray-400 mt-3">
+                            Having trouble?{' '}
+                            <Link to="/support" className="text-gray-500 hover:text-blue-600 hover:underline transition-colors">
+                                Visit Support Centre
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
