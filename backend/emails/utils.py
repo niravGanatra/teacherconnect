@@ -228,6 +228,23 @@ def send_skill_endorsed_email(recipient_user, actor_user, skill_name: str) -> No
     )
 
 
+def send_support_inquiry_email(sender_name: str, sender_email: str,
+                                issue_type: str, subject: str, message: str) -> None:
+    """Sent to info@acadworld.com when a user submits the support contact form."""
+    send_email(
+        template='support_inquiry.html',
+        context={
+            'sender_name': sender_name,
+            'sender_email': sender_email,
+            'issue_type': issue_type,
+            'subject': subject,
+            'message': message,
+        },
+        subject=f'[Support] {subject}',
+        recipient='info@acadworld.com',
+    )
+
+
 def send_new_institution_email(institution_name: str, admin_email: str) -> None:
     """Sent to the Super Admin when a new institution page is created."""
     from django.contrib.auth import get_user_model

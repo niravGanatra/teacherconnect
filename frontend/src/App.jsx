@@ -14,6 +14,7 @@ import VerifyEmail from './pages/auth/VerifyEmail';
 import AuthCallback from './pages/auth/AuthCallback';
 import TermsOfService from './pages/legal/TermsOfService';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import SupportPage from './pages/support/SupportPage';
 import EducatorOnboarding from './pages/onboarding/EducatorOnboarding';
 import InstitutionOnboarding from './pages/onboarding/InstitutionOnboarding';
 import LearnerOnboarding from './pages/onboarding/LearnerOnboarding';
@@ -212,6 +213,7 @@ function AppRoutes() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/support" element={<SupportPage />} />
 
       {/* Protected Routes - All Users */}
       <Route

@@ -675,3 +675,62 @@ class GoogleCallbackView(APIView):
         except Exception as exc:
             logger.error('Google OAuth callback error: %s', exc, exc_info=True)
             return HttpResponseRedirect(f'{frontend_url}/auth/callback?error=server_error')
+
+
+# =============================================================================
+# Support Contact
+# =============================================================================
+
+class SupportContactView(APIView):
+    """
+    POST /api/auth/support-contact/
+
+    Accepts a support inquiry from anyone (no auth required) and forwards
+    it to info@acadworld.com via the transactional email system.
+    """
+    permission_classes = [AllowAny]
+
+    ISSUE_TYPES = {
+        'login': 'Login Issue',
+        'registration': 'Registration Issue',
+        'account': 'Account / Profile',
+        'fdp': 'FDP / Course',
+        'billing': 'Billing / Payment',
+        'other': 'Other',
+    }
+
+    def post(self, request):
+        from emails.utils import send_support_inquiry_email
+
+        name = (request.data.get('name') or '').strip()
+        email = (request.data.get('email') or '').strip()
+        issue_type_key = (request.data.get('issue_type') or 'other').strip()
+        subject = (request.data.get('subject') or '').strip()
+        message = (request.data.get('message') or '').strip()
+
+        errors = {}
+        if not name:
+            errors['name'] = 'Your name is required.'
+        if not email or '@' not in email:
+            errors['email'] = 'A valid email address is required.'
+        if not subject:
+            errors['subject'] = 'Subject is required.'
+        if not message:
+            errors['message'] = 'Please describe your issue.'
+        if len(message) > 4000:
+            errors['message'] = 'Message must be under 4000 characters.'
+
+        if errors:
+            return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        issue_type_label = self.ISSUE_TYPES.get(issue_type_key, 'Other')
+
+        send_support_inquiry_email(
+            sender_name=name,
+            sender_email=email,
+            issue_type=issue_type_label,
+            subject=subject,
+            message=message,
+        )
+
+        return Response({'message': 'Your message has been received. We will get back to you shortly.'})

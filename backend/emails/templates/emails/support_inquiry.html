@@ -1,0 +1,52 @@
+{% extends "emails/base_email.html" %}
+
+{% block subject %}Support Request: {{ subject }}{% endblock %}
+
+{% block content %}
+<h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1e293b;">
+  New Support Request
+</h2>
+<p style="margin:0 0 24px;font-size:14px;color:#6b7280;">
+  Received from the AcadWorld support page
+</p>
+
+<!-- Metadata table -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+       style="background:#f8fafc;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:24px;">
+  <tr>
+    <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+      <p style="margin:0;font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">From</p>
+      <p style="margin:4px 0 0;font-size:15px;color:#1e293b;font-weight:500;">{{ sender_name }}</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+      <p style="margin:0;font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Reply-To Email</p>
+      <p style="margin:4px 0 0;font-size:15px;color:#6c3fc5;font-weight:500;">
+        <a href="mailto:{{ sender_email }}" style="color:#6c3fc5;text-decoration:none;">{{ sender_email }}</a>
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+      <p style="margin:0;font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Issue Type</p>
+      <p style="margin:4px 0 0;font-size:15px;color:#1e293b;">{{ issue_type }}</p>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:16px 20px;">
+      <p style="margin:0;font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Subject</p>
+      <p style="margin:4px 0 0;font-size:15px;color:#1e293b;font-weight:500;">{{ subject }}</p>
+    </td>
+  </tr>
+</table>
+
+<!-- Message body -->
+<p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Message</p>
+<div style="background:#f8fafc;border-left:4px solid #6c3fc5;border-radius:0 8px 8px 0;
+            padding:16px 20px;font-size:15px;color:#334155;line-height:1.7;white-space:pre-wrap;">{{ message }}</div>
+
+<p style="margin:24px 0 0;font-size:13px;color:#94a3b8;">
+  Reply directly to this email or use the reply-to address above to respond to {{ sender_name }}.
+</p>
+{% endblock %}

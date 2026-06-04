@@ -17,6 +17,7 @@ from .views import (
     PasswordResetConfirmView,
     GoogleAuthURLView,
     GoogleCallbackView,
+    SupportContactView,
 )
 
 urlpatterns = [
@@ -37,4 +38,6 @@ urlpatterns = [
     path('google/', GoogleAuthURLView.as_view(), name='google_auth_url'),
     path('google/url/', GoogleAuthURLView.as_view(), name='google_auth_url_alias'),
     path('google/callback/', GoogleCallbackView.as_view(), name='google_callback'),
+    # Support contact form
+    path('support-contact/', SupportContactView.as_view(), name='support_contact'),
 ]
