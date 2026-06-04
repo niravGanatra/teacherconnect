@@ -234,7 +234,7 @@ export default function SupportPage() {
     setSubmitting(true);
 
     try {
-      await api.post('/api/auth/support-contact/', form);
+      await api.post('/auth/support-contact/', form);
       setSubmitted(true);
     } catch (err) {
       if (err.response?.data?.errors) {
