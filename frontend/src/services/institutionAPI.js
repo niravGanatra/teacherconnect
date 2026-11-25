@@ -8,6 +8,9 @@ export const institutionAPI = {
     // List all institutions (verified only)
     list: (params = {}) => api.get('/institutions/', { params }),
 
+    // Directory filter counts (boards, states, totals)
+    filters: () => api.get('/institutions/filters/'),
+
     // Get institution by slug
     get: (slug) => api.get(`/institutions/${slug}/`),
 

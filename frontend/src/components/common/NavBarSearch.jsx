@@ -228,9 +228,9 @@ export default function NavBarSearch() {
             <div ref={dropdownRef} className="relative z-50 w-full max-w-xl">
                 {/* Search Input */}
                 <div className={`
-                    relative flex items-center gap-2 px-4 py-2.5
-                    bg-slate-100 rounded-full border-2 transition-all duration-200
-                    ${isFocused ? 'bg-white border-blue-500 shadow-lg' : 'border-transparent hover:bg-slate-200'}
+                    relative flex items-center gap-2 px-4 py-2
+                    bg-slate-100/90 rounded-full border transition-all duration-200
+                    ${isFocused ? 'bg-white border-violet-500 ring-2 ring-violet-500/15 shadow-sm' : 'border-transparent hover:bg-slate-200/70'}
                 `}>
                     <MagnifyingGlassIcon className="w-5 h-5 text-slate-500 flex-shrink-0" />
                     <input
@@ -453,8 +453,8 @@ export default function NavBarSearch() {
                                         onClick={handleViewAll}
                                         className={`
                                             w-full flex items-center justify-center gap-2 px-4 py-3 
-                                            text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors
-                                            ${highlightedIndex === getAllItems().length - 1 ? 'bg-blue-50' : ''}
+                                            text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors
+                                            ${highlightedIndex === getAllItems().length - 1 ? 'bg-violet-50' : ''}
                                         `}
                                     >
                                         See all results for "{query}"

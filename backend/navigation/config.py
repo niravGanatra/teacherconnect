@@ -37,8 +37,15 @@ MENU_CONFIG = {
             'badge': 'user_count',
         },
         {
+            'id': 'institutions_directory',
+            'label': 'School Directory',
+            'icon': 'institutions',
+            'path': '/institutions',
+            'badge': None,
+        },
+        {
             'id': 'institutions',
-            'label': 'Institutions',
+            'label': 'Verify Institutions',
             'icon': 'institutions',
             'path': '/admin/institutions',
             'badge': None,
@@ -84,6 +91,13 @@ MENU_CONFIG = {
     #  INSTITUTION ADMIN
     # ─────────────────────────────────────────────
     'INSTITUTION': [
+        {
+            'id': 'institutions',
+            'label': 'Institutions',
+            'icon': 'institutions',
+            'path': '/institutions',
+            'badge': None,
+        },
         {
             'id': 'acadopportunities',
             'label': 'AcadOpportunities',
@@ -187,6 +201,13 @@ MENU_CONFIG = {
             'icon': 'message',
             'path': '/acadtalk',
             'badge': 'acadtalk_unread_count',
+        },
+        {
+            'id': 'institutions',
+            'label': 'Institutions',
+            'icon': 'institutions',
+            'path': '/institutions',
+            'badge': None,
         },
         {
             'id': 'acadopportunities',

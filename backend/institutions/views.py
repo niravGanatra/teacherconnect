@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 
 from rest_framework.exceptions import PermissionDenied
 from .models import Institution, Campus, Course
@@ -56,50 +56,115 @@ class InstitutionViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         queryset = Institution.objects.all()
-        
+
         # For list view, only show verified institutions (unless admin)
         if self.action == 'list':
             if not self.request.user.is_staff:
                 queryset = queryset.filter(status='VERIFIED')
-        
-        # Add follower and alumni counts
-        queryset = queryset.annotate(
-            follower_count=Count('followers', distinct=True),
-            alumni_count=Count('alumni_education__profile__user', distinct=True),
-            admin_count=Count('admins', distinct=True)
-        )
-        
+            queryset = queryset.select_related('academic_details')
+        else:
+            # Add follower, alumni, and admin counts for detail/action views
+            queryset = queryset.annotate(
+                follower_count=Count('followers', distinct=True),
+                alumni_count=Count('alumni_education__profile__user', distinct=True),
+                admin_count=Count('admins', distinct=True)
+            )
+
         # Prefetch for detail view effectiveness
         if self.action == 'retrieve':
-            queryset = queryset.prefetch_related(
-                'campuses', 
-                'courses', 
-                'accreditations', 
-                'admins', 
+            queryset = queryset.select_related(
+                'academic_details',
+                'contact_details',
+                'social_details',
+            ).prefetch_related(
+                'campuses__infrastructure',
+                'courses',
+                'accreditations',
+                'admins',
                 'stats'
             )
 
-        
-        # Search filter
-        search = self.request.query_params.get('search')
+        # Search filter (supports ?search= or ?q=)
+        search = (self.request.query_params.get('search') or self.request.query_params.get('q') or '').strip()
         if search:
-            queryset = queryset.filter(name__icontains=search)
-        
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(brand_name__icontains=search) |
+                Q(city__icontains=search) |
+                Q(state__icontains=search) |
+                Q(pincode__icontains=search) |
+                Q(registration_number__icontains=search)
+            )
+
         # Type filter
         inst_type = self.request.query_params.get('type')
         if inst_type:
             queryset = queryset.filter(institution_type=inst_type)
-        
+
+        # Board / sub_type filter (?board=CBSE or ?sub_type=CBSE)
+        board = (self.request.query_params.get('board') or self.request.query_params.get('sub_type') or '').strip().upper()
+        if board:
+            queryset = queryset.filter(sub_type=board)
+
+        # Ownership filter (?ownership=GOVT|PRIVATE)
+        ownership = (self.request.query_params.get('ownership') or '').strip().upper()
+        if ownership:
+            queryset = queryset.filter(ownership_type=ownership)
+
+        # Website / Enriched filters
+        if (self.request.query_params.get('has_website') or '').lower() in ('1', 'true', 'yes'):
+            queryset = queryset.exclude(website='')
+        if (self.request.query_params.get('enriched') or '').lower() in ('1', 'true', 'yes'):
+            queryset = queryset.filter(data_source='WEB')
+
         # Location filter
         city = self.request.query_params.get('city')
         if city:
             queryset = queryset.filter(city__icontains=city)
-        
+
         state = self.request.query_params.get('state')
         if state:
-            queryset = queryset.filter(state__icontains=state)
-        
-        return queryset.order_by('name')
+            queryset = queryset.filter(state__iexact=state) if len(state) > 2 else queryset.filter(state__icontains=state)
+
+        # Sorting (default: richest / most complete profiles first instead of raw +2 alphabetical)
+        sort = (self.request.query_params.get('sort') or 'featured').lower()
+        if sort == 'name_asc':
+            return queryset.order_by('name')
+        elif sort == 'name_desc':
+            return queryset.order_by('-name')
+        elif sort == 'newest':
+            return queryset.order_by(F('establishment_year').desc(nulls_last=True), 'name')
+        return queryset.order_by('-profile_completion_percentage', '-data_source', 'name')
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def filters(self, request):
+        """
+        GET /api/institutions/filters/
+        Returns aggregate counts for boards and states to power directory filter facets.
+        """
+        base_qs = Institution.objects.all()
+        if not request.user.is_staff:
+            base_qs = base_qs.filter(status='VERIFIED')
+
+        boards = list(
+            base_qs.exclude(sub_type='')
+            .values('sub_type')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        states = list(
+            base_qs.exclude(state='')
+            .values('state')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        return Response({
+            'total': base_qs.count(),
+            'enriched': base_qs.filter(data_source='WEB').count(),
+            'with_website': base_qs.exclude(website='').count(),
+            'boards': [{'value': b['sub_type'], 'count': b['count']} for b in boards],
+            'states': [{'value': s['state'], 'count': s['count']} for s in states],
+        })
 
     def perform_create(self, serializer):
         """Override to send admin notification email when a new institution registers."""

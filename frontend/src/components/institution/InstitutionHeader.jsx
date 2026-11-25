@@ -1,25 +1,55 @@
 /**
  * Institution Header Component
- * LinkedIn-style centered header with cover image, logo, and follow button
+ * Clean editorial profile hero with properly layered overlapping monogram/logo,
+ * anchored Verified badge, board metadata, and quick actions.
  */
 import { useState } from 'react';
-import { Button, Badge } from '../common';
 import {
     MapPinIcon,
     AcademicCapIcon,
     GlobeAltIcon,
     CalendarIcon,
-    CheckBadgeIcon,
     BriefcaseIcon,
     BuildingOfficeIcon,
+    ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
+import { CheckBadgeIcon as CheckBadgeSolid } from '@heroicons/react/24/solid';
+
+function getInitials(name = '') {
+    const words = name.replace(/[^A-Za-z0-9\s]/g, ' ').trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    return (words[0] || 'S').slice(0, 2).toUpperCase();
+}
+
+const BOARD_ACCENTS = {
+    CBSE: {
+        banner: 'from-slate-900 via-indigo-950 to-indigo-900',
+        avatar: 'from-indigo-600 to-violet-600',
+        badge: 'bg-indigo-50 text-indigo-700 ring-indigo-200/80',
+    },
+    ICSE: {
+        banner: 'from-slate-900 via-teal-950 to-emerald-900',
+        avatar: 'from-emerald-600 to-teal-600',
+        badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200/80',
+    },
+    IB: {
+        banner: 'from-slate-900 via-indigo-950 to-violet-900',
+        avatar: 'from-violet-600 to-purple-700',
+        badge: 'bg-violet-50 text-violet-700 ring-violet-200/80',
+    },
+    IGCSE: {
+        banner: 'from-slate-900 via-slate-800 to-amber-950',
+        avatar: 'from-amber-500 to-orange-600',
+        badge: 'bg-amber-50 text-amber-700 ring-amber-200/80',
+    },
+};
 
 export default function InstitutionHeader({
     institution,
     onFollow,
     isFollowing,
     followerCount,
-    isAdmin
+    isAdmin,
 }) {
     const [followLoading, setFollowLoading] = useState(false);
 
@@ -32,149 +62,182 @@ export default function InstitutionHeader({
         }
     };
 
+    const displayName = institution.brand_name || institution.name;
+    const founded = institution.establishment_year || institution.founded_year;
+    const location = [
+        institution.city,
+        institution.state,
+        institution.country && institution.country !== 'India' ? institution.country : '',
+    ]
+        .filter(Boolean)
+        .join(', ');
+    const accent = BOARD_ACCENTS[institution.sub_type] || BOARD_ACCENTS.IB;
+
     return (
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100">
-            {/* Cover Image */}
-            <div className="relative h-48 md:h-64 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
-                {institution.cover_image && (
+        <div className="relative bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-200/80">
+            {/* Cover Banner (z-0 so overlapping logo paints cleanly on top) */}
+            <div className={`relative z-0 h-28 sm:h-32 bg-gradient-to-r ${accent.banner}`}>
+                {institution.cover_image ? (
                     <img
                         src={institution.cover_image}
-                        alt={`${institution.name} cover`}
+                        alt={`${displayName} cover`}
                         className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <div
+                        className="w-full h-full opacity-25"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(circle at 18% 55%, rgba(167,139,250,0.45) 0%, transparent 45%), radial-gradient(circle at 82% 25%, rgba(99,102,241,0.35) 0%, transparent 45%)',
+                        }}
                     />
                 )}
 
+                {/* Anchored Status Badges */}
+                <div className="absolute top-3.5 right-4 flex items-center gap-2 z-10">
+                    {institution.is_hiring && (
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-500/95 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+                            <BriefcaseIcon className="w-3.5 h-3.5" />
+                            Hiring
+                        </span>
+                    )}
+                    {institution.status === 'VERIFIED' && (
+                        <span className="inline-flex items-center gap-1 bg-white/95 backdrop-blur-xs text-slate-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+                            <CheckBadgeSolid className="w-4 h-4 text-blue-500" />
+                            Verified
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {/* Status Badges - Absolute positioned on cover image */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-                {/* Verified Badge */}
-                {institution.status === 'VERIFIED' && (
-                    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
-                        <CheckBadgeIcon className="w-5 h-5 text-blue-500" />
-                        <span className="text-sm font-medium text-slate-700">Verified</span>
-                    </div>
-                )}
-
-                {/* Hiring Badge */}
-                {institution.is_hiring && (
-                    <div className="flex items-center gap-1 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm animate-pulse">
-                        <BriefcaseIcon className="w-4 h-4 text-white" />
-                        <span className="text-sm font-medium text-white">Hiring</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Centered Content */}
-            <div className="relative px-6 pb-6 text-center">
-                {/* Logo - Centered and overlapping */}
-                <div className="relative -mt-16 mb-4 flex justify-center">
-                    <div className="w-32 h-32 bg-white rounded-xl shadow-lg border-4 border-white overflow-hidden">
+            {/* Identity & Actions (relative z-10 guarantees avatar sits ON TOP of banner) */}
+            <div className="relative z-10 px-5 sm:px-7 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    {/* Overlapping Logo / Monogram */}
+                    <div className="-mt-10 sm:-mt-11 w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-white p-1 shadow-md ring-4 ring-white border border-slate-200/70 flex-shrink-0">
                         {institution.logo ? (
                             <img
                                 src={institution.logo}
-                                alt={institution.name}
-                                className="w-full h-full object-cover"
+                                alt={displayName}
+                                className="w-full h-full object-contain rounded-xl"
                             />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                                <span className="text-4xl font-bold text-white">
-                                    {institution.name?.charAt(0)?.toUpperCase()}
+                            <div className={`w-full h-full rounded-xl bg-gradient-to-br ${accent.avatar} flex items-center justify-center`}>
+                                <span className="text-2xl font-bold text-white tracking-wide select-none">
+                                    {getInitials(displayName)}
                                 </span>
                             </div>
                         )}
                     </div>
-                </div>
 
-                {/* Institution Name */}
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
-                    {institution.brand_name || institution.name}
-                </h1>
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 sm:pt-3">
+                        {institution.website && (
+                            <a
+                                href={institution.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                            >
+                                <GlobeAltIcon className="w-4 h-4 text-slate-500" />
+                                Website
+                                <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5 text-slate-400" />
+                            </a>
+                        )}
 
-                {institution.brand_name && institution.brand_name !== institution.name && (
-                    <p className="text-sm text-slate-500 mb-2">
-                        {institution.name}
-                    </p>
-                )}
+                        {institution.google_maps_link && (
+                            <a
+                                href={institution.google_maps_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                            >
+                                <MapPinIcon className="w-4 h-4 text-slate-500" />
+                                Directions
+                            </a>
+                        )}
 
-                {/* Ownership Badge */}
-                {institution.ownership_type && (
-                    <div className="flex justify-center mb-3">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                            <BuildingOfficeIcon className="w-3 h-3" />
-                            {institution.ownership_type.replace('_', ' ')}
-                        </span>
-                    </div>
-                )}
-
-                {/* Tagline */}
-                {institution.tagline && (
-                    <p className="text-slate-600 mb-4 max-w-xl mx-auto">
-                        {institution.tagline}
-                    </p>
-                )}
-
-                {/* Meta Info */}
-                <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500 mb-6">
-                    {institution.city && (
-                        <span className="flex items-center gap-1">
-                            <MapPinIcon className="w-4 h-4" />
-                            {institution.city}, {institution.state}
-                        </span>
-                    )}
-                    {institution.student_count_range && (
-                        <span className="flex items-center gap-1">
-                            <AcademicCapIcon className="w-4 h-4" />
-                            {institution.student_count_range} students
-                        </span>
-                    )}
-                    {institution.founded_year && (
-                        <span className="flex items-center gap-1">
-                            <CalendarIcon className="w-4 h-4" />
-                            Est. {institution.founded_year}
-                        </span>
-                    )}
-                    {institution.website && (
-                        <a
-                            href={institution.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-purple-600 hover:underline"
+                        <button
+                            type="button"
+                            onClick={handleFollow}
+                            disabled={followLoading}
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${
+                                isFollowing
+                                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                    : 'bg-violet-700 text-white hover:bg-violet-800 shadow-xs'
+                            }`}
                         >
-                            <GlobeAltIcon className="w-4 h-4" />
-                            Website
-                        </a>
-                    )}
-                </div>
+                            {followLoading ? 'Updating...' : isFollowing ? '✓ Following' : '+ Follow'}
+                        </button>
 
-                {/* Stats */}
-                <div className="flex justify-center gap-8 mb-6">
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-slate-900">{followerCount || 0}</p>
-                        <p className="text-sm text-slate-500">Followers</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-slate-900">{institution.alumni_count || 0}</p>
-                        <p className="text-sm text-slate-500">Alumni</p>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                className="px-4 py-2 rounded-xl text-sm font-medium border border-violet-300 text-violet-700 hover:bg-violet-50 transition-colors"
+                            >
+                                Edit Page
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-3">
-                    <Button
-                        onClick={handleFollow}
-                        loading={followLoading}
-                        variant={isFollowing ? 'secondary' : 'primary'}
-                        className="min-w-32"
-                    >
-                        {isFollowing ? '✓ Following' : '+ Follow'}
-                    </Button>
+                {/* Name + Badges + Tagline + Meta */}
+                <div className="mt-4 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                            {displayName}
+                        </h1>
+                        {institution.sub_type && (
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold ring-1 ring-inset ${accent.badge}`}>
+                                <AcademicCapIcon className="w-3.5 h-3.5" />
+                                {institution.sub_type}
+                            </span>
+                        )}
+                        {institution.ownership_type && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                                <BuildingOfficeIcon className="w-3.5 h-3.5" />
+                                {institution.ownership_type === 'GOVT'
+                                    ? 'Government'
+                                    : institution.ownership_type.charAt(0) + institution.ownership_type.slice(1).toLowerCase()}
+                            </span>
+                        )}
+                    </div>
 
-                    {isAdmin && (
-                        <Button variant="outline">
-                            Edit Page
-                        </Button>
+                    {institution.tagline && (
+                        <p className="text-sm sm:text-[15px] text-slate-600 max-w-3xl leading-relaxed">
+                            {institution.tagline}
+                        </p>
                     )}
+
+                    {/* Meta Strip */}
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs sm:text-sm text-slate-500 pt-1">
+                        {location && (
+                            <span className="inline-flex items-center gap-1.5">
+                                <MapPinIcon className="w-4 h-4 text-slate-400" />
+                                {location}
+                            </span>
+                        )}
+                        {founded && (
+                            <span className="inline-flex items-center gap-1.5">
+                                <CalendarIcon className="w-4 h-4 text-slate-400" />
+                                Est. {founded}
+                            </span>
+                        )}
+                        {institution.registration_number && (
+                            <span className="text-slate-400">
+                                Affiliation No. <strong className="font-medium text-slate-600">{institution.registration_number}</strong>
+                            </span>
+                        )}
+                        {(followerCount > 0 || institution.alumni_count > 0) && (
+                            <span className="text-slate-500">
+                                {followerCount > 0 && <strong className="text-slate-800">{followerCount}</strong>}
+                                {followerCount > 0 && ' followers'}
+                                {followerCount > 0 && institution.alumni_count > 0 && ' · '}
+                                {institution.alumni_count > 0 && <strong className="text-slate-800">{institution.alumni_count}</strong>}
+                                {institution.alumni_count > 0 && ' alumni'}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

@@ -73,12 +73,14 @@ class GlobalSearchView(APIView):
             if search_type in ['ALL', 'INSTITUTIONS', 'COMPANIES']:
                 inst_type = request.query_params.get('institution_type', '')
                 inst_board = request.query_params.get('inst_boards', '')
+                location = request.query_params.get('location', '').strip()
                 has_hostel = request.query_params.get('has_hostel', '').lower() == 'true'
                 has_transport = request.query_params.get('has_transport', '').lower() == 'true'
                 results['institutions'] = self._search_institutions(
                     query, limit,
                     institution_type=inst_type,
                     board_filter=inst_board,
+                    location=location,
                     has_hostel=has_hostel,
                     has_transport=has_transport
                 )
@@ -182,32 +184,33 @@ class GlobalSearchView(APIView):
         ]
 
 
-    def _search_institutions(self, query, limit, institution_type='', board_filter='', has_hostel=False, has_transport=False):
-        """Search institutions with filters."""
-        # Base query on new Institution model
+    def _search_institutions(self, query, limit, institution_type='', board_filter='', location='', has_hostel=False, has_transport=False):
+        """Search institutions with filters, ranking enriched profiles first."""
         queryset = Institution.objects.filter(
             Q(name__icontains=query) |
+            Q(brand_name__icontains=query) |
             Q(tagline__icontains=query) |
             Q(description__icontains=query) |
-            Q(contact_details__city__icontains=query) |
-            Q(contact_details__state__icontains=query)
-        ).prefetch_related('contact_details').defer('is_hiring')
-        
-        # Apply type filter
+            Q(city__icontains=query) |
+            Q(state__icontains=query) |
+            Q(sub_type__icontains=query)
+        ).defer('is_hiring')
+
         if institution_type:
             queryset = queryset.filter(institution_type=institution_type)
 
-        # Apply board filter (search in academic_details.boards_affiliations)
         if board_filter:
-            queryset = queryset.filter(academic_details__boards_affiliations__contains=board_filter)
+            queryset = queryset.filter(sub_type__iexact=board_filter)
 
-        # Apply facility filters
+        if location:
+            queryset = queryset.filter(Q(city__icontains=location) | Q(state__icontains=location))
+
         if has_hostel:
-            queryset = queryset.filter(infrastructure_details__has_hostel=True)
+            queryset = queryset.filter(campuses__infrastructure__has_hostel=True)
         if has_transport:
-            queryset = queryset.filter(infrastructure_details__has_transport=True)
+            queryset = queryset.filter(campuses__infrastructure__has_transport=True)
 
-        institutions = list(queryset[:limit])
+        institutions = list(queryset.order_by('-profile_completion_percentage', '-data_source', 'name')[:limit])
 
         return [
             {
@@ -216,15 +219,16 @@ class GlobalSearchView(APIView):
                 'name': inst.name,
                 'slug': inst.slug,
                 'institution_type': inst.institution_type,
+                'sub_type': inst.sub_type,
                 'tagline': inst.tagline or '',
-                'city': getattr(inst.contact_details, 'city', '') if hasattr(inst, 'contact_details') else '',
-                'state': getattr(inst.contact_details, 'state', '') if hasattr(inst, 'contact_details') else '',
+                'city': inst.city or '',
+                'state': inst.state or '',
                 'logo': inst.logo.url if inst.logo else None,
                 'is_verified': inst.is_verified,
-                'is_hiring': False, 
-                'boards': [], # getattr(inst.academic_details, 'boards_affiliations', []) if hasattr(inst, 'academic_details') else [],
-                'has_hostel': False, # getattr(inst.infrastructure_details, 'has_hostel', False) if hasattr(inst, 'infrastructure_details') else False,
-                'has_transport': False, # getattr(inst.infrastructure_details, 'has_transport', False) if hasattr(inst, 'infrastructure_details') else False,
+                'is_hiring': False,
+                'boards': [inst.sub_type] if inst.sub_type else [],
+                'has_hostel': False,
+                'has_transport': False,
                 'relevance_score': 1.0,
             }
             for inst in institutions
@@ -305,13 +309,14 @@ class AutocompleteView(APIView):
                 is_searchable=True
             ).select_related('user')[:3]
 
-            # Institutions (new model) - top 3
+            # Institutions (new model) - top 5, richest profiles first
             institutions = Institution.objects.filter(
                 Q(name__icontains=query) |
                 Q(tagline__icontains=query) |
-                Q(contact_details__city__icontains=query) |
-                Q(contact_details__state__icontains=query)
-            ).prefetch_related('contact_details').defer('is_hiring')[:3]
+                Q(city__icontains=query) |
+                Q(state__icontains=query) |
+                Q(sub_type__icontains=query)
+            ).defer('is_hiring').order_by('-profile_completion_percentage', 'name')[:5]
 
             # Jobs - top 3
             jobs = JobListing.objects.filter(
@@ -345,8 +350,9 @@ class AutocompleteView(APIView):
                         'id': str(i.id),
                         'name': i.name,
                         'slug': i.slug,
+                        'sub_type': i.sub_type,
                         'logo': i.logo.url if i.logo else None,
-                        'city': getattr(i.contact_details, 'city', '') if hasattr(i, 'contact_details') and i.contact_details else '',
+                        'city': ', '.join(p for p in (i.city, i.state, i.sub_type) if p),
                     }
                     for i in institutions
                 ],

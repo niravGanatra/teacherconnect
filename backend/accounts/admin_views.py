@@ -40,8 +40,11 @@ class AdminStatsView(APIView):
         new_users_7d = User.objects.filter(created_at__gte=last_7_days).count()
 
         # Verification stats
+        from institutions.models import Institution
         verified_users = User.objects.filter(is_verified=True).count()
         pending_institutions = InstitutionProfile.objects.filter(is_verified=False).count()
+        directory_institutions = Institution.objects.count()
+        enriched_institutions = Institution.objects.filter(data_source='WEB').count()
 
         # Job stats
         total_jobs = JobListing.objects.count()
@@ -82,6 +85,8 @@ class AdminStatsView(APIView):
             },
             'institutions': {
                 'pending_verification': pending_institutions,
+                'total_directory': directory_institutions,
+                'enriched': enriched_institutions,
             },
             'jobs': {
                 'total': total_jobs,

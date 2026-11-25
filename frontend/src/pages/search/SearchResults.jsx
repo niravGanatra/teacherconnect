@@ -24,7 +24,7 @@ import {
 const RESULT_TYPES = ['ALL', 'PEOPLE', 'INSTITUTIONS', 'JOBS', 'FDPS'];
 
 // Popular cities for quick filters
-const POPULAR_CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad'];
+const POPULAR_CITIES = ['Mumbai', 'Delhi', 'Bengaluru', 'Chennai', 'Hyderabad'];
 
 export default function SearchResults() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -177,34 +177,45 @@ export default function SearchResults() {
     );
 
     const InstitutionCard = ({ institution }) => (
-        <Card className="p-4 hover:shadow-md transition-shadow">
-            <Link
-                to={institution.slug ? `/institution/${institution.slug}` : `/institutions/${institution.id}`}
-                className="flex items-center gap-4"
-            >
+        <Link
+            to={institution.slug ? `/institution/${institution.slug}` : `/institutions/${institution.id}`}
+            className="block bg-white rounded-xl border border-slate-200/80 p-4 hover:shadow-md hover:border-violet-300/80 transition-all group"
+        >
+            <div className="flex items-center gap-4">
                 {institution.logo ? (
-                    <img src={institution.logo} alt="" className="w-14 h-14 rounded-lg object-cover" />
+                    <img src={institution.logo} alt={institution.name} className="w-12 h-12 rounded-xl object-contain border border-slate-100 p-1 bg-white flex-shrink-0" />
                 ) : (
-                    <div className="w-14 h-14 bg-slate-200 rounded-lg flex items-center justify-center">
-                        <BuildingOfficeIcon className="w-6 h-6 text-slate-400" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {(institution.name || 'S').slice(0, 2).toUpperCase()}
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-800 hover:text-blue-600 flex items-center gap-2">
-                        {institution.name}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-slate-900 group-hover:text-violet-700 transition-colors truncate">
+                            {institution.name}
+                        </h4>
+                        {institution.sub_type && (
+                            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-violet-50 text-violet-700">
+                                {institution.sub_type}
+                            </span>
+                        )}
                         {institution.is_verified && <Badge variant="success">Verified</Badge>}
-                    </h4>
-                    <p className="text-sm text-slate-600">{institution.institution_type}</p>
+                    </div>
+                    {institution.tagline && (
+                        <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">{institution.tagline}</p>
+                    )}
                     {(institution.city || institution.state) && (
                         <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                            <MapPinIcon className="w-3 h-3" />
+                            <MapPinIcon className="w-3.5 h-3.5 text-slate-400" />
                             {[institution.city, institution.state].filter(Boolean).join(', ')}
                         </p>
                     )}
                 </div>
-                <Button variant="outline" size="sm">Follow</Button>
-            </Link>
-        </Card>
+                <span className="text-xs font-medium text-violet-700 hidden sm:inline flex-shrink-0">
+                    View →
+                </span>
+            </div>
+        </Link>
     );
 
     const JobCard = ({ job }) => (
@@ -311,7 +322,7 @@ export default function SearchResults() {
 
             <div className="flex gap-6">
                 {/* Desktop Sidebar */}
-                <div className="hidden lg:block w-64 flex-shrink-0 sticky top-4 h-fit">
+                <div className="hidden lg:block w-64 flex-shrink-0 sticky top-20 h-fit">
                     <FilterSidebar />
                 </div>
 
@@ -330,7 +341,7 @@ export default function SearchResults() {
                                     key={t}
                                     onClick={() => updateFilters('type', t)}
                                     className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${type === t
-                                        ? 'border-blue-600 text-blue-600'
+                                        ? 'border-violet-700 text-violet-700'
                                         : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                                         }`}
                                 >

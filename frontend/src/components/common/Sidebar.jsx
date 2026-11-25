@@ -398,8 +398,8 @@ export function DashboardLayout({ children, flush = false }) {
             )}
 
             {/* Desktop top bar */}
-            <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 bg-white border-b border-slate-200 shadow-sm">
-                <div className="flex items-center h-14 px-6 w-full max-w-4xl gap-3">
+            <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200/80">
+                <div className="flex items-center justify-between h-14 px-6 w-full gap-4">
                     <NavBarSearch />
                     <NotificationBell />
                 </div>

@@ -94,6 +94,13 @@ body {
   outline-offset: 2px;
 }
 
+/* Restore intuitive pointer cursor for interactive controls (Tailwind v4 Preflight sets default) */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
 /* Animation Classes */
 @keyframes fadeIn {
   from {

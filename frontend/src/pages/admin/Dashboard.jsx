@@ -83,11 +83,12 @@ export default function AdminDashboard() {
             link: '/admin/users?type=TEACHER',
         },
         {
-            title: 'Institutions',
-            value: stats?.users?.institutions || 0,
+            title: 'School Directory',
+            value: stats?.institutions?.total_directory ?? stats?.users?.institutions ?? 0,
             icon: BuildingOfficeIcon,
-            color: 'bg-purple-500',
-            link: '/admin/users?type=INSTITUTION',
+            color: 'bg-violet-600',
+            link: '/institutions',
+            subtitle: `${stats?.institutions?.enriched || 0} web enriched`,
         },
         {
             title: 'Pending Verification',
@@ -147,30 +148,43 @@ export default function AdminDashboard() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {statCards.map((stat, index) => (
-                        <Link
-                            key={index}
-                            to={stat.link || '#'}
-                            className={`card p-5 hover:shadow-lg transition-all ${stat.urgent ? 'ring-2 ring-amber-400' : ''
-                                }`}
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div className={`p-2.5 rounded-lg ${stat.color}`}>
-                                    <stat.icon className="w-5 h-5 text-white" />
+                    {statCards.map((stat, index) => {
+                        const cardInner = (
+                            <>
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className={`p-2.5 rounded-lg ${stat.color}`}>
+                                        <stat.icon className="w-5 h-5 text-white" />
+                                    </div>
+                                    {stat.urgent && (
+                                        <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full font-medium">
+                                            Action needed
+                                        </span>
+                                    )}
                                 </div>
-                                {stat.urgent && (
-                                    <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full font-medium">
-                                        Action needed
-                                    </span>
+                                <p className="text-2xl font-bold text-slate-800">{stat.value.toLocaleString()}</p>
+                                <p className="text-sm text-slate-500">{stat.title}</p>
+                                {stat.subtitle && (
+                                    <p className="text-xs text-slate-400 mt-1">{stat.subtitle}</p>
                                 )}
+                            </>
+                        );
+                        return stat.link ? (
+                            <Link
+                                key={index}
+                                to={stat.link}
+                                className={`card p-5 hover:shadow-lg transition-all ${stat.urgent ? 'ring-2 ring-amber-400' : ''}`}
+                            >
+                                {cardInner}
+                            </Link>
+                        ) : (
+                            <div
+                                key={index}
+                                className={`card p-5 ${stat.urgent ? 'ring-2 ring-amber-400' : ''}`}
+                            >
+                                {cardInner}
                             </div>
-                            <p className="text-2xl font-bold text-slate-800">{stat.value.toLocaleString()}</p>
-                            <p className="text-sm text-slate-500">{stat.title}</p>
-                            {stat.subtitle && (
-                                <p className="text-xs text-slate-400 mt-1">{stat.subtitle}</p>
-                            )}
-                        </Link>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Quick Actions */}
